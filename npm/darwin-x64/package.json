@@ -1,0 +1,18 @@
+{
+  "name": "@ice/css-modules-hash-darwin-x64",
+  "version": "0.0.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "css-modules-hash.darwin-x64.node",
+  "files": [
+    "css-modules-hash.darwin-x64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}
