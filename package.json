@@ -14,15 +14,6 @@
       ]
     }
   },
-  "optionalDependencies": {
-    "@ice/css-modules-hash-darwin-arm64": "0.0.4",
-    "@ice/css-modules-hash-darwin-universal": "0.0.4",
-    "@ice/css-modules-hash-darwin-x64": "0.0.4",
-    "@ice/css-modules-hash-linux-x64-gnu": "0.0.4",
-    "@ice/css-modules-hash-linux-x64-musl": "0.0.4",
-    "@ice/css-modules-hash-win32-arm64-msvc": "0.0.4",
-    "@ice/css-modules-hash-win32-x64-msvc": "0.0.4"
-  },
   "files": [
     "index.d.ts",
     "index.js"
