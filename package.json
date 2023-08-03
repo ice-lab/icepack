@@ -1,6 +1,6 @@
 {
   "name": "@ice/css-modules-hash",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -22,7 +22,7 @@
     "@ice/css-modules-hash-linux-x64-musl": "0.0.4",
     "@ice/css-modules-hash-win32-arm64-msvc": "0.0.4",
     "@ice/css-modules-hash-win32-x64-msvc": "0.0.4"
-},
+  },
   "files": [
     "index.d.ts",
     "index.js"
