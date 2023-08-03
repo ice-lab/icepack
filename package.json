@@ -33,5 +33,8 @@
     "test": "ava",
     "universal": "napi universal",
     "version": "napi version"
+  },
+  "repository": {
+    "url": "https://github.com/ice-lab/awesome-ice"
   }
 }
