@@ -27,3 +27,4 @@ xxhash-rust = { workspace = true, features = ["xxh32"] }
 [dev-dependencies]
 indexmap       = { workspace = true }
 tokio          = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "test-util", "parking_lot"] }
+rspack_testing = { path = "../.rspack_crates/rspack_testing" }
