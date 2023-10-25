@@ -195,3 +195,6 @@ Cargo.lock
 !.yarn/versions
 
 *.node
+
+.rspack_crates/
+node_modules/

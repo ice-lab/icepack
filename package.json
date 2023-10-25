@@ -1,44 +1,17 @@
 {
-  "name": "@ice/css-modules-hash",
-  "version": "0.0.6",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "napi": {
-    "name": "css-modules-hash",
-    "triples": {
-      "additional": [
-        "aarch64-apple-darwin",
-        "aarch64-pc-windows-msvc",
-        "x86_64-unknown-linux-musl",
-        "universal-apple-darwin"
-      ]
-    }
-  },
-  "files": [
-    "index.d.ts",
-    "index.js"
-  ],
-  "license": "MIT",
+  "name": "ice-monorepo",
+  "version": "0.0.0",
+  "type": "module",
+  "homepage": "https://ice.work",
+  "bugs": "https://github.com/alibaba/ice/issues",
   "devDependencies": {
-    "@napi-rs/cli": "^2.16.2",
-    "ava": "^5.1.1"
-  },
-  "ava": {
-    "timeout": "3m"
-  },
-  "engines": {
-    "node": ">= 10"
-  },
-  "scripts": {
-    "artifacts": "napi artifacts",
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm",
-    "test": "ava",
-    "universal": "napi universal",
-    "version": "napi version"
+    "git-clone": "0.2.0",
+    "rimraf": "^5.0.5",
+    "fs-extra": "^11.1.1",
+    "ora": "^7.0.1"
   },
   "repository": {
-    "url": "https://github.com/ice-lab/awesome-ice"
+    "type": "git",
+    "url": "https://github.com/alibaba/ice"
   }
 }
