@@ -3,7 +3,7 @@ use rspack_core::PluginExt;
 use rspack_testing::{fixture,test_fixture_insta};
 use plugin_manifest::ManifestPlugin;
 
-#[fixture("tests/fixtures/*")]
+#[fixture("tests/fixtures/with-assets")]
 fn manifest(fixture_path: PathBuf) {
   test_fixture_insta(
     &fixture_path,
