@@ -13,6 +13,7 @@ pub struct ManifestPlugin;
 
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AssetsManifest {
   pub pages: HashMap<String, Vec<String>>,
   pub entries: HashMap<String, Vec<String>>,
@@ -58,7 +59,6 @@ impl Plugin for ManifestPlugin {
         if let Some(chunk) = compilation.chunk_by_ukey.get(chunk) {
           chunk.files.iter().for_each(|file| {
             if let Some(asset) = assets.get(file) {
-              // print!("file: {:?}", asset.info);
               if !asset.info.hot_module_replacement && !asset.info.development {
                 files.push(file.to_string());
               }
@@ -90,14 +90,12 @@ impl Plugin for ManifestPlugin {
           }
         }
       });
-    println!("manifest: {:?}", assets_mainfest);
     let json_string = serde_json::to_string(&assets_mainfest).unwrap();
     let output_path = compilation
       .options
       .output
       .path
     .join("assets-manifest.json".to_string()).to_string_lossy().to_string();
-    println!("output_path: {}", output_path);
     compilation.emit_asset(
       output_path,
       CompilationAsset::from(RawSource::from(json_string).boxed()),
