@@ -10,7 +10,6 @@ rspack_core                             = { path = "../.rspack_crates/rspack_cor
 rspack_error                            = { path = "../.rspack_crates/rspack_error" }
 rspack_identifier                       = { path = "../.rspack_crates/rspack_identifier" }
 rspack_ids                              = { path = "../.rspack_crates/rspack_ids" }
-rspack_loader_react_refresh             = { path = "../.rspack_crates/rspack_loader_react_refresh" }
 rspack_loader_runner                    = { path = "../.rspack_crates/rspack_loader_runner" }
 rspack_loader_sass                      = { path = "../.rspack_crates/rspack_loader_sass" }
 rspack_loader_swc                       = { path = "../.rspack_crates/rspack_loader_swc" }
