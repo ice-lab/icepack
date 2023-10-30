@@ -27,7 +27,6 @@ mod utils;
 
 use hook::*;
 use js_values::*;
-
 // Napi macro registered this successfully
 #[allow(unused)]
 use loader::*;

@@ -9,7 +9,7 @@ use rspack_binding_options::{
   RawMode, RawNodeOption, RawOptimizationOptions, RawOutputOptions, RawResolveOptions,
   RawSnapshotOptions, RawStatsOptions, RawTarget, RawOptionsApply, RawModuleOptions,
 };
-use rspack_plugin_javascript::{FlagDependencyExportsPlugin, FlagDependencyUsagePlugin};
+use rspack_plugin_javascript::{FlagDependencyExportsPlugin, FlagDependencyUsagePlugin, SideEffectsFlagPlugin};
 use serde::Deserialize;
 
 mod raw_module;
@@ -72,6 +72,7 @@ impl RawOptionsApply for RSPackRawOptions {
       },
       async_web_assembly: self.experiments.async_web_assembly,
       new_split_chunks: self.experiments.new_split_chunks,
+      top_level_await: self.experiments.top_level_await,
       rspack_future: self.experiments.rspack_future.into(),
     };
     let optimization = IS_ENABLE_NEW_SPLIT_CHUNKS.set(&experiments.new_split_chunks, || {
@@ -128,6 +129,9 @@ impl RawOptionsApply for RSPackRawOptions {
     plugins.push(rspack_ids::NamedChunkIdsPlugin::new(None, None).boxed());
 
     if experiments.rspack_future.new_treeshaking {
+      if optimization.side_effects.is_enable() {
+        plugins.push(SideEffectsFlagPlugin::default().boxed());
+      }
       if optimization.provided_exports {
         plugins.push(FlagDependencyExportsPlugin::default().boxed());
       }

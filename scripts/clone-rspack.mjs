@@ -5,7 +5,7 @@ import fse from 'fs-extra';
 
 const REPO = 'git@github.com:web-infra-dev/rspack.git';
 const DEST = 'crates/.rspack_crates/';
-const CEHECKOUT = 'v0.3.6';
+const CEHECKOUT = 'main';
 
 function createSpinner(
   text,
