@@ -8,11 +8,14 @@ edition = "2021"
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+dashmap = { workspace = true }
 either = "1"
 once_cell = { workspace = true }
+rspack_ast = { path = "../.rspack_crates/rspack_ast" }
 rspack_core = { path = "../.rspack_crates/rspack_core" }
 rspack_error = { path = "../.rspack_crates/rspack_error" }
 rspack_loader_runner = { path = "../.rspack_crates/rspack_loader_runner" }
+rspack_plugin_javascript = { path = "../.rspack_crates/rspack_plugin_javascript" }
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0.100"
 swc_config = { workspace = true }
