@@ -1,14 +1,23 @@
 use std::{str::FromStr,env, fs,path::{Path, PathBuf}, sync::Arc};
 use loader_compilation::CompilationLoader;
-use rspack_core::{run_loaders, CompilerContext, CompilerOptions, SideEffectOption};
-use rspack_loader_runner::ResourceData;
+use rspack_core::{
+  run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData, SideEffectOption,
+};
+use serde_json::json;
+use swc_core::base::config::{PluginConfig, Config};
 
 async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
   let tests_path = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"))).join("tests");
-  let actual_path = tests_path.join(actual);
   let expected_path = tests_path.join(expected);
+  let actual_path = tests_path.join(actual);
+  let plugin_path = tests_path.join("my_first_plugin.wasm");
+  let mut options = Config::default();
+  options.jsc.experimental.plugins = Some(vec![PluginConfig(
+    plugin_path.to_string_lossy().to_string(),
+    json!(null),
+  )]);
   let (result, _) = run_loaders(
-    &[Arc::new(CompilationLoader::default())],
+    &[Arc::new(CompilationLoader::new(options)) as Arc<dyn Loader<LoaderRunnerContext>>],
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),
     &[],
     CompilerContext {
@@ -71,11 +80,12 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
           side_effects: SideEffectOption::False,
           provided_exports: Default::default(),
           used_exports: Default::default(),
+          inner_graph: Default::default(),
         },
         profile: false,
       }),
       resolver_factory: Default::default(),
-    }
+    },
   )
   .await
   .expect("TODO:")
