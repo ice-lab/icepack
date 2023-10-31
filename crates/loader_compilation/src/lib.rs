@@ -18,15 +18,13 @@ pub struct CompilationLoader {
   identifier: Identifier,
 }
 
-impl Default for CompilationLoader {
-  fn default() -> Self {
+impl CompilationLoader {
+  pub fn new() -> Self {
     Self {
       identifier: COMPILATION_LOADER_IDENTIFIER.into(),
     }
   }
-}
 
-impl CompilationLoader {
   pub fn with_identifier(mut self, identifier: Identifier) -> Self {
     assert!(identifier.starts_with(COMPILATION_LOADER_IDENTIFIER));
     self.identifier = identifier;

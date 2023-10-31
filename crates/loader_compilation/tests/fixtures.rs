@@ -17,7 +17,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     json!(null),
   )]);
   let (result, _) = run_loaders(
-    &[Arc::new(CompilationLoader::new(options)) as Arc<dyn Loader<LoaderRunnerContext>>],
+    &[Arc::new(CompilationLoader::new()) as Arc<dyn Loader<LoaderRunnerContext>>],
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),
     &[],
     CompilerContext {
