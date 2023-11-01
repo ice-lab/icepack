@@ -5,7 +5,8 @@
   "homepage": "https://ice.work",
   "bugs": "https://github.com/alibaba/ice/issues",
   "scripts": {
-    "setup": "rm -rf node_modules packages/*/node_modules && pnpm install && node scripts/clone-rspack.mjs",
+    "setup": "rm -rf node_modules packages/*/node_modules && pnpm install && pnpm setup-crate",
+    "setup-crates": "node scripts/clone-rspack.mjs",
     "test": "node scripts/test.mjs"
   },
   "devDependencies": {
@@ -17,5 +18,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/alibaba/ice"
-  }
+  },
+  "packageManager": "pnpm@8.9.2"
 }

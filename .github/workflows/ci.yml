@@ -62,6 +62,11 @@ jobs:
           clippy: true
           fmt: true
           shared-key: check
+      - name: Pnpm Cache # Required by some tests
+        uses: ./.github/actions/pnpm-cache
+
+      - name: Run Setup
+        run: pnpm setup-crates
 
       - name: Run Cargo Check
         run: cargo check --workspace --all-targets --locked # Not using --release because it uses too much cache, and is also slow.
@@ -101,6 +106,9 @@ jobs:
         run: |
           echo '[profile.test]' >> Cargo.toml
           echo 'debug = false' >> Cargo.toml
+
+      - name: Run Setup
+        run: pnpm setup
 
       - name: Run test
         run: pnpm test
