@@ -63,6 +63,9 @@ jobs:
           sparse-checkout: crates
           ref: main
 
+      - name: List file
+        run: node scripts/clean.mjs
+
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
