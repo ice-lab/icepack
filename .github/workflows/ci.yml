@@ -56,10 +56,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - uses: actions/checkout@v4
-      #   repository: my-org/my-private-tools
-      #   path: crates/.rspack_crates
-      #   sparse-checkout: crates
+      - uses: actions/checkout@v4
+        with:
+          repository: my-org/my-private-tools
+          path: crates/.rspack_crates
+          sparse-checkout: crates
+          ref: main
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
