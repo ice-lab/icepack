@@ -59,15 +59,8 @@ jobs:
       - name: Pnpm Cache # Required by some tests
         uses: ./.github/actions/pnpm-cache
 
-      - uses: actions/checkout@v4
-        with:
-          repository: web-infra-dev/rspack
-          path: crates/.rspack_crates
-          sparse-checkout: crates
-          ref: main
-
-      - name: List file
-        run: node scripts/clean.mjs
+      - name: Clone Crates
+        uses: ./.github/actions/clone-crates
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup

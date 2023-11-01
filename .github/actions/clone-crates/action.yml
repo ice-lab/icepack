@@ -1,0 +1,33 @@
+name: clone crates
+
+description: clone rspack crates for github
+
+inputs:
+  repo:
+    default: 'web-infra-dev/rspack'
+    required: false
+    type: string
+  dest:
+    default: 'crates/.rspack_crates'
+    required: false
+    type: string
+  ref:
+    default: 'v0.3.6'
+    required: false
+    type: string
+  temp:
+    default: 'crates/.rspack_crates/.temp'
+    required: false
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Clone Repo
+      uses: actions/checkout@v4
+      with:
+        repository: web-infra-dev/rspack
+        path: ${inputs.temp}
+        ref: ${ref}
+    - name: Clean up
+      run: node scripts/clean.mjs

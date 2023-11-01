@@ -13,7 +13,8 @@
     "git-clone": "0.2.0",
     "rimraf": "^5.0.5",
     "fs-extra": "^11.1.1",
-    "ora": "^7.0.1"
+    "ora": "^7.0.1",
+    "js-yaml": "4.1.0"
   },
   "repository": {
     "type": "git",
