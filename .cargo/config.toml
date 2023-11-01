@@ -41,5 +41,10 @@ rustflags = ["-C", "link-args=-Wl,--warn-unresolved-symbols"]
 [target.'cfg(target_os = "windows")']
 rustflags = ["-C", "link-args=/FORCE"]
 
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+[target.i686-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
 [target.x86_64-apple-darwin]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]

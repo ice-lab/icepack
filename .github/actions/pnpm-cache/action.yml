@@ -4,7 +4,7 @@ description: Install Node.js with pnpm global cache
 
 inputs:
   node-version:
-    default: '16'
+    default: '18'
     required: false
     type: string
   save-if:
@@ -19,9 +19,10 @@ runs:
   using: composite
   steps:
     - name: Install Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
+        check-latest: true
 
     # https://pnpm.io/continuous-integration#github-actions
     # Uses `packageManagement` field from package.json
