@@ -58,7 +58,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: my-org/my-private-tools
+          repository: web-infra-dev/rspack
           path: crates/.rspack_crates
           sparse-checkout: crates
           ref: main
