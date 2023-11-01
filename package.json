@@ -4,6 +4,10 @@
   "type": "module",
   "homepage": "https://ice.work",
   "bugs": "https://github.com/alibaba/ice/issues",
+  "scripts": {
+    "setup": "rm -rf node_modules packages/*/node_modules && pnpm install && node scripts/clone-rspack.mjs",
+    "test": "node scripts/test.mjs"
+  },
   "devDependencies": {
     "git-clone": "0.2.0",
     "rimraf": "^5.0.5",
