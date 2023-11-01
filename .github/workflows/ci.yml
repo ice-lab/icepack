@@ -56,6 +56,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pnpm Cache # Required by some tests
+        uses: ./.github/actions/pnpm-cache
+
       - uses: actions/checkout@v4
         with:
           repository: web-infra-dev/rspack
