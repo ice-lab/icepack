@@ -95,7 +95,7 @@ jobs:
         uses: ./.github/actions/pnpm-cache
 
       - uses: actions/checkout@v4
-      - run: pnpm setup-crates
+      - run: pnpm install && pnpm setup-crates
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
