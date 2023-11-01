@@ -70,7 +70,7 @@ jobs:
           shared-key: check
 
       - name: Run Cargo Check
-        run: cargo check --workspace --all-targets --locked # Not using --release because it uses too much cache, and is also slow.
+        run: cargo check --workspace --all-targets # Not using --release because it uses too much cache, and is also slow.
 
       - name: Run Clippy
         uses: actions-rs/cargo@v1
@@ -94,6 +94,9 @@ jobs:
 
       - name: Pnpm Cache # Required by some tests
         uses: ./.github/actions/pnpm-cache
+
+      - name: Clone Crates
+        uses: ./.github/actions/clone-crates
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
