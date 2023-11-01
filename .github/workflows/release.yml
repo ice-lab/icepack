@@ -66,13 +66,11 @@ jobs:
       - name: Clone Crates
         uses: ./.github/actions/clone-crates
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - name: Install
+        uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}
         with:
-          clippy: true
-          fmt: true
-          shared-key: check
+          toolchain: stable
           targets: ${{ matrix.settings.target }}
 
       - name: Cache cargo
