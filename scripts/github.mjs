@@ -25,10 +25,11 @@ export async function copyAndCleanUp(temp, dest, spinner) {
   if (spinner) {
     spinner.text = 'Copying crates to the dest...';
   }
-  
   fse.copySync(temp + '/crates', dest);
   // Step4: remove useless files.
-  spinner.text = 'Clean up...';
+  if (spinner) {
+    spinner.text = 'Clean up...';
+  }
   await rimraf(temp);
   if (spinner) {
     spinner.succeed('Cloning rspack repo succeed.');
