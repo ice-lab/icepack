@@ -35,7 +35,7 @@ jobs:
     outputs:
       changed: ${{ steps.filter.outputs.changed }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: dorny/paths-filter@v2
         id: filter
@@ -54,7 +54,7 @@ jobs:
     if: ${{ needs.rust_changes.outputs.changed == 'true' }}
     runs-on: ${{ fromJSON(vars.LINUX_RUNNER_LABELS || '"ubuntu-latest"') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -89,10 +89,13 @@ jobs:
     if: ${{ needs.rust_changes.outputs.changed == 'true' }}
     runs-on: ${{ fromJSON(vars.LINUX_RUNNER_LABELS || '"ubuntu-latest"') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Pnpm Cache # Required by some tests
         uses: ./.github/actions/pnpm-cache
+
+      - uses: actions/checkout@v4
+      - run: pnpm setup-crates
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -106,9 +109,6 @@ jobs:
         run: |
           echo '[profile.test]' >> Cargo.toml
           echo 'debug = false' >> Cargo.toml
-
-      - name: Run Setup
-        run: pnpm setup
 
       - name: Run test
         run: pnpm test
