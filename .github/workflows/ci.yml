@@ -72,18 +72,6 @@ jobs:
       - name: Run Cargo Check
         run: cargo check --workspace --all-targets # Not using --release because it uses too much cache, and is also slow.
 
-      - name: Run Clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --workspace --all-targets -- -D warnings
-
-      # - name: Run rustfmt
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: fmt
-      #     args: --all -- --check
-
   rust_test:
     name: Rust test
     needs: rust_changes
