@@ -27,7 +27,9 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: web-infra-dev/rspack
-        path: ${inputs.temp}
-        ref: ${ref}
+        path: ${{inputs.temp}}
+        ref: ${{ref}}
+
     - name: Clean up
+      shell: bash
       run: node scripts/clean.mjs
