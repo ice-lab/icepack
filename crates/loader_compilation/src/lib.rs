@@ -55,8 +55,12 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options)?;
 
     let transform_options = SwcPluginOptions {
-      keep_export: None,
-      remove_export: None,
+      keep_export: Some(KeepExportOptions {
+        export_names: vec!["default".to_string()],
+      }),
+      remove_export: Some(RemoveExportOptions {
+        remove_names: vec!["default".to_string()],
+      }),
     };
     let built = compiler.parse(None, |_| {
       transform(transform_options)

@@ -10,12 +10,8 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
   let tests_path = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"))).join("tests");
   let expected_path = tests_path.join(expected);
   let actual_path = tests_path.join(actual);
-  let plugin_path = tests_path.join("my_first_plugin.wasm");
+
   let mut options = Config::default();
-  options.jsc.experimental.plugins = Some(vec![PluginConfig(
-    plugin_path.to_string_lossy().to_string(),
-    json!(null),
-  )]);
   let (result, _) = run_loaders(
     &[Arc::new(CompilationLoader::new()) as Arc<dyn Loader<LoaderRunnerContext>>],
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),

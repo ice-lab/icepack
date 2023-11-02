@@ -2,13 +2,19 @@ use either::Either;
 use swc_core::common::chain;
 use swc_core::ecma::{
   transforms::base::pass::noop,
-  visit::{as_folder, Fold, VisitMut},
+  visit::{as_folder, Fold, VisitMut, Visit},
   ast::Module,
 };
 
+mod keep_export;
+mod remove_export;
+
+use keep_export::keep_export;
+use remove_export::remove_export;
+
 macro_rules! either {
   ($config:expr, $f:expr) => {
-    if let Some(config) = &$config {
+    if let Some(config) = $config {
       Either::Left($f(config))
     } else {
       Either::Right(noop())
@@ -24,37 +30,25 @@ macro_rules! either {
 }
 
 pub struct KeepExportOptions {
-  export_names: Vec<String>,
+  pub export_names: Vec<String>,
 }
 
-pub struct RemoveExport {
-  remove_names: Vec<String>,
+pub struct RemoveExportOptions {
+  pub remove_names: Vec<String>,
 }
 
 pub struct SwcPluginOptions {
   pub keep_export: Option<KeepExportOptions>,
-  pub remove_export: Option<RemoveExport>,
+  pub remove_export: Option<RemoveExportOptions>,
 }
 
 pub(crate) fn transform<'a>(plugin_options: SwcPluginOptions) -> impl Fold + 'a {
   chain!(
-    either!(plugin_options.keep_export, |_| {
-      keep_export()
+    either!(plugin_options.keep_export, |options: KeepExportOptions| {
+      keep_export(options.export_names)
     }),
-    either!(plugin_options.remove_export, |_| {
-      keep_export()
+    either!(plugin_options.remove_export, |options: RemoveExportOptions| {
+      remove_export(options.remove_names)
     }),
   )
-}
-
-struct KeepExport;
-
-impl VisitMut for KeepExport {
-  fn visit_mut_module(&mut self, module: &mut Module) {
-    
-  }
-}
-
-fn keep_export() -> impl Fold {
-  as_folder(KeepExport)
 }
