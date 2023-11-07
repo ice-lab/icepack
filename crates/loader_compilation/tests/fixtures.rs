@@ -1,5 +1,5 @@
 use std::{str::FromStr,env, fs,path::{Path, PathBuf}, sync::Arc};
-use loader_compilation::CompilationLoader;
+use loader_compilation::{CompilationLoader, LoaderOptions};
 use rspack_core::{
   run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData, SideEffectOption,
 };
@@ -13,7 +13,10 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
 
   let mut options = Config::default();
   let (result, _) = run_loaders(
-    &[Arc::new(CompilationLoader::new()) as Arc<dyn Loader<LoaderRunnerContext>>],
+    &[Arc::new(CompilationLoader::new(LoaderOptions {
+      swc_options: options,
+      transform_features: Default::default(),
+    })) as Arc<dyn Loader<LoaderRunnerContext>>],
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),
     &[],
     CompilerContext {
