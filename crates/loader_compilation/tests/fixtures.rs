@@ -10,6 +10,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
   let tests_path = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"))).join("tests");
   let expected_path = tests_path.join(expected);
   let actual_path = tests_path.join(actual);
+  let parent_path = actual_path.parent().unwrap().to_path_buf();
 
   let mut options = Config::default();
   let (result, _) = run_loaders(
@@ -21,7 +22,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     &[],
     CompilerContext {
       options: std::sync::Arc::new(CompilerOptions {
-        context: rspack_core::Context::default(),
+        context: rspack_core::Context::new(parent_path.to_string_lossy().to_string()),
         dev_server: rspack_core::DevServerOptions::default(),
         devtool: rspack_core::Devtool::from("source-map".to_string()),
         mode: rspack_core::Mode::None,

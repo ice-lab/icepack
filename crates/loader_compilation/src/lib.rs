@@ -1,3 +1,5 @@
+use std::{path::Path, collections::HashMap, sync::{Arc, Mutex},};
+use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
 use rspack_core::{rspack_sources::SourceMap, LoaderRunnerContext, Mode};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
@@ -59,6 +61,11 @@ impl CompilationLoader {
   }
 }
 
+lazy_static! {
+  static ref GLOBAL_FILE_ACCESS: Mutex<HashMap<String, bool>> = Mutex::new(HashMap::new());
+  static ref GLOBAL_ROUTES_CONFIG: Mutex<Option<Vec<String>>> = Mutex::new(None);
+}
+
 #[async_trait::async_trait]
 impl Loader<LoaderRunnerContext> for CompilationLoader {
   async fn run(&self, loader_context: &mut LoaderContext<'_, LoaderRunnerContext>) -> Result<()> {
@@ -106,8 +113,34 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options)?;
 
     let transform_options = &self.loader_options.transform_features;
+    let compiler_context = loader_context.context.options.context.as_ref();
+    let mut file_access = GLOBAL_FILE_ACCESS.lock().unwrap();
+    let mut routes_config = GLOBAL_ROUTES_CONFIG.lock().unwrap();
+    let file_accessed = file_access.contains_key(&resource_path.to_string_lossy().to_string());
+
+    if routes_config.is_none() || file_accessed {
+      // Load routes config for transform.
+      println!("Load route config only once");
+      let routes_config_path: std::path::PathBuf = Path::new(compiler_context).join(".ice/route-manifest.json");
+      *routes_config = Some(load_routes_config(&routes_config_path).unwrap());
+
+      if file_accessed {
+        // If file accessed, then we need to clear the map for the current compilation.
+        file_access.clear();
+      }
+    }
+    file_access.insert(resource_path.to_string_lossy().to_string(), true);
+
+    println!("routes_config: {:?}", routes_config);
+    println!("file_access: {:?}", file_access);
+    
     let built = compiler.parse(None, |_| {
-      transform(transform_options)
+      transform(
+        &resource_path,
+        compiler_context,
+        routes_config.as_ref().unwrap(),
+        transform_options
+      )
     })?;
 
     let codegen_options = ast::CodegenOptions {
