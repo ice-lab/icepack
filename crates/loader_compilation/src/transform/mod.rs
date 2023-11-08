@@ -1,12 +1,10 @@
 use std::path::Path;
 use anyhow::{Error, Context};
 use either::Either;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use swc_core::common::chain;
 use swc_core::ecma::{
-  transforms::base::pass::noop,
-  visit::{as_folder, Fold, VisitMut, Visit},
-  ast::Module,
+  transforms::base::pass::noop, visit::Fold,
 };
 
 mod keep_export;
@@ -100,7 +98,6 @@ pub struct TransformFeatureOptions {
 
 pub(crate) fn transform<'a>(
   resource_path: &'a Path,
-  context: &str,
   routes_config: &Vec<String>,
   feature_options: &TransformFeatureOptions,
 ) -> impl Fold + 'a {

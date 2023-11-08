@@ -3,7 +3,6 @@ use loader_compilation::{CompilationLoader, LoaderOptions};
 use rspack_core::{
   run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData, SideEffectOption,
 };
-use serde_json::json;
 use swc_core::base::config::{PluginConfig, Config};
 
 async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {

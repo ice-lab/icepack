@@ -1,4 +1,4 @@
-use std::{path::Path, collections::HashMap, sync::{Arc, Mutex},};
+use std::{path::Path, collections::HashMap, sync::Mutex};
 use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
 use rspack_core::{rspack_sources::SourceMap, LoaderRunnerContext, Mode};
@@ -6,7 +6,7 @@ use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_error::{
   internal_error, Result, Diagnostic,
 };
-use swc_core::{base::config::{InputSourceMap, Options, OutputCharset, Config, TransformConfig}, ecma::transforms::react::Runtime, common::source_map};
+use swc_core::{base::config::{InputSourceMap, Options, OutputCharset, Config, TransformConfig}, ecma::transforms::react::Runtime};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
   TransformOutput,
@@ -113,7 +113,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options)?;
 
     let transform_options = &self.loader_options.transform_features;
-    let compiler_context = loader_context.context.options.context.as_ref();
+    let compiler_context:&str = loader_context.context.options.context.as_ref();
     let mut file_access = GLOBAL_FILE_ACCESS.lock().unwrap();
     let mut routes_config = GLOBAL_ROUTES_CONFIG.lock().unwrap();
     let file_accessed = file_access.contains_key(&resource_path.to_string_lossy().to_string());
@@ -137,7 +137,6 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     let built = compiler.parse(None, |_| {
       transform(
         &resource_path,
-        compiler_context,
         routes_config.as_ref().unwrap(),
         transform_options
       )
