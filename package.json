@@ -5,7 +5,7 @@
   "homepage": "https://ice.work",
   "bugs": "https://github.com/alibaba/ice/issues",
   "scripts": {
-    "setup": "rm -rf node_modules packages/*/node_modules && pnpm install && pnpm setup-crate",
+    "setup": "rm -rf node_modules packages/*/node_modules && pnpm install && pnpm setup-crates",
     "setup-crates": "node scripts/clone-rspack.mjs",
     "test": "node scripts/test.mjs"
   },

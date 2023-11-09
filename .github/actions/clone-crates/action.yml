@@ -33,3 +33,5 @@ runs:
     - name: Clean up
       shell: bash
       run: node scripts/clean.mjs
+      env:
+        IS_GITHUB: true

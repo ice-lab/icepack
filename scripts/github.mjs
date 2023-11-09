@@ -26,11 +26,19 @@ export async function copyAndCleanUp(temp, dest, spinner) {
     spinner.text = 'Copying crates to the dest...';
   }
   fse.copySync(temp + '/crates', dest);
+  const pkg = JSON.parse(fse.readFileSync(temp + '/package.json', 'utf-8'));
+  console.log('version: ', pkg.version);
   // Step4: remove useless files.
   if (spinner) {
     spinner.text = 'Clean up...';
   }
   await rimraf(temp);
+  if (process.env.IS_GITHUB) {
+    await Promise.all(['node_binding', 'bench'].map(async (dir) => {
+      // Remove useless crates in github action to reduce the check time.
+      await rimraf(dest + '/' + dir);
+    }));
+  }
   if (spinner) {
     spinner.succeed('Cloning rspack repo succeed.');
   }

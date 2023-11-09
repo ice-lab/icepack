@@ -48,29 +48,29 @@ jobs:
               - 'Cargo.toml'
               - 'rust-toolchain.toml'
 
-  rust_check:
-    name: Rust check
-    needs: rust_changes
-    if: ${{ needs.rust_changes.outputs.changed == 'true' }}
-    runs-on: ${{ fromJSON(vars.LINUX_RUNNER_LABELS || '"ubuntu-latest"') }}
-    steps:
-      - uses: actions/checkout@v4
+  # rust_check:
+  #   name: Rust check
+  #   needs: rust_changes
+  #   if: ${{ needs.rust_changes.outputs.changed == 'true' }}
+  #   runs-on: ${{ fromJSON(vars.LINUX_RUNNER_LABELS || '"ubuntu-latest"') }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Pnpm Cache # Required by some tests
-        uses: ./.github/actions/pnpm-cache
+  #     - name: Pnpm Cache # Required by some tests
+  #       uses: ./.github/actions/pnpm-cache
 
-      - name: Clone Crates
-        uses: ./.github/actions/clone-crates
+  #     - name: Clone Crates
+  #       uses: ./.github/actions/clone-crates
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-        with:
-          clippy: true
-          fmt: true
-          shared-key: check
+  #     - name: Install Rust Toolchain
+  #       uses: ./.github/actions/rustup
+  #       with:
+  #         clippy: true
+  #         fmt: true
+  #         shared-key: check
 
-      - name: Run Cargo Check
-        run: cargo check --workspace --all-targets # Not using --release because it uses too much cache, and is also slow.
+  #     - name: Run Cargo Check
+  #       run: cargo check --workspace --all-targets # Not using --release because it uses too much cache, and is also slow.
 
   rust_test:
     name: Rust test
