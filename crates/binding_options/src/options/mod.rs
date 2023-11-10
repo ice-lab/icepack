@@ -13,9 +13,11 @@ use rspack_plugin_javascript::{FlagDependencyExportsPlugin, FlagDependencyUsageP
 use serde::Deserialize;
 
 mod raw_module;
+mod raw_features;
 mod js_loader;
 
 pub use raw_module::*;
+pub use raw_features::*;
 pub use js_loader::*;
 
 scoped_tls!(pub(crate) static IS_ENABLE_NEW_SPLIT_CHUNKS: bool);
@@ -45,6 +47,7 @@ pub struct RSPackRawOptions {
   pub node: Option<RawNodeOption>,
   pub profile: bool,
   pub builtins: RawBuiltins,
+  pub features: RawFeatures,
 }
 
 impl RawOptionsApply for RSPackRawOptions {
@@ -74,9 +77,19 @@ impl RawOptionsApply for RSPackRawOptions {
       new_split_chunks: self.experiments.new_split_chunks,
       rspack_future: self.experiments.rspack_future.into(),
     };
-    let optimization = IS_ENABLE_NEW_SPLIT_CHUNKS.set(&experiments.new_split_chunks, || {
-      self.optimization.apply(plugins)
-    })?;
+    let optimization;
+    if self.features.split_chunks_strategy.is_some() {
+      let split_chunk_strategy = SplitChunksStrategy::new(
+        self.features.split_chunks_strategy.unwrap(),
+        self.optimization,
+      );
+      optimization = split_chunk_strategy.apply(plugins)?;
+    } else {
+      optimization = IS_ENABLE_NEW_SPLIT_CHUNKS.set(&experiments.new_split_chunks, || {
+        self.optimization.apply(plugins)
+      })?;
+    }
+    
     let stats = self.stats.into();
     let snapshot = self.snapshot.into();
     let node = self.node.map(|n| n.into());
