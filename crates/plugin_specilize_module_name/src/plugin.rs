@@ -8,13 +8,13 @@ use rspack_core::{
 
 #[derive(Debug)]
 pub struct SpecilizeModuleNamePlugin {
-    // this value will auto-increase in coconcurrence situation
+    // this value will auto-increase in concurrence situation
     uid: RwLock<i32>,
-    target_module_names: Vec<&'static str>,
+    target_module_names: Vec<String>,
 }
 
 impl SpecilizeModuleNamePlugin {
-    pub fn new(target_module_names: Option<Vec<&'static str>>) -> Self {
+    pub fn new(target_module_names: Option<Vec<String>>) -> Self {
         Self {
             uid: RwLock::new(0),
             target_module_names: match target_module_names {
@@ -24,7 +24,7 @@ impl SpecilizeModuleNamePlugin {
         }
     }
 
-    pub fn increase_uid(&self) -> i32 {
+    fn increase_uid(&self) -> i32 {
         let mut cur_id = self.uid.write().unwrap();
         *cur_id += 1;
         *cur_id
@@ -48,7 +48,8 @@ impl Plugin for SpecilizeModuleNamePlugin {
         for name in &self.target_module_names {
             if _args.request.contains(name) {
                 let uid = self.increase_uid().to_string();
-                _args.request = format!("{}?id={}", _args.request, uid);
+                _args.request.push_str("?id=");
+                _args.request.push_str(&uid);
                 break;
             }
         }
@@ -72,7 +73,7 @@ mod tests {
     }
     #[test]
     fn test_create_instance_with_argument() {
-        let target = vec!["a", "b"];
+        let target = vec!["a".to_string(), "b".to_string()];
         let specilize_module_name_plugin = SpecilizeModuleNamePlugin::new(Some(target.clone()));
 
         assert_eq!(*specilize_module_name_plugin.uid.read().unwrap(), 0);

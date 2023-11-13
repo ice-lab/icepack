@@ -2,7 +2,6 @@ console.log("Hello World!");
 
 const { cal } = require("./function")
 const { add } = require("./utils");
-const { isString } = require("lodash");
 
 cal();
 
