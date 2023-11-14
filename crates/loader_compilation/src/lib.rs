@@ -120,7 +120,6 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
 
     if routes_config.is_none() || file_accessed {
       // Load routes config for transform.
-      println!("Load route config only once");
       let routes_config_path: std::path::PathBuf = Path::new(compiler_context).join(".ice/route-manifest.json");
       *routes_config = Some(load_routes_config(&routes_config_path).unwrap());
 
@@ -130,9 +129,6 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       }
     }
     file_access.insert(resource_path.to_string_lossy().to_string(), true);
-
-    println!("routes_config: {:?}", routes_config);
-    println!("file_access: {:?}", file_access);
     
     let built = compiler.parse(None, |_| {
       transform(
