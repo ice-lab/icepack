@@ -1186,34 +1186,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ice_pack_binding"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "binding_options",
- "dashmap",
- "futures",
- "mimalloc-rust",
- "napi",
- "napi-build",
- "napi-derive",
- "napi-sys",
- "once_cell",
- "rspack_binding_macros",
- "rspack_binding_options",
- "rspack_core",
- "rspack_error",
- "rspack_fs_node",
- "rspack_identifier",
- "rspack_napi_shared",
- "rspack_tracing",
- "rustc-hash",
- "serde_json",
- "tikv-jemallocator",
- "tracing",
-]
-
-[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1709,6 +1681,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
+name = "node_binding"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "binding_options",
+ "dashmap",
+ "futures",
+ "mimalloc-rust",
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "napi-sys",
+ "once_cell",
+ "rspack_binding_macros",
+ "rspack_binding_options",
+ "rspack_core",
+ "rspack_error",
+ "rspack_fs_node",
+ "rspack_identifier",
+ "rspack_napi_shared",
+ "rspack_tracing",
+ "rustc-hash",
+ "serde_json",
+ "tikv-jemallocator",
+ "tracing",
+]
+
+[[package]]
 name = "nodejs-resolver"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2114,6 +2114,17 @@ dependencies = [
 
 [[package]]
 name = "plugin_manifest"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "rspack_core",
+ "rspack_error",
+ "rspack_testing",
+ "tracing",
+]
+
+[[package]]
+name = "plugin_specilize_module_name"
 version = "0.1.0"
 dependencies = [
  "async-trait",
