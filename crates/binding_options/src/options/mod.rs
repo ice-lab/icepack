@@ -83,7 +83,7 @@ impl RawOptionsApply for RSPackRawOptions {
         self.features.split_chunks_strategy.unwrap(),
         self.optimization,
       );
-      optimization = split_chunk_strategy.apply(plugins)?;
+      optimization = split_chunk_strategy.apply(plugins, context.to_string())?;
     } else {
       optimization = IS_ENABLE_NEW_SPLIT_CHUNKS.set(&experiments.new_split_chunks, || {
         self.optimization.apply(plugins)

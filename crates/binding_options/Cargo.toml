@@ -41,10 +41,12 @@ rspack_plugin_swc_js_minimizer          = { path = "../.rspack_crates/rspack_plu
 rspack_plugin_wasm                      = { path = "../.rspack_crates/rspack_plugin_wasm" }
 rspack_plugin_worker                    = { path = "../.rspack_crates/rspack_plugin_worker" }
 rspack_regex                            = { path = "../.rspack_crates/rspack_regex" }
+rspack_hash                             = { path = "../.rspack_crates/rspack_hash" }
 rspack_swc_visitors                     = { path = "../.rspack_crates/rspack_swc_visitors" }
 loader_compilation                      = { path = "../loader_compilation" }
-plugin_manifest                        = { path = "../plugin_manifest" }
+plugin_manifest                         = { path = "../plugin_manifest" }
 
+futures-util      = { workspace = true }
 anyhow            = { workspace = true, features = ["backtrace"] }
 async-trait       = { workspace = true }
 better_scoped_tls = { workspace = true }
