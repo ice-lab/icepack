@@ -4,7 +4,8 @@ members  = [
   "crates/binding_options",
   "crates/node_binding",
   "crates/loader_compilation",
-  "crates/plugin_manifest"
+  "crates/plugin_manifest",
+  "crates/plugin_specilize_module_name"
 ]
 resolver = "2"
 
