@@ -13,8 +13,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "3.0.0-alpha.3",
-    "call-bind": "1.0.2"
+    "@napi-rs/cli": "^2.16.3"
   },
   "ava": {
     "timeout": "3m"
@@ -24,8 +23,9 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release --target aarch64-apple-darwin",
-    "build:debug": "napi build --platform --target aarch64-apple-darwin",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "build:debug:aarch64": "napi build --platform --target aarch64-apple-darwin",
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",
     "version": "napi version"
