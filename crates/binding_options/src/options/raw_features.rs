@@ -11,7 +11,7 @@ use rspack_ids::{
   DeterministicChunkIdsPlugin, DeterministicModuleIdsPlugin, NamedChunkIdsPlugin,
   NamedModuleIdsPlugin,
 };
-use rspack_binding_options::RawOptimizationOptions;
+use crate::RspackRawOptimizationOptions;
 use rspack_plugin_split_chunks_new::{PluginOptions, CacheGroup};
 use rspack_regex::RspackRegex;
 use rspack_hash::{RspackHash, HashFunction, HashDigest};
@@ -27,6 +27,7 @@ pub struct SplitChunksStrategy {
   real_content_hash: bool,
   remove_empty_chunks: bool,
   remove_available_modules: bool,
+  inner_graph: bool,
 }
 
 fn get_modules_size(module: &dyn Module) -> f64 {
@@ -126,7 +127,7 @@ pub trait FeatureApply {
 }
 
 impl SplitChunksStrategy {
-  pub fn new(strategy: RawStrategyOptions, option: RawOptimizationOptions) -> Self {
+  pub fn new(strategy: RawStrategyOptions, option: RspackRawOptimizationOptions) -> Self {
     Self {
       strategy,
       chunk_ids: option.chunk_ids,
@@ -137,6 +138,7 @@ impl SplitChunksStrategy {
       used_exports: option.used_exports,
       provided_exports: option.provided_exports,
       real_content_hash: option.real_content_hash,
+      inner_graph: option.inner_graph,
     }
   }
 }
@@ -173,12 +175,13 @@ impl FeatureApply for SplitChunksStrategy {
     if self.real_content_hash {
       plugins.push(rspack_plugin_real_content_hash::RealContentHashPlugin.boxed());
     }
-    Ok(Self::Options {
+    Ok(Optimization {
       remove_available_modules: self.remove_available_modules,
       remove_empty_chunks: self.remove_empty_chunks,
       side_effects: SideEffectOption::from(self.side_effects.as_str()),
       provided_exports: self.provided_exports,
       used_exports: UsedExportsOption::from(self.used_exports.as_str()),
+      inner_graph: self.inner_graph,
     })
   }
 }

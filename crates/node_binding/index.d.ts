@@ -620,6 +620,13 @@ export interface RawOptions {
   profile: boolean
   builtins: RawBuiltins
 }
+export interface RawStrategyOptions {
+  name: string
+  topLevelFrameworks: Array<string>
+}
+export interface RawFeatures {
+  splitChunksStrategy?: RawStrategyOptions
+}
 export interface RsPackRawOptions {
   mode?: undefined | 'production' | 'development' | 'none'
   target: Array<string>
@@ -638,6 +645,7 @@ export interface RsPackRawOptions {
   node?: RawNodeOption
   profile: boolean
   builtins: RawBuiltins
+  features: RawFeatures
 }
 export interface JsAssetInfoRelated {
   sourceMap?: string
