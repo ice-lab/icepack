@@ -1,26 +1,28 @@
 use napi_derive::napi;
-use better_scoped_tls::scoped_tls;
 use rspack_core::{
   BoxPlugin, CompilerOptions, Context, DevServerOptions, Devtool, Experiments, IncrementalRebuild,
-  IncrementalRebuildMakeState, ModuleOptions, ModuleType, OutputOptions, PluginExt,
+  IncrementalRebuildMakeState, ModuleOptions, ModuleType, OutputOptions, PluginExt, Optimization,
 };
+use rspack_plugin_javascript::{
+  FlagDependencyExportsPlugin, FlagDependencyUsagePlugin, SideEffectsFlagPlugin,
+};
+use serde::Deserialize;
+
 use rspack_binding_options::{
   RawBuiltins, RawCacheOptions, RawContext, RawDevServer, RawDevtool, RawExperiments,
-  RawMode, RawNodeOption, RawOptimizationOptions, RawOutputOptions, RawResolveOptions,
-  RawSnapshotOptions, RawStatsOptions, RawTarget, RawOptionsApply, RawModuleOptions,
+  RawMode, RawNodeOption, RawOutputOptions, RawResolveOptions, RawOptimizationOptions,
+  RawSnapshotOptions, RawStatsOptions, RawTarget, RawModuleOptions, RawOptionsApply,
 };
-use rspack_plugin_javascript::{FlagDependencyExportsPlugin, FlagDependencyUsagePlugin};
-use serde::Deserialize;
 
 mod raw_module;
 mod raw_features;
 mod js_loader;
+mod raw_optimization;
 
 pub use raw_module::*;
 pub use raw_features::*;
 pub use js_loader::*;
-
-scoped_tls!(pub(crate) static IS_ENABLE_NEW_SPLIT_CHUNKS: bool);
+pub use raw_optimization::*;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -38,7 +40,7 @@ pub struct RSPackRawOptions {
   pub module: RawModuleOptions,
   #[napi(ts_type = "string")]
   pub devtool: RawDevtool,
-  pub optimization: RawOptimizationOptions,
+  pub optimization: RspackRawOptimizationOptions,
   pub stats: RawStatsOptions,
   pub dev_server: RawDevServer,
   pub snapshot: RawSnapshotOptions,
@@ -75,9 +77,10 @@ impl RawOptionsApply for RSPackRawOptions {
       },
       async_web_assembly: self.experiments.async_web_assembly,
       new_split_chunks: self.experiments.new_split_chunks,
+      top_level_await: self.experiments.top_level_await,
       rspack_future: self.experiments.rspack_future.into(),
     };
-    let optimization;
+    let optimization: Optimization;
     if self.features.split_chunks_strategy.is_some() {
       let split_chunk_strategy = SplitChunksStrategy::new(
         self.features.split_chunks_strategy.unwrap(),
@@ -89,7 +92,7 @@ impl RawOptionsApply for RSPackRawOptions {
         self.optimization.apply(plugins)
       })?;
     }
-    
+
     let stats = self.stats.into();
     let snapshot = self.snapshot.into();
     let node = self.node.map(|n| n.into());
@@ -141,6 +144,9 @@ impl RawOptionsApply for RSPackRawOptions {
     plugins.push(rspack_ids::NamedChunkIdsPlugin::new(None, None).boxed());
 
     if experiments.rspack_future.new_treeshaking {
+      if optimization.side_effects.is_enable() {
+        plugins.push(SideEffectsFlagPlugin::default().boxed());
+      }
       if optimization.provided_exports {
         plugins.push(FlagDependencyExportsPlugin::default().boxed());
       }
@@ -156,7 +162,7 @@ impl RawOptionsApply for RSPackRawOptions {
 
     plugins.push(rspack_plugin_ensure_chunk_conditions::EnsureChunkConditionsPlugin.boxed());
 
-    plugins.push(plugin_manifest::ManifestPlugin::new().boxed());
+    plugins.push(rspack_plugin_warn_sensitive_module::WarnCaseSensitiveModulesPlugin.boxed());
 
     Ok(Self::Options {
       context,

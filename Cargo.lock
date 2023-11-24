@@ -137,7 +137,7 @@ checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 [[package]]
 name = "ast_node"
 version = "0.9.5"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -265,7 +265,7 @@ dependencies = [
 [[package]]
 name = "better_scoped_tls"
 version = "0.1.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "scoped-tls",
 ]
@@ -286,12 +286,12 @@ dependencies = [
  "plugin_manifest",
  "rspack_binding_macros",
  "rspack_binding_options",
+ "rspack_binding_values",
  "rspack_core",
  "rspack_error",
  "rspack_hash",
  "rspack_identifier",
  "rspack_ids",
- "rspack_loader_react_refresh",
  "rspack_loader_runner",
  "rspack_loader_sass",
  "rspack_loader_swc",
@@ -310,6 +310,7 @@ dependencies = [
  "rspack_plugin_javascript",
  "rspack_plugin_json",
  "rspack_plugin_library",
+ "rspack_plugin_limit_chunk_count",
  "rspack_plugin_progress",
  "rspack_plugin_real_content_hash",
  "rspack_plugin_remove_empty_chunks",
@@ -319,7 +320,9 @@ dependencies = [
  "rspack_plugin_split_chunks_new",
  "rspack_plugin_swc_css_minimizer",
  "rspack_plugin_swc_js_minimizer",
+ "rspack_plugin_warn_sensitive_module",
  "rspack_plugin_wasm",
+ "rspack_plugin_web_worker_template",
  "rspack_plugin_worker",
  "rspack_regex",
  "rspack_swc_visitors",
@@ -906,7 +909,7 @@ dependencies = [
 [[package]]
 name = "from_variant"
 version = "0.1.6"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -1338,6 +1341,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonc-parser"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "538702ed54bac04d391352d4c9ad0ec2a9225e3c477ffa23fc44d0f04fa83c54"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1698,6 +1710,7 @@ dependencies = [
  "once_cell",
  "rspack_binding_macros",
  "rspack_binding_options",
+ "rspack_binding_values",
  "rspack_core",
  "rspack_error",
  "rspack_fs_node",
@@ -1720,7 +1733,7 @@ dependencies = [
  "dashmap",
  "dunce",
  "indexmap 1.9.3",
- "jsonc-parser",
+ "jsonc-parser 0.21.1",
  "once_cell",
  "path-absolutize",
  "rustc-hash",
@@ -1847,9 +1860,9 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "oxc_resolver"
-version = "0.2.0"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9657cba6ac0894a8acf3aca5b9a4b7668ce8486042588cf2bf0f34eb5f37ebc6"
+checksum = "1d10d078b6ba0b8cfa0eb634ef749698aa82ef4a86c7ba1446453644ccf13fd2"
 dependencies = [
  "dashmap",
  "dunce",
@@ -1860,7 +1873,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -1931,6 +1943,12 @@ name = "path-clean"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ecba01bf2678719532c5e3059e0b5f0811273d94b397088b82e3bd0a78c78fdd"
+
+[[package]]
+name = "path-clean"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17359afc20d7ab31fdb42bb844c8b3bb1dabd7dcf7e68428492da7f16966fcef"
 
 [[package]]
 name = "path-dedot"
@@ -2119,9 +2137,12 @@ name = "plugin_manifest"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "regex",
  "rspack_core",
  "rspack_error",
  "rspack_testing",
+ "serde",
+ "serde_json",
  "tracing",
 ]
 
@@ -2173,8 +2194,8 @@ checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
 name = "preset_env_base"
-version = "0.4.5"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.4.6"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "ahash 0.8.6",
  "anyhow",
@@ -2516,6 +2537,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rspack_ast"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rspack_error",
+ "swc_core",
+ "swc_error_reporters",
+ "swc_node_comments",
+ "tokio",
+]
+
+[[package]]
 name = "rspack_ast_viewer"
 version = "0.1.0"
 dependencies = [
@@ -2550,6 +2583,70 @@ dependencies = [
  "glob",
  "napi",
  "napi-derive",
+ "rspack_binding_macros",
+ "rspack_binding_values",
+ "rspack_core",
+ "rspack_error",
+ "rspack_identifier",
+ "rspack_ids",
+ "rspack_loader_react_refresh",
+ "rspack_loader_runner",
+ "rspack_loader_sass",
+ "rspack_loader_swc",
+ "rspack_napi_shared",
+ "rspack_plugin_asset",
+ "rspack_plugin_banner",
+ "rspack_plugin_copy",
+ "rspack_plugin_css",
+ "rspack_plugin_dev_friendly_split_chunks",
+ "rspack_plugin_devtool",
+ "rspack_plugin_ensure_chunk_conditions",
+ "rspack_plugin_entry",
+ "rspack_plugin_externals",
+ "rspack_plugin_hmr",
+ "rspack_plugin_html",
+ "rspack_plugin_javascript",
+ "rspack_plugin_json",
+ "rspack_plugin_library",
+ "rspack_plugin_limit_chunk_count",
+ "rspack_plugin_progress",
+ "rspack_plugin_real_content_hash",
+ "rspack_plugin_remove_empty_chunks",
+ "rspack_plugin_runtime",
+ "rspack_plugin_schemes",
+ "rspack_plugin_split_chunks",
+ "rspack_plugin_split_chunks_new",
+ "rspack_plugin_swc_css_minimizer",
+ "rspack_plugin_swc_js_minimizer",
+ "rspack_plugin_warn_sensitive_module",
+ "rspack_plugin_wasm",
+ "rspack_plugin_web_worker_template",
+ "rspack_plugin_worker",
+ "rspack_regex",
+ "rspack_swc_visitors",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "swc_config",
+ "swc_core",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "rspack_binding_values"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "better_scoped_tls 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dashmap",
+ "derivative",
+ "futures",
+ "glob",
+ "napi",
+ "napi-derive",
+ "napi-sys",
  "rspack_binding_macros",
  "rspack_core",
  "rspack_error",
@@ -2607,6 +2704,7 @@ dependencies = [
  "dashmap",
  "derivative",
  "dyn-clone",
+ "either",
  "futures",
  "glob-match",
  "hashlink",
@@ -2621,6 +2719,7 @@ dependencies = [
  "rayon",
  "regex",
  "rkyv",
+ "rspack_ast",
  "rspack_database",
  "rspack_error",
  "rspack_fs",
@@ -2669,9 +2768,11 @@ dependencies = [
  "rspack_binding_options",
  "rspack_core",
  "rspack_fs",
+ "rspack_sources",
  "rspack_testing",
  "rspack_tracing",
  "rspack_util",
+ "serde_json",
  "sugar_path",
  "swc_core",
  "termcolor",
@@ -2754,6 +2855,7 @@ dependencies = [
 name = "rspack_loader_runner"
 version = "0.1.0"
 dependencies = [
+ "anymap",
  "async-recursion",
  "async-trait",
  "bitflags 1.3.2",
@@ -2794,11 +2896,16 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "dashmap",
  "either",
  "indexmap 1.9.3",
+ "jsonc-parser 0.22.1",
+ "once_cell",
+ "rspack_ast",
  "rspack_core",
  "rspack_error",
  "rspack_loader_runner",
+ "rspack_plugin_javascript",
  "rspack_swc_visitors",
  "rspack_testing",
  "serde",
@@ -2835,6 +2942,7 @@ dependencies = [
  "once_cell",
  "rspack_binding_macros",
  "rspack_binding_options",
+ "rspack_binding_values",
  "rspack_core",
  "rspack_error",
  "rspack_fs_node",
@@ -2895,6 +3003,7 @@ dependencies = [
  "rspack_futures",
  "rspack_hash",
  "rspack_testing",
+ "rustc-hash",
  "sugar_path",
  "testing_macros",
  "tokio",
@@ -3010,6 +3119,7 @@ dependencies = [
  "async-trait",
  "dojang",
  "itertools",
+ "path-clean 1.0.1",
  "rayon",
  "regex",
  "rspack_base64",
@@ -3040,6 +3150,7 @@ dependencies = [
  "preset_env_base",
  "rayon",
  "regex",
+ "rspack_ast",
  "rspack_core",
  "rspack_error",
  "rspack_hash",
@@ -3083,6 +3194,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rspack_plugin_limit_chunk_count"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "rspack_core",
+ "rspack_database",
+ "rspack_util",
+]
+
+[[package]]
 name = "rspack_plugin_progress"
 version = "0.1.0"
 dependencies = [
@@ -3122,6 +3243,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "itertools",
+ "once_cell",
  "rayon",
  "rspack_core",
  "rspack_error",
@@ -3168,6 +3290,7 @@ dependencies = [
  "dashmap",
  "derivative",
  "futures-util",
+ "num-bigint",
  "rayon",
  "rspack_core",
  "rspack_identifier",
@@ -3194,6 +3317,7 @@ version = "0.1.0"
 dependencies = [
  "async-recursion",
  "async-trait",
+ "once_cell",
  "rayon",
  "regex",
  "rspack_core",
@@ -3201,9 +3325,19 @@ dependencies = [
  "rspack_plugin_javascript",
  "rspack_regex",
  "rspack_util",
+ "serde_json",
  "swc_config",
  "swc_core",
  "swc_ecma_minifier",
+]
+
+[[package]]
+name = "rspack_plugin_warn_sensitive_module"
+version = "0.1.0"
+dependencies = [
+ "dashmap",
+ "rspack_core",
+ "rspack_error",
 ]
 
 [[package]]
@@ -3222,6 +3356,15 @@ dependencies = [
  "serde_json",
  "swc_core",
  "wasmparser",
+]
+
+[[package]]
+name = "rspack_plugin_web_worker_template"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "rspack_core",
+ "rspack_plugin_runtime",
 ]
 
 [[package]]
@@ -3270,6 +3413,7 @@ dependencies = [
  "once_cell",
  "regex",
  "serde",
+ "styled_components",
  "swc_core",
  "swc_emotion",
  "swc_plugin_import",
@@ -3304,6 +3448,7 @@ dependencies = [
  "rspack_plugin_library",
  "rspack_plugin_remove_empty_chunks",
  "rspack_plugin_runtime",
+ "rspack_plugin_warn_sensitive_module",
  "rspack_plugin_wasm",
  "rspack_regex",
  "rspack_tracing",
@@ -3382,9 +3527,9 @@ checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
 
 [[package]]
 name = "ryu-js"
-version = "0.2.2"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6518fc26bced4d53678a22d6e423e9d8716377def84545fe328236e3af070e7f"
+checksum = "4950d85bc52415f8432144c97c4791bd0c4f7954de32a7270ee9cccd3c22b12b"
 
 [[package]]
 name = "same-file"
@@ -3746,7 +3891,7 @@ dependencies = [
 [[package]]
 name = "string_enum"
 version = "0.4.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -3760,6 +3905,24 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "styled_components"
+version = "0.77.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2efe2ad3cd5fe8868b2fa9d7b2619110313c19c3c304733651cd90d11b6e201a"
+dependencies = [
+ "Inflector",
+ "once_cell",
+ "regex",
+ "serde",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "tracing",
+]
 
 [[package]]
 name = "substring"
@@ -3809,15 +3972,15 @@ dependencies = [
 
 [[package]]
 name = "swc"
-version = "0.266.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.269.31"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "anyhow",
  "base64",
  "dashmap",
  "either",
  "indexmap 1.9.3",
- "jsonc-parser",
+ "jsonc-parser 0.21.1",
  "lru",
  "once_cell",
  "parking_lot 0.12.1",
@@ -3830,6 +3993,7 @@ dependencies = [
  "swc_atoms",
  "swc_cached",
  "swc_common",
+ "swc_compiler_base",
  "swc_config",
  "swc_ecma_ast",
  "swc_ecma_codegen",
@@ -3855,8 +4019,8 @@ dependencies = [
 
 [[package]]
 name = "swc_atoms"
-version = "0.5.9"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.6.0"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "once_cell",
  "rustc-hash",
@@ -3868,8 +4032,8 @@ dependencies = [
 
 [[package]]
 name = "swc_cached"
-version = "0.3.17"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.3.18"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "ahash 0.8.6",
  "anyhow",
@@ -3881,13 +4045,13 @@ dependencies = [
 
 [[package]]
 name = "swc_common"
-version = "0.32.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.33.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "ahash 0.8.6",
  "ast_node",
  "atty",
- "better_scoped_tls 0.1.1 (git+https://github.com/swc-project/swc.git?rev=5c00525)",
+ "better_scoped_tls 0.1.1 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
  "cfg-if",
  "either",
  "from_variant",
@@ -3910,9 +4074,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_compiler_base"
+version = "0.3.30"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "anyhow",
+ "base64",
+ "pathdiff",
+ "serde",
+ "sourcemap",
+ "swc_atoms",
+ "swc_common",
+ "swc_config",
+ "swc_ecma_ast",
+ "swc_ecma_codegen",
+ "swc_ecma_minifier",
+ "swc_ecma_parser",
+ "swc_ecma_visit",
+ "swc_timer",
+]
+
+[[package]]
 name = "swc_config"
 version = "0.1.7"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "indexmap 1.9.3",
  "serde",
@@ -3923,7 +4108,7 @@ dependencies = [
 [[package]]
 name = "swc_config_macro"
 version = "0.1.2"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -3934,8 +4119,8 @@ dependencies = [
 
 [[package]]
 name = "swc_core"
-version = "0.83.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.86.33"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "swc",
  "swc_atoms",
@@ -3963,14 +4148,13 @@ dependencies = [
  "swc_ecma_transforms_typescript",
  "swc_ecma_utils",
  "swc_ecma_visit",
- "swc_trace_macro",
  "vergen",
 ]
 
 [[package]]
 name = "swc_css_ast"
-version = "0.139.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.140.3"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "is-macro",
  "string_enum",
@@ -3980,8 +4164,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_codegen"
-version = "0.149.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.151.5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "auto_impl",
  "bitflags 2.4.1",
@@ -3997,7 +4181,7 @@ dependencies = [
 [[package]]
 name = "swc_css_codegen_macros"
 version = "0.2.2"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -4008,8 +4192,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_compat"
-version = "0.25.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.27.5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "bitflags 2.4.1",
  "once_cell",
@@ -4024,8 +4208,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_minifier"
-version = "0.114.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.116.5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "serde",
  "swc_atoms",
@@ -4037,8 +4221,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_modules"
-version = "0.27.2"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.29.5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -4052,8 +4236,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_parser"
-version = "0.148.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.150.5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "lexical",
  "serde",
@@ -4064,8 +4248,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_prefixer"
-version = "0.151.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.153.6"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "once_cell",
  "preset_env_base",
@@ -4080,8 +4264,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_utils"
-version = "0.136.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.137.3"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "once_cell",
  "serde",
@@ -4094,8 +4278,8 @@ dependencies = [
 
 [[package]]
 name = "swc_css_visit"
-version = "0.138.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.139.3"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "serde",
  "swc_atoms",
@@ -4106,8 +4290,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_ast"
-version = "0.109.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.110.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "bitflags 2.4.1",
  "is-macro",
@@ -4122,8 +4306,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_codegen"
-version = "0.145.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.146.9"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "memchr",
  "num-bigint",
@@ -4141,7 +4325,7 @@ dependencies = [
 [[package]]
 name = "swc_ecma_codegen_macros"
 version = "0.7.3"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -4151,9 +4335,192 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_ecma_compat_bugfixes"
+version = "0.1.17"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_compat_es2015",
+ "swc_ecma_transforms_base",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_common"
+version = "0.1.11"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2015"
+version = "0.1.17"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "arrayvec",
+ "indexmap 1.9.3",
+ "is-macro",
+ "serde",
+ "serde_derive",
+ "smallvec",
+ "swc_atoms",
+ "swc_common",
+ "swc_config",
+ "swc_ecma_ast",
+ "swc_ecma_compat_common",
+ "swc_ecma_transforms_base",
+ "swc_ecma_transforms_classes",
+ "swc_ecma_transforms_macros",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2016"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_transforms_base",
+ "swc_ecma_transforms_macros",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2017"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "serde",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_transforms_base",
+ "swc_ecma_transforms_macros",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2018"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "serde",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_compat_common",
+ "swc_ecma_transforms_base",
+ "swc_ecma_transforms_macros",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2019"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_transforms_base",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2020"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "serde",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_compat_es2022",
+ "swc_ecma_transforms_base",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2021"
+version = "0.1.14"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_transforms_base",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es2022"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_compat_common",
+ "swc_ecma_transforms_base",
+ "swc_ecma_transforms_classes",
+ "swc_ecma_transforms_macros",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
+name = "swc_ecma_compat_es3"
+version = "0.1.15"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
+dependencies = [
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_transforms_base",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
+ "tracing",
+]
+
+[[package]]
 name = "swc_ecma_ext_transforms"
-version = "0.109.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.110.13"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "phf",
  "swc_atoms",
@@ -4165,8 +4532,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_lints"
-version = "0.88.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.89.16"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "auto_impl",
  "dashmap",
@@ -4184,8 +4551,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_loader"
-version = "0.44.3"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.45.3"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "anyhow",
  "dashmap",
@@ -4193,7 +4560,7 @@ dependencies = [
  "normpath",
  "once_cell",
  "parking_lot 0.12.1",
- "path-clean",
+ "path-clean 0.1.0",
  "pathdiff",
  "serde",
  "serde_json",
@@ -4204,8 +4571,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_minifier"
-version = "0.187.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.189.28"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "arrayvec",
  "indexmap 1.9.3",
@@ -4238,8 +4605,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_parser"
-version = "0.140.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.141.8"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "either",
  "num-bigint",
@@ -4257,8 +4624,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_preset_env"
-version = "0.201.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.203.23"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "anyhow",
  "dashmap",
@@ -4281,8 +4648,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_quote_macros"
-version = "0.51.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.52.8"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "anyhow",
  "pmutil",
@@ -4298,8 +4665,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms"
-version = "0.224.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.226.22"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -4317,10 +4684,10 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_base"
-version = "0.133.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.134.16"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
- "better_scoped_tls 0.1.1 (git+https://github.com/swc-project/swc.git?rev=5c00525)",
+ "better_scoped_tls 0.1.1 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
  "bitflags 2.4.1",
  "indexmap 1.9.3",
  "once_cell",
@@ -4340,8 +4707,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_classes"
-version = "0.122.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.123.16"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -4353,8 +4720,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_compat"
-version = "0.159.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.160.21"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "arrayvec",
  "indexmap 1.9.3",
@@ -4366,19 +4733,30 @@ dependencies = [
  "swc_common",
  "swc_config",
  "swc_ecma_ast",
+ "swc_ecma_compat_bugfixes",
+ "swc_ecma_compat_common",
+ "swc_ecma_compat_es2015",
+ "swc_ecma_compat_es2016",
+ "swc_ecma_compat_es2017",
+ "swc_ecma_compat_es2018",
+ "swc_ecma_compat_es2019",
+ "swc_ecma_compat_es2020",
+ "swc_ecma_compat_es2021",
+ "swc_ecma_compat_es2022",
+ "swc_ecma_compat_es3",
  "swc_ecma_transforms_base",
  "swc_ecma_transforms_classes",
  "swc_ecma_transforms_macros",
  "swc_ecma_utils",
  "swc_ecma_visit",
- "swc_trace_macro",
+ "swc_trace_macro 0.1.3 (git+https://github.com/swc-project/swc.git?rev=1095bff)",
  "tracing",
 ]
 
 [[package]]
 name = "swc_ecma_transforms_macros"
 version = "0.5.3"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -4389,15 +4767,15 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_module"
-version = "0.176.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.177.23"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "Inflector",
  "anyhow",
  "bitflags 2.4.1",
  "indexmap 1.9.3",
  "is-macro",
- "path-clean",
+ "path-clean 0.1.0",
  "pathdiff",
  "regex",
  "serde",
@@ -4415,8 +4793,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_optimization"
-version = "0.193.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.195.23"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "dashmap",
  "indexmap 1.9.3",
@@ -4439,8 +4817,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_proposal"
-version = "0.167.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.168.24"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "either",
  "rustc-hash",
@@ -4458,8 +4836,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_react"
-version = "0.179.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.180.24"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "base64",
  "dashmap",
@@ -4481,9 +4859,10 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_typescript"
-version = "0.183.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.185.22"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
+ "ryu-js",
  "serde",
  "swc_atoms",
  "swc_common",
@@ -4496,8 +4875,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_usage_analyzer"
-version = "0.19.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.20.14"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "indexmap 1.9.3",
  "rustc-hash",
@@ -4512,8 +4891,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_utils"
-version = "0.123.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.124.13"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "indexmap 1.9.3",
  "num_cpus",
@@ -4530,8 +4909,8 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_visit"
-version = "0.95.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.96.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "num-bigint",
  "swc_atoms",
@@ -4543,9 +4922,9 @@ dependencies = [
 
 [[package]]
 name = "swc_emotion"
-version = "0.42.0"
+version = "0.58.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13abda43ddbc94149aca923fb331f13b90e70f7cc2fb54662ee4a2c51cb59b22"
+checksum = "d123bc6ff6aff8724f43542964ee726801fc205137bbf0de7f822a2f8b15f204"
 dependencies = [
  "base64",
  "byteorder",
@@ -4555,14 +4934,20 @@ dependencies = [
  "regex",
  "serde",
  "sourcemap",
- "swc_core",
+ "swc_atoms",
+ "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_codegen",
+ "swc_ecma_utils",
+ "swc_ecma_visit",
+ "swc_trace_macro 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing",
 ]
 
 [[package]]
 name = "swc_eq_ignore_macros"
 version = "0.1.2"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -4572,8 +4957,8 @@ dependencies = [
 
 [[package]]
 name = "swc_error_reporters"
-version = "0.16.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.17.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "anyhow",
  "miette",
@@ -4584,8 +4969,8 @@ dependencies = [
 
 [[package]]
 name = "swc_fast_graph"
-version = "0.20.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.21.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "indexmap 1.9.3",
  "petgraph",
@@ -4595,8 +4980,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html"
-version = "0.131.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.134.29"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "swc_html_ast",
  "swc_html_codegen",
@@ -4606,8 +4991,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html_ast"
-version = "0.32.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.33.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "is-macro",
  "string_enum",
@@ -4617,8 +5002,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html_codegen"
-version = "0.41.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.42.4"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "auto_impl",
  "bitflags 2.4.1",
@@ -4633,7 +5018,7 @@ dependencies = [
 [[package]]
 name = "swc_html_codegen_macros"
 version = "0.2.2"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -4644,8 +5029,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html_minifier"
-version = "0.128.0"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.131.29"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "once_cell",
  "serde",
@@ -4672,8 +5057,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html_parser"
-version = "0.38.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.39.4"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -4683,8 +5068,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html_utils"
-version = "0.17.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.18.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "once_cell",
  "serde",
@@ -4695,8 +5080,8 @@ dependencies = [
 
 [[package]]
 name = "swc_html_visit"
-version = "0.32.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.33.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "serde",
  "swc_atoms",
@@ -4708,7 +5093,7 @@ dependencies = [
 [[package]]
 name = "swc_macros_common"
 version = "0.3.8"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -4718,8 +5103,8 @@ dependencies = [
 
 [[package]]
 name = "swc_node_comments"
-version = "0.19.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.20.2"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "dashmap",
  "swc_atoms",
@@ -4738,8 +5123,8 @@ dependencies = [
 
 [[package]]
 name = "swc_timer"
-version = "0.20.1"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+version = "0.21.4"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "tracing",
 ]
@@ -4747,7 +5132,18 @@ dependencies = [
 [[package]]
 name = "swc_trace_macro"
 version = "0.1.3"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff9719b6085dd2824fd61938a881937be14b08f95e2d27c64c825a9f65e052ba"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+]
+
+[[package]]
+name = "swc_trace_macro"
+version = "0.1.3"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4757,7 +5153,7 @@ dependencies = [
 [[package]]
 name = "swc_visit"
 version = "0.5.7"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "either",
  "swc_visit_macros",
@@ -4766,7 +5162,7 @@ dependencies = [
 [[package]]
 name = "swc_visit_macros"
 version = "0.5.8"
-source = "git+https://github.com/swc-project/swc.git?rev=5c00525#5c005256d6402705ec5de12603d8e13dccd18ee5"
+source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
 dependencies = [
  "Inflector",
  "pmutil",
