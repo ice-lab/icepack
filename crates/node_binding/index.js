@@ -252,11 +252,14 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { BuiltinPluginName, JsCompilation, JsStats, runBuiltinLoader, Rspack, registerGlobalTrace, cleanupGlobalTrace } = nativeBinding
+const { __chunk_inner_is_only_initial, __chunk_inner_can_be_initial, __chunk_inner_has_runtime, JsCompilation, JsStats, BuiltinPluginName, runBuiltinLoader, Rspack, registerGlobalTrace, cleanupGlobalTrace } = nativeBinding
 
-module.exports.BuiltinPluginName = BuiltinPluginName
+module.exports.__chunk_inner_is_only_initial = __chunk_inner_is_only_initial
+module.exports.__chunk_inner_can_be_initial = __chunk_inner_can_be_initial
+module.exports.__chunk_inner_has_runtime = __chunk_inner_has_runtime
 module.exports.JsCompilation = JsCompilation
 module.exports.JsStats = JsStats
+module.exports.BuiltinPluginName = BuiltinPluginName
 module.exports.runBuiltinLoader = runBuiltinLoader
 module.exports.Rspack = Rspack
 module.exports.registerGlobalTrace = registerGlobalTrace
