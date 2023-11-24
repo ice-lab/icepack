@@ -11,12 +11,16 @@ use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
   TransformOutput,
 };
+use serde::Deserialize;
+
 mod compiler;
 mod transform;
 
 use transform::*;
 use compiler::{SwcCompiler, IntoJsAst};
 
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct LoaderOptions {
   pub swc_options: Config,
   pub transform_features: TransformFeatureOptions,

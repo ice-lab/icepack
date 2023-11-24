@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use rspack_core::BoxLoader;
-use rspack_loader_react_refresh::REACT_REFRESH_LOADER_IDENTIFIER;
 use rspack_loader_sass::SASS_LOADER_IDENTIFIER;
 use rspack_loader_swc::SWC_LOADER_IDENTIFIER;
 use loader_compilation::COMPILATION_LOADER_IDENTIFIER;

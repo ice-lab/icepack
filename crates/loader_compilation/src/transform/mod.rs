@@ -80,17 +80,21 @@ fn match_app_entry(resource_path: &Path) -> bool {
   regex_for_app.is_match(resource_path_str)
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct KeepExportOptions {
   pub export_names: Vec<String>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct RemoveExportOptions {
   pub remove_names: Vec<String>,
 }
 
-#[derive(Default, Debug)]
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct TransformFeatureOptions {
   pub keep_export: Option<KeepExportOptions>,
   pub remove_export: Option<RemoveExportOptions>,

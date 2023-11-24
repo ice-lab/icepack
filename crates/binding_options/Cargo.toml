@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 rspack_binding_macros                   = { path = "../.rspack_crates/rspack_binding_macros" }
 rspack_binding_options                  = { path = "../.rspack_crates/rspack_binding_options" }
+rspack_binding_values                   = { path = "../.rspack_crates/rspack_binding_values" }
 rspack_core                             = { path = "../.rspack_crates/rspack_core" }
 rspack_error                            = { path = "../.rspack_crates/rspack_error" }
 rspack_identifier                       = { path = "../.rspack_crates/rspack_identifier" }
@@ -28,6 +29,7 @@ rspack_plugin_html                      = { path = "../.rspack_crates/rspack_plu
 rspack_plugin_javascript                = { path = "../.rspack_crates/rspack_plugin_javascript" }
 rspack_plugin_json                      = { path = "../.rspack_crates/rspack_plugin_json" }
 rspack_plugin_library                   = { path = "../.rspack_crates/rspack_plugin_library" }
+rspack_plugin_limit_chunk_count         = { path = "../.rspack_crates/rspack_plugin_limit_chunk_count" }
 rspack_plugin_progress                  = { path = "../.rspack_crates/rspack_plugin_progress" }
 rspack_plugin_real_content_hash         = { path = "../.rspack_crates/rspack_plugin_real_content_hash" }
 rspack_plugin_remove_empty_chunks       = { path = "../.rspack_crates/rspack_plugin_remove_empty_chunks" }
@@ -37,13 +39,17 @@ rspack_plugin_split_chunks              = { path = "../.rspack_crates/rspack_plu
 rspack_plugin_split_chunks_new          = { path = "../.rspack_crates/rspack_plugin_split_chunks_new" }
 rspack_plugin_swc_css_minimizer         = { path = "../.rspack_crates/rspack_plugin_swc_css_minimizer" }
 rspack_plugin_swc_js_minimizer          = { path = "../.rspack_crates/rspack_plugin_swc_js_minimizer" }
+rspack_plugin_warn_sensitive_module     = { path = "../.rspack_crates/rspack_plugin_warn_sensitive_module" }
 rspack_plugin_wasm                      = { path = "../.rspack_crates/rspack_plugin_wasm" }
+rspack_plugin_web_worker_template       = { path = "../.rspack_crates/rspack_plugin_web_worker_template" }
 rspack_plugin_worker                    = { path = "../.rspack_crates/rspack_plugin_worker" }
 rspack_regex                            = { path = "../.rspack_crates/rspack_regex" }
+rspack_hash                             = { path = "../.rspack_crates/rspack_hash" }
 rspack_swc_visitors                     = { path = "../.rspack_crates/rspack_swc_visitors" }
 loader_compilation                      = { path = "../loader_compilation" }
-plugin_manifest                        = { path = "../plugin_manifest" }
+plugin_manifest                         = { path = "../plugin_manifest" }
 
+futures-util      = { workspace = true }
 anyhow            = { workspace = true, features = ["backtrace"] }
 async-trait       = { workspace = true }
 better_scoped_tls = { workspace = true }
