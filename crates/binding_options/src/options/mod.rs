@@ -10,8 +10,8 @@ use serde::Deserialize;
 
 use rspack_binding_options::{
   RawBuiltins, RawCacheOptions, RawContext, RawDevServer, RawDevtool, RawExperiments,
-  RawMode, RawNodeOption, RawOutputOptions, RawResolveOptions, RawOptimizationOptions,
-  RawSnapshotOptions, RawStatsOptions, RawTarget, RawModuleOptions, RawOptionsApply,
+  RawMode, RawNodeOption, RawOutputOptions, RawResolveOptions, RawSnapshotOptions,
+  RawStatsOptions, RawTarget, RawModuleOptions, RawOptionsApply,
 };
 
 mod raw_module;
@@ -163,6 +163,12 @@ impl RawOptionsApply for RSPackRawOptions {
     plugins.push(rspack_plugin_ensure_chunk_conditions::EnsureChunkConditionsPlugin.boxed());
 
     plugins.push(rspack_plugin_warn_sensitive_module::WarnCaseSensitiveModulesPlugin.boxed());
+
+    // Add custom plugins.
+    plugins.push(plugin_manifest::ManifestPlugin::new().boxed());
+    plugins.push(plugin_specilize_module_name::SpecilizeModuleNamePlugin::new(
+      Some(vec!["universal-env".to_string(), "@uni/env".to_string()])
+    ).boxed());
 
     Ok(Self::Options {
       context,
