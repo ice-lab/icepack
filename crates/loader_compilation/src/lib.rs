@@ -163,7 +163,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
 
     // If swc-loader is the latest loader available,
     // then loader produces AST, which could be used as an optimization.
-    if loader_context.loader_index() == 1
+    if loader_context.loader_index() == 0
       && (loader_context
         .current_loader()
         .composed_index_by_identifier(&self.identifier)
