@@ -26,7 +26,11 @@ pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> BoxLoader {
 
   if builtin.starts_with(COMPILATION_LOADER_IDENTIFIER) {
     return  Arc::new(
-      loader_compilation::CompilationLoader::default().with_identifier(builtin.into()),
+      loader_compilation::CompilationLoader::new(
+        serde_json::from_str(options.unwrap_or("{}")).unwrap_or_else(|e| {
+          panic!("Could not parse builtin:compilation-loader options:{options:?},error: {e:?}")
+        }),
+      ).with_identifier(builtin.into()),
     );
   }
 

@@ -10,8 +10,8 @@ use serde::Deserialize;
 
 use rspack_binding_options::{
   RawBuiltins, RawCacheOptions, RawContext, RawDevServer, RawDevtool, RawExperiments,
-  RawMode, RawNodeOption, RawOutputOptions, RawResolveOptions, RawOptimizationOptions,
-  RawSnapshotOptions, RawStatsOptions, RawTarget, RawModuleOptions, RawOptionsApply,
+  RawMode, RawNodeOption, RawOutputOptions, RawResolveOptions, RawOptionsApply,
+  RawSnapshotOptions, RawStatsOptions, RawTarget, RawModuleOptions,
 };
 
 mod raw_module;
