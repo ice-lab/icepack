@@ -80,24 +80,11 @@ fn match_app_entry(resource_path: &Path) -> bool {
   regex_for_app.is_match(resource_path_str)
 }
 
-#[derive(Default, Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct KeepExportOptions {
-  pub export_names: Vec<String>,
-}
-
-#[derive(Default, Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct RemoveExportOptions {
-  pub remove_names: Vec<String>,
-}
-
-
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TransformFeatureOptions {
-  pub keep_export: Option<KeepExportOptions>,
-  pub remove_export: Option<RemoveExportOptions>,
+  pub keep_export: Option<Vec<String>>,
+  pub remove_export: Option<Vec<String>>,
 }
 
 pub(crate) fn transform<'a>(
@@ -106,8 +93,8 @@ pub(crate) fn transform<'a>(
   feature_options: &TransformFeatureOptions,
 ) -> impl Fold + 'a {
   chain!(
-    either!(feature_options.keep_export, |options: &KeepExportOptions| {
-      let mut exports_name = options.export_names.clone();
+    either!(feature_options.keep_export, |options: &Vec<String>| {
+      let mut exports_name = options.clone();
       // Special case for app entry.
       // When keep pageConfig, we should also keep the default export of app entry.
       if match_app_entry(resource_path) && exports_name.contains(&String::from("pageConfig")) {
@@ -117,8 +104,8 @@ pub(crate) fn transform<'a>(
     }, || {
       match_app_entry(resource_path) || match_route_entry(resource_path, routes_config)
     }),
-    either!(feature_options.remove_export, |options: &RemoveExportOptions| {
-      remove_export(options.remove_names.clone())
+    either!(feature_options.remove_export, |options: &Vec<String>| {
+      remove_export(options.clone())
     }, || {
       // Remove export only work for app entry and route entry.
       match_app_entry(resource_path) || match_route_entry(resource_path, routes_config)

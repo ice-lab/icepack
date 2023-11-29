@@ -3,7 +3,7 @@ use loader_compilation::{CompilationLoader, LoaderOptions};
 use rspack_core::{
   run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData, SideEffectOption,
 };
-use swc_core::base::config::{PluginConfig, Config};
+use swc_core::base::config::Config;
 
 async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
   let tests_path = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"))).join("tests");
@@ -16,10 +16,13 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     &[Arc::new(CompilationLoader::new(LoaderOptions {
       swc_options: options,
       transform_features: Default::default(),
+      compile_rules: Default::default(),
     })) as Arc<dyn Loader<LoaderRunnerContext>>],
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),
     &[],
     CompilerContext {
+      module: None,
+      module_context: None,
       options: std::sync::Arc::new(CompilerOptions {
         context: rspack_core::Context::new(parent_path.to_string_lossy().to_string()),
         dev_server: rspack_core::DevServerOptions::default(),

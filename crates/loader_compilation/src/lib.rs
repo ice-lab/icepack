@@ -6,12 +6,18 @@ use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_error::{
   internal_error, Result, Diagnostic,
 };
-use swc_core::{base::config::{InputSourceMap, Options, OutputCharset, Config, TransformConfig}, ecma::transforms::react::Runtime};
+use swc_core::{
+  base::config::{InputSourceMap, Options, OutputCharset, Config, TransformConfig},
+  ecma::parser::{Syntax, TsConfig},
+};
+
+use swc_config::{config_types::MergingOption, merge::Merge};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
   TransformOutput,
 };
 use serde::Deserialize;
+use rspack_regex::RspackRegex;
 
 mod compiler;
 mod transform;
@@ -21,14 +27,23 @@ use compiler::{SwcCompiler, IntoJsAst};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
+pub struct CompileRules {
+  // Built-in rules to exclude files from compilation, such as react, react-dom, etc.
+  exclude: Option<Vec<String>>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct LoaderOptions {
   pub swc_options: Config,
   pub transform_features: TransformFeatureOptions,
+  pub compile_rules: CompileRules,
 }
 
 pub struct CompilationOptions {
   swc_options: Options,
   transform_features: TransformFeatureOptions,
+  compile_rules: CompileRules,
 }
 pub struct CompilationLoader {
   identifier: Identifier,
@@ -39,13 +54,15 @@ pub const COMPILATION_LOADER_IDENTIFIER: &str = "builtin:compilation-loader";
 
 impl From<LoaderOptions> for CompilationOptions {
   fn from(value: LoaderOptions) -> Self {
-    let transform_features = TransformFeatureOptions::default();
+    let transform_features = value.transform_features;
+    let compile_rules  = value.compile_rules;
     CompilationOptions {
       swc_options: Options {
         config: value.swc_options,
         ..Default::default()
       },
       transform_features,
+      compile_rules,
     }
   } 
 }
@@ -74,6 +91,17 @@ lazy_static! {
 impl Loader<LoaderRunnerContext> for CompilationLoader {
   async fn run(&self, loader_context: &mut LoaderContext<'_, LoaderRunnerContext>) -> Result<()> {
     let resource_path = loader_context.resource_path.to_path_buf();
+
+    if self.loader_options.compile_rules.exclude.is_some() {
+      let exclude = self.loader_options.compile_rules.exclude.as_ref().unwrap();
+      for pattern in exclude {
+        let pattern = RspackRegex::new(pattern).unwrap();
+        if pattern.test(&resource_path.to_string_lossy()) {
+          return Ok(());
+        }
+      }
+    }
+
     let Some(content) = std::mem::take(&mut loader_context.content) else {
       return Err(internal_error!("No content found"));
     };
@@ -84,7 +112,17 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         let mut transform = TransformConfig::default();
         let default_development = matches!(loader_context.context.options.mode, Mode::Development);
         transform.react.development = Some(default_development);
-        transform.react.runtime = Some(Runtime::Automatic);
+        swc_options
+          .config
+          .jsc
+          .transform
+          .merge(MergingOption::from(Some(transform)));
+      }
+      
+      let file_extension = resource_path.extension().unwrap();
+      let ts_extensions = vec!["tsx", "ts", "mts"];
+      if ts_extensions.iter().any(|ext| ext == &file_extension) {
+        swc_options.config.jsc.syntax = Some(Syntax::Typescript(TsConfig { tsx: true, decorators: true, ..Default::default() }));
       }
 
       if let Some(pre_source_map) = std::mem::take(&mut loader_context.source_map) {
@@ -133,7 +171,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       }
     }
     file_access.insert(resource_path.to_string_lossy().to_string(), true);
-    
+
     let built = compiler.parse(None, |_| {
       transform(
         &resource_path,
