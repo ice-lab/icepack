@@ -54,8 +54,8 @@ pub const COMPILATION_LOADER_IDENTIFIER: &str = "builtin:compilation-loader";
 
 impl From<LoaderOptions> for CompilationOptions {
   fn from(value: LoaderOptions) -> Self {
-    let transform_features = TransformFeatureOptions::default();
-    let compile_rules  = CompileRules::default();
+    let transform_features = value.transform_features;
+    let compile_rules  = value.compile_rules;
     CompilationOptions {
       swc_options: Options {
         config: value.swc_options,
@@ -118,8 +118,10 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
           .transform
           .merge(MergingOption::from(Some(transform)));
       }
-
-      if resource_path.ends_with(".tsx") {
+      
+      let file_extension = resource_path.extension().unwrap();
+      let ts_extensions = vec!["tsx", "ts", "mts"];
+      if ts_extensions.iter().any(|ext| ext == &file_extension) {
         swc_options.config.jsc.syntax = Some(Syntax::Typescript(TsConfig { tsx: true, decorators: true, ..Default::default() }));
       }
 
@@ -169,7 +171,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       }
     }
     file_access.insert(resource_path.to_string_lossy().to_string(), true);
-    
+
     let built = compiler.parse(None, |_| {
       transform(
         &resource_path,
