@@ -132,9 +132,6 @@ jobs:
           path: crates/node_binding/artifacts
       - name: Combine binaries
         run: cd crates/node_binding && pnpm universal
-      - name: List packages
-        run: ls -R
-        shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
