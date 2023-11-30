@@ -166,9 +166,6 @@ impl RawOptionsApply for RSPackRawOptions {
 
     // Add custom plugins.
     plugins.push(plugin_manifest::ManifestPlugin::new().boxed());
-    plugins.push(plugin_specilize_module_name::SpecilizeModuleNamePlugin::new(
-      Some(vec!["universal-env".to_string(), "@uni/env".to_string()])
-    ).boxed());
 
     Ok(Self::Options {
       context,

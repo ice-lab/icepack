@@ -91,13 +91,8 @@ impl Plugin for ManifestPlugin {
         }
       });
     let json_string = serde_json::to_string(&assets_mainfest).unwrap();
-    let output_path = compilation
-      .options
-      .output
-      .path
-    .join("assets-manifest.json".to_string()).to_string_lossy().to_string();
     compilation.emit_asset(
-      output_path,
+      "assets-manifest.json".to_string(),
       CompilationAsset::from(RawSource::from(json_string).boxed()),
     );
     Ok(())
