@@ -9,7 +9,7 @@ permissions:
 on:
   push:
     branches:
-      - master
+      - fix/universal-ci
     tags-ignore:
       - '**'
     paths-ignore:
