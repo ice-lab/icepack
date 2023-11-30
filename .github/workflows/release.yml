@@ -9,7 +9,7 @@ permissions:
 on:
   push:
     branches:
-      - fix/universal-ci
+      - master
     tags-ignore:
       - '**'
     paths-ignore:
@@ -31,25 +31,25 @@ jobs:
               cd crates/node_binding
               pnpm build
               strip -x *.node
-          # - host: windows-latest
-          #   build: cd crates/node_binding && pnpm build
-          #   name: win32-x64-msvc
-          #   target: x86_64-pc-windows-msvc
-          # - host: ubuntu-latest
-          #   target: x86_64-unknown-linux-gnu
-          #   name: linux-x64-gnu
-          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-          #   build: |-
-          #     set -e &&
-          #     cd crates/node_binding &&
-          #     unset CC_x86_64_unknown_linux_gnu && unset CC &&
-          #     pnpm build --target x86_64-unknown-linux-gnu &&
-          #     strip *.node
-          # - host: ubuntu-latest
-          #   name: linux-x64-musl
-          #   target: x86_64-unknown-linux-musl
-          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-          #   build: cd crates/node_binding && set -e && pnpm build && strip *.node
+          - host: windows-latest
+            build: cd crates/node_binding && pnpm build
+            name: win32-x64-msvc
+            target: x86_64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            name: linux-x64-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+            build: |-
+              set -e &&
+              cd crates/node_binding &&
+              unset CC_x86_64_unknown_linux_gnu && unset CC &&
+              pnpm build --target x86_64-unknown-linux-gnu &&
+              strip *.node
+          - host: ubuntu-latest
+            name: linux-x64-musl
+            target: x86_64-unknown-linux-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+            build: cd crates/node_binding && set -e && pnpm build && strip *.node
           - host: macos-latest
             name: darwin-arm64
             target: aarch64-apple-darwin
@@ -57,10 +57,10 @@ jobs:
               cd crates/node_binding
               pnpm build --target aarch64-apple-darwin
               strip -x *.node
-          # - host: windows-latest
-          #   target: aarch64-pc-windows-msvc
-          #   name: win32-arm64-msvc
-          #   build: cd crates/node_binding && pnpm build --target aarch64-pc-windows-msvc
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+            name: win32-arm64-msvc
+            build: cd crates/node_binding && pnpm build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@18
     runs-on: ${{ matrix.settings.host }}
     steps:
