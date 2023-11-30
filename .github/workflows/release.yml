@@ -30,31 +30,31 @@ jobs:
               cd crates/node_binding
               pnpm build
               strip -x *.node
-          - host: windows-latest
-            build: cd crates/node_binding && pnpm build
-            target: x86_64-pc-windows-msvc
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: |-
-              set -e &&
-              cd crates/node_binding &&
-              unset CC_x86_64_unknown_linux_gnu && unset CC &&
-              pnpm build --target x86_64-unknown-linux-gnu &&
-              strip *.node
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-            build: cd crates/node_binding && set -e && pnpm build && strip *.node
+          # - host: windows-latest
+          #   build: cd crates/node_binding && pnpm build
+          #   target: x86_64-pc-windows-msvc
+          # - host: ubuntu-latest
+          #   target: x86_64-unknown-linux-gnu
+          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+          #   build: |-
+          #     set -e &&
+          #     cd crates/node_binding &&
+          #     unset CC_x86_64_unknown_linux_gnu && unset CC &&
+          #     pnpm build --target x86_64-unknown-linux-gnu &&
+          #     strip *.node
+          # - host: ubuntu-latest
+          #   target: x86_64-unknown-linux-musl
+          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+          #   build: cd crates/node_binding && set -e && pnpm build && strip *.node
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
               cd crates/node_binding
               pnpm build --target aarch64-apple-darwin
               strip -x *.node
-          - host: windows-latest
-            target: aarch64-pc-windows-msvc
-            build: cd crates/node_binding && pnpm build --target aarch64-pc-windows-msvc
+          # - host: windows-latest
+          #   target: aarch64-pc-windows-msvc
+          #   build: cd crates/node_binding && pnpm build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@18
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -117,10 +117,12 @@ jobs:
       - name: Download macOS x64 artifact
         uses: actions/download-artifact@v3
         with:
+          name: ${{ env.APP_NAME }}.darwin-x64.node
           path: crates/node_binding/artifacts
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
+          name: ${{ env.APP_NAME }}.darwin-arm64.node
           path: crates/node_binding/artifacts
       - name: Combine binaries
         run: cd crates/node_binding && pnpm universal
