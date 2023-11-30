@@ -118,12 +118,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: bindings-x86_64-apple-darwin
-          path: crates/node_binding/artifact/
+          path: crates/node_binding/
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
           name: bindings-aarch64-apple-darwin
-          path: crates/node_binding/artifact/
+          path: crates/node_binding/
       - name: Combine binaries
         run: cd crates/node_binding && pnpm universal
       - name: Upload artifact
