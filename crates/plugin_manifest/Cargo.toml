@@ -1,0 +1,18 @@
+[package]
+name = "plugin_manifest"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = { workspace = true }
+tracing = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+rspack_core = { path = "../.rspack_crates/rspack_core" }
+rspack_error = { path = "../.rspack_crates/rspack_error" }
+
+[dev-dependencies]
+rspack_testing = { path = "../.rspack_crates/rspack_testing" }

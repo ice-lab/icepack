@@ -1,0 +1,40 @@
+[package]
+edition = "2021"
+name = "node_binding"
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rspack_binding_macros  = { path = "../.rspack_crates/rspack_binding_macros" }
+rspack_binding_values  = { path = "../.rspack_crates/rspack_binding_values" }
+binding_options        = { path = "../binding_options" }
+rspack_binding_options = { path = "../.rspack_crates/rspack_binding_options" }
+rspack_core            = { path = "../.rspack_crates/rspack_core" }
+rspack_error           = { path = "../.rspack_crates/rspack_error" }
+rspack_fs_node         = { path = "../.rspack_crates/rspack_fs_node" }
+rspack_identifier      = { path = "../.rspack_crates/rspack_identifier" }
+rspack_napi_shared     = { path = "../.rspack_crates/rspack_napi_shared" }
+rspack_tracing         = { path = "../.rspack_crates/rspack_tracing" }
+
+async-trait = { workspace = true }
+dashmap     = { workspace = true }
+futures     = { workspace = true }
+once_cell   = { workspace = true }
+rustc-hash  = { workspace = true }
+tracing     = { workspace = true }
+serde_json  = { workspace = true }
+
+napi        = { workspace = true }
+napi-derive = { workspace = true }
+napi-sys    = { workspace = true }
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+mimalloc-rust = { workspace = true }
+
+[target.'cfg(all(target_os = "linux", target_env = "gnu", any(target_arch = "x86_64", target_arch = "aarch64")))'.dependencies]
+tikv-jemallocator = { workspace = true }
+
+[build-dependencies]
+napi-build = { workspace = true }
