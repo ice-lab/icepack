@@ -119,18 +119,20 @@ jobs:
       - name: Download macOS x64 artifact
         uses: actions/download-artifact@v3
         with:
+          name: ${{ env.APP_NAME }}.darwin-x64.node
           path: crates/node_binding/artifacts
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
+          name: ${{ env.APP_NAME }}.darwin-arm64.node
           path: crates/node_binding/artifacts
       - name: Combine binaries
         run: cd crates/node_binding && pnpm universal
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          # name: bindings-universal-apple-darwin
-          path: crates/node_binding/${{ env.APP_NAME }}.*.node
+          name: ${{ env.APP_NAME }}.darwin-universal.node
+          path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   publish:
     name: Publish
