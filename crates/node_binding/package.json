@@ -27,7 +27,6 @@
     "build:debug": "napi build --platform",
     "build:debug:aarch64": "napi build --platform --target aarch64-apple-darwin",
     "prepublishOnly": "napi prepublish -t npm",
-    "universal": "napi universal",
     "version": "napi version"
   }
 }

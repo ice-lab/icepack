@@ -89,7 +89,7 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
+          save-cache: ${{ github.ref_name == 'master' }}
           shared-key: check
 
       # Compile test without debug info for reducing the CI cache size
