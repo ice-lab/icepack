@@ -27,8 +27,8 @@ importers:
   crates/node_binding:
     devDependencies:
       '@napi-rs/cli':
-        specifier: ^2.16.3
-        version: 2.16.3
+        specifier: ^2.16.4
+        version: 2.16.5
 
 packages:
 
@@ -44,8 +44,8 @@ packages:
       wrap-ansi-cjs: /wrap-ansi@7.0.0
     dev: true
 
-  /@napi-rs/cli@2.16.3:
-    resolution: {integrity: sha512-3mLNPlbbOhpbIUKicLrJtIearlHXUuXL3UeueYyRRplpVMNkdn8xCyzY6PcYZi3JXR8bmCOiWgkVmLnrSL7DKw==}
+  /@napi-rs/cli@2.16.5:
+    resolution: {integrity: sha512-mFEzwrg4IOLngGd2/P6yeqIWgwQNn59Z08n1rndu6kLDq1gg954NH9cM1O9Da0RJuybt46p43lqgSsnAY2mxqA==}
     engines: {node: '>= 10'}
     hasBin: true
     dev: true
