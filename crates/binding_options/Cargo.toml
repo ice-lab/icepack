@@ -48,6 +48,7 @@ rspack_hash                             = { path = "../.rspack_crates/rspack_has
 rspack_swc_visitors                     = { path = "../.rspack_crates/rspack_swc_visitors" }
 loader_compilation                      = { path = "../loader_compilation" }
 plugin_manifest                         = { path = "../plugin_manifest" }
+## plugin_specilize_module_name            = { path = "../plugin_specilize_module_name" }
 
 futures-util      = { workspace = true }
 anyhow            = { workspace = true, features = ["backtrace"] }

@@ -164,6 +164,9 @@ impl RawOptionsApply for RSPackRawOptions {
 
     plugins.push(rspack_plugin_warn_sensitive_module::WarnCaseSensitiveModulesPlugin.boxed());
 
+    // Add custom plugins.
+    plugins.push(plugin_manifest::ManifestPlugin::new().boxed());
+
     Ok(Self::Options {
       context,
       mode,
