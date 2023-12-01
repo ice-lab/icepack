@@ -6,7 +6,7 @@ members  = [
   "crates/loader_compilation",
   "crates/plugin_manifest",
   "crates/plugin_specilize_module_name",
-  "crates/plugin_optimize_package_import"
+    "crates/plugin_change_package_import"
 ]
 resolver = "2"
 
