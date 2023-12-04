@@ -32,5 +32,8 @@
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",
     "version": "napi version"
+  },
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
   }
 }

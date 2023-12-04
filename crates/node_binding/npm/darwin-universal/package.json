@@ -13,6 +13,6 @@
     "node": ">= 10"
   },
   "repository": {
-    "url": "https://github.com/ice-lab/awesome-ice"
+    "url": "https://github.com/ice-lab/icepack"
   }
 }
