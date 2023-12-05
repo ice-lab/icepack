@@ -168,7 +168,6 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       if routes_content.is_ok() {
         *routes_config = Some(routes_content?);
       }
-      
       if file_accessed {
         // If file accessed, then we need to clear the map for the current compilation.
         file_access.clear();
