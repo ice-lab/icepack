@@ -9,9 +9,11 @@ use swc_core::ecma::{
 
 mod keep_export;
 mod remove_export;
+mod env_replacement;
 
 use keep_export::keep_export;
 use remove_export::remove_export;
+use env_replacement::env_replacement;
 
 macro_rules! either {
   ($config:expr, $f:expr) => {
@@ -63,11 +65,13 @@ pub(crate) fn load_routes_config(path: &Path) -> Result<Vec<String>, Error> {
   parse_routes_config(content)
 }
 
-fn match_route_entry(resource_path: &Path, routes: &Vec<String>) -> bool {
+fn match_route_entry(resource_path: &Path, routes: Option<&Vec<String>>) -> bool {
   let resource_path_str = resource_path.to_str().unwrap();
-  for route in routes {
-    if resource_path_str.ends_with(&route.to_string()) {
-      return true;
+  if let Some(routes) = routes {
+    for route in routes {
+      if resource_path_str.ends_with(&route.to_string()) {
+        return true;
+      }
     }
   }
   false
@@ -89,10 +93,13 @@ pub struct TransformFeatureOptions {
 
 pub(crate) fn transform<'a>(
   resource_path: &'a Path,
-  routes_config: &Vec<String>,
+  routes_config: Option<&Vec<String>>,
   feature_options: &TransformFeatureOptions,
 ) -> impl Fold + 'a {
   chain!(
+    either!(Some(&vec!["@uni/env".to_string(), "universal-env".to_string()]), |options: &Vec<String>| {
+      env_replacement(options.clone())
+    }),
     either!(feature_options.keep_export, |options: &Vec<String>| {
       let mut exports_name = options.clone();
       // Special case for app entry.

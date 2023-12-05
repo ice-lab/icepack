@@ -1,8 +1,5 @@
-const a = 1;
-const b = 2;
+import { isWeb } from "@uni/env";
 
-export const dataLoader = {
-  b,
-};
-
-export default a;
+if (isWeb) {
+  console.log("test");
+}

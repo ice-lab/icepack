@@ -1,3 +1,4 @@
+#![feature(box_patterns)]
 use std::{path::Path, collections::HashMap, sync::Mutex};
 use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
@@ -163,8 +164,11 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     if routes_config.is_none() || file_accessed {
       // Load routes config for transform.
       let routes_config_path: std::path::PathBuf = Path::new(compiler_context).join(".ice/route-manifest.json");
-      *routes_config = Some(load_routes_config(&routes_config_path).unwrap());
-
+      let routes_content = load_routes_config(&routes_config_path);
+      if routes_content.is_ok() {
+        *routes_config = Some(routes_content?);
+      }
+      
       if file_accessed {
         // If file accessed, then we need to clear the map for the current compilation.
         file_access.clear();
@@ -175,7 +179,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     let built = compiler.parse(None, |_| {
       transform(
         &resource_path,
-        routes_config.as_ref().unwrap(),
+        routes_config.as_ref(),
         transform_options
       )
     })?;
