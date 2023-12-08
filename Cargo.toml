@@ -6,7 +6,7 @@ members  = [
   "crates/loader_compilation",
   "crates/plugin_manifest",
   "crates/plugin_specilize_module_name",
-    "crates/plugin_change_package_import"
+  "crates/plugin_change_package_import",
 ]
 resolver = "2"
 
@@ -64,7 +64,7 @@ xxhash-rust        = { version = "0.8.6" }
 napi-sys            = { version = "=2.2.3" }
 styled_components   = { version = "=0.72.0" }
 swc_config          = { version = "=0.1.7" }
-swc_core            = { version = "=0.83.1", default-features = false }
+swc_core            = { version = "=0.86.82", default-features = false }
 swc_css             = { version = "=0.155.2" }
 swc_ecma_minifier   = { version = "=0.187.0", default-features = false }
 swc_emotion         = { version = "=0.42.0" }
@@ -73,6 +73,7 @@ swc_html            = { version = "=0.131.0" }
 swc_html_minifier   = { version = "=0.128.0" }
 swc_node_comments   = { version = "=0.19.1" }
 tikv-jemallocator   = { version = "=0.5.4", features = ["disable_initial_exec_tls"] }
+testing             = { version = "0.35.13" }
 
 [patch.crates-io]
 swc_config          = { git = "https://github.com/swc-project/swc.git", rev = "5c00525" }
