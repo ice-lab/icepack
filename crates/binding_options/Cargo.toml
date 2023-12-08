@@ -4,17 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rspack_binding_macros                   = { path = "../.rspack_crates/rspack_binding_macros" }
 rspack_binding_options                  = { path = "../.rspack_crates/rspack_binding_options" }
-rspack_binding_values                   = { path = "../.rspack_crates/rspack_binding_values" }
 rspack_core                             = { path = "../.rspack_crates/rspack_core" }
 rspack_error                            = { path = "../.rspack_crates/rspack_error" }
-rspack_identifier                       = { path = "../.rspack_crates/rspack_identifier" }
 rspack_ids                              = { path = "../.rspack_crates/rspack_ids" }
 rspack_loader_runner                    = { path = "../.rspack_crates/rspack_loader_runner" }
 rspack_loader_sass                      = { path = "../.rspack_crates/rspack_loader_sass" }
 rspack_loader_swc                       = { path = "../.rspack_crates/rspack_loader_swc" }
-rspack_napi_shared                      = { path = "../.rspack_crates/rspack_napi_shared" }
 rspack_plugin_asset                     = { path = "../.rspack_crates/rspack_plugin_asset" }
 rspack_plugin_banner                    = { path = "../.rspack_crates/rspack_plugin_banner" }
 rspack_plugin_copy                      = { path = "../.rspack_crates/rspack_plugin_copy" }
@@ -43,12 +39,12 @@ rspack_plugin_warn_sensitive_module     = { path = "../.rspack_crates/rspack_plu
 rspack_plugin_wasm                      = { path = "../.rspack_crates/rspack_plugin_wasm" }
 rspack_plugin_web_worker_template       = { path = "../.rspack_crates/rspack_plugin_web_worker_template" }
 rspack_plugin_worker                    = { path = "../.rspack_crates/rspack_plugin_worker" }
+rspack_loader_react_refresh             = { path = "../.rspack_crates/rspack_loader_react_refresh" }
 rspack_regex                            = { path = "../.rspack_crates/rspack_regex" }
 rspack_hash                             = { path = "../.rspack_crates/rspack_hash" }
 rspack_swc_visitors                     = { path = "../.rspack_crates/rspack_swc_visitors" }
 loader_compilation                      = { path = "../loader_compilation" }
 plugin_manifest                         = { path = "../plugin_manifest" }
-## plugin_specilize_module_name            = { path = "../plugin_specilize_module_name" }
 
 futures-util      = { workspace = true }
 anyhow            = { workspace = true, features = ["backtrace"] }

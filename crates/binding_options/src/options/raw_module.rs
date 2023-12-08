@@ -2,6 +2,7 @@ use std::sync::Arc;
 use rspack_core::BoxLoader;
 use rspack_loader_sass::SASS_LOADER_IDENTIFIER;
 use rspack_loader_swc::SWC_LOADER_IDENTIFIER;
+use rspack_loader_react_refresh::REACT_REFRESH_LOADER_IDENTIFIER;
 use loader_compilation::COMPILATION_LOADER_IDENTIFIER;
 
 pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> BoxLoader {
@@ -21,6 +22,12 @@ pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> BoxLoader {
         }),
       )
       .with_identifier(builtin.into()),
+    );
+  }
+
+  if builtin.starts_with(REACT_REFRESH_LOADER_IDENTIFIER) {
+    return Arc::new(
+      rspack_loader_react_refresh::ReactRefreshLoader::default().with_identifier(builtin.into()),
     );
   }
 
