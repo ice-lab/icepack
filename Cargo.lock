@@ -1473,7 +1473,6 @@ dependencies = [
  "async-trait",
  "dashmap",
  "either",
- "fxhash",
  "indexmap 1.9.3",
  "lazy_static",
  "once_cell",
@@ -1490,6 +1489,9 @@ dependencies = [
  "swc_config",
  "swc_core",
  "swc_emotion",
+ "swc_env_replacement",
+ "swc_keep_export",
+ "swc_remove_export",
  "tokio",
  "xxhash-rust",
 ]
@@ -4952,6 +4954,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_env_replacement"
+version = "0.1.0"
+dependencies = [
+ "swc_core",
+]
+
+[[package]]
 name = "swc_eq_ignore_macros"
 version = "0.1.2"
 source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
@@ -5098,6 +5107,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_keep_export"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
+ "rspack_error",
+ "swc_core",
+]
+
+[[package]]
 name = "swc_macros_common"
 version = "0.3.8"
 source = "git+https://github.com/swc-project/swc.git?rev=1095bff#1095bff35a3fe8473e9e5ab32a80461ddcb7fb72"
@@ -5125,6 +5143,15 @@ dependencies = [
  "handlebars",
  "rustc-hash",
  "serde",
+ "swc_core",
+]
+
+[[package]]
+name = "swc_remove_export"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
+ "rspack_error",
  "swc_core",
 ]
 

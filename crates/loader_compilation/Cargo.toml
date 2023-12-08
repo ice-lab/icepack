@@ -10,7 +10,6 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 dashmap = { workspace = true }
 either = "1"
-fxhash = "0.2.1"
 lazy_static = "1.4.0"
 once_cell = { workspace = true }
 rspack_ast = { path = "../.rspack_crates/rspack_ast" }
@@ -30,6 +29,9 @@ swc_core = { workspace = true, features = [
 ] }
 swc_emotion = { workspace = true }
 xxhash-rust = { workspace = true, features = ["xxh32"] }
+swc_env_replacement = { path = "../swc_env_replacement" }
+swc_keep_export = { path = "../swc_keep_export" }
+swc_remove_export = { path = "../swc_remove_export" }
 
 [dev-dependencies]
 indexmap       = { workspace = true }

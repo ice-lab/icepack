@@ -6,14 +6,9 @@ use swc_core::common::chain;
 use swc_core::ecma::{
   transforms::base::pass::noop, visit::Fold,
 };
-
-mod keep_export;
-mod remove_export;
-mod env_replacement;
-
-use keep_export::keep_export;
-use remove_export::remove_export;
-use env_replacement::env_replacement;
+use swc_keep_export::keep_export;
+use swc_remove_export::remove_export;
+use swc_env_replacement::env_replacement;
 
 macro_rules! either {
   ($config:expr, $f:expr) => {
