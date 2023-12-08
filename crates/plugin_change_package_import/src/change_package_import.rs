@@ -22,7 +22,7 @@ pub struct ModuleImportVisitor {
 }
 
 impl ModuleImportVisitor {
-    fn new(options: Vec<Config>) -> Self {
+    pub fn new(options: Vec<Config>) -> Self {
         Self {
             options,
             new_nodes: vec![],
@@ -44,16 +44,17 @@ impl VisitMut for ModuleImportVisitor {
                                     if named_import_spec.is_type_only {
                                         return;
                                     }
+
                                     let new_src = get_new_src(named_import_spec, &import_decl);
                                     import_decl.src = Box::new(Str {
                                         span: named_import_spec.span,
                                         value: new_src.clone().into(),
-                                        raw: Some(format!("\"{}\"", new_src).into()),
+                                        raw: Some(gen_raw_string(&new_src).into()),
                                     });
                                     import_decl.specifiers[0] = ImportSpecifier::Default(ImportDefaultSpecifier {
                                         span: named_import_spec.span,
                                         local: named_import_spec.local.clone(),
-                                    })
+                                    });
                                 }
                                 _ => ()
                             }
@@ -83,14 +84,14 @@ impl VisitMut for ModuleImportVisitor {
                         if import_decl.specifiers.len() == 1 {
                             for (_pkg_name, rules) in config.map.iter() {
                                 let MapProperty { to, import_type, name } = rules;
-                                let new_src = format!("{}/{}", config.name, to);
+                                let new_src = gen_path_string(config.name.clone(), to);
 
                                 match &mut import_decl.specifiers[0] {
                                     ImportSpecifier::Named(named_import_spec) => {
                                         import_decl.src = Box::new(Str {
                                             span: named_import_spec.span,
                                             value: new_src.clone().into(),
-                                            raw: Some(format!("\"{}\"", new_src).into()),
+                                            raw: Some(gen_raw_string(&new_src).into()),
                                         });
                                         if import_type.is_none() || match import_type.as_ref().unwrap() {
                                             ImportType::Default => true,
@@ -127,9 +128,15 @@ impl VisitMut for ModuleImportVisitor {
         stmts.retain(|stmt| {
             match stmt {
                 ModuleItem::ModuleDecl(mod_decl) => {
-                    if mod_decl.clone().import().unwrap().src.value.is_empty() {
-                        return false;
-                    }
+                    match mod_decl.clone().import() {
+                        Some(import) => {
+                            if import.src.value.is_empty() {
+                                return false;
+                            }
+                            true
+                        },
+                        None => false,
+                    };
                     true
                 }
                 _ => true
@@ -163,17 +170,31 @@ fn is_hit_rule(cur_import: &ImportDecl, target: &Config) -> bool {
 
 fn get_new_src(named_import_spec: &ImportNamedSpecifier, import_decl: &ImportDecl) -> String {
     if named_import_spec.imported.is_none() {
-        format!("{}/{}", &import_decl.src.value, named_import_spec.local.sym)
+        gen_path_string((&import_decl.src.value).to_string(), &named_import_spec.local.sym)
     } else {
         match &named_import_spec.imported.clone().unwrap() {
             ModuleExportName::Ident(ident) => {
-                format!("{}/{}", &import_decl.src.value, ident.sym)
+                gen_path_string((&import_decl.src.value).to_string(), &ident.sym)
             }
             ModuleExportName::Str(str) => {
-                format!("{}/{}", &import_decl.src.value, str.value)
+                gen_path_string((&import_decl.src.value).to_string(), &str.value)
             }
         }
     }
+}
+
+fn gen_raw_string(content: &str) -> String {
+    let mut s = String::new();
+    s.push_str("\"");
+    s.push_str(content);
+    s.push_str("\"");
+    s
+}
+
+fn gen_path_string(mut p1: String, p2: &str) -> String {
+    p1.push_str("/");
+    p1.push_str(p2);
+    p1
 }
 
 fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
@@ -181,7 +202,7 @@ fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
         src: Box::new(Str {
             span: DUMMY_SP,
             value: src.clone().into(),
-            raw: Some(format!("\"{}\"", src).into()),
+            raw: Some(gen_raw_string(&src).into()),
         }),
         specifiers: vec![ImportSpecifier::Default(
             ImportDefaultSpecifier {
