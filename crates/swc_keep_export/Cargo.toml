@@ -1,0 +1,13 @@
+[package]
+name = "swc_keep_export"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fxhash = "0.2.1"
+swc_core = { workspace = true, features = [
+  "base",
+  "ecma_ast",
+  "common"
+] }
+rspack_error = { path = "../.rspack_crates/rspack_error" }

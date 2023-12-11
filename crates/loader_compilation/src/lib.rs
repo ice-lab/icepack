@@ -1,4 +1,3 @@
-#![feature(box_patterns)]
 use std::{path::Path, collections::HashMap, sync::Mutex};
 use lazy_static::lazy_static;
 use rspack_ast::RspackAst;

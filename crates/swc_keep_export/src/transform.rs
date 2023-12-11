@@ -2,14 +2,15 @@
 // https://github.com/ice-lab/swc-plugins/tree/main/packages/keep-export
 use fxhash::FxHashSet;
 use std::mem::take;
-use swc_core::ecma::{
-  ast::*,
-  visit::{Fold, FoldWith, noop_fold_type},
+use swc_core::{
+  common::{
+    DUMMY_SP, pass::{Repeat, Repeated}
+  },
+  ecma::{
+    ast::*,
+    visit::{Fold, FoldWith, noop_fold_type}
+  }
 };
-use swc_core::common::{
-  DUMMY_SP, pass::{Repeat, Repeated}
-};
-
 /// State of the transforms. Shared by the analyzer and the transform.
 #[derive(Debug, Default)]
 struct State {

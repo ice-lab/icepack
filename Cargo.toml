@@ -5,6 +5,9 @@ members  = [
   "crates/node_binding",
   "crates/loader_compilation",
   "crates/plugin_manifest",
+  "crates/swc_env_replacement",
+  "crates/swc_keep_export",
+  "crates/swc_remove_export",
   "crates/plugin_specilize_module_name"
 ]
 resolver = "2"
