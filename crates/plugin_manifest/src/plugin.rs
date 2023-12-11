@@ -17,6 +17,7 @@ pub struct ManifestPlugin;
 pub struct AssetsManifest {
   pub pages: HashMap<String, Vec<String>>,
   pub entries: HashMap<String, Vec<String>>,
+  pub assets: HashMap<String, String>,
   pub public_path: String,
 }
 
@@ -47,11 +48,20 @@ impl Plugin for ManifestPlugin {
     let mut assets_mainfest = AssetsManifest {
       pages: HashMap::new(),
       entries: HashMap::new(),
+      assets: HashMap::new(),
       public_path: public_path.to_string(),
     };
     let entry_points = &compilation.entrypoints;
     let assets = &compilation.assets();
     
+    assets.into_iter().for_each(|(_, asset)| {
+      let version = &asset.info.version;
+      let source_file = &asset.info.source_filename;
+      if let Some(name) = source_file {
+        assets_mainfest.assets.insert(name.to_string(), version.to_string());
+      }
+    });
+
     entry_points.iter().for_each(|(name, _entry)| {
       let mut files: Vec<String> = Vec::new();
       compilation.entrypoint_by_name(name).chunks.iter().for_each(|chunk| {
