@@ -1719,6 +1719,7 @@ version = "0.0.0"
 dependencies = [
  "async-trait",
  "binding_options",
+ "color-backtrace",
  "dashmap",
  "futures",
  "mimalloc-rust",
