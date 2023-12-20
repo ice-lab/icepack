@@ -114,7 +114,7 @@ fn get_plugin_options(strategy: RawStrategyOptions, split_chunks: Option<RawSpli
       id_hint: String::from("lib"),
       r#type: rspack_plugin_split_chunks_new::create_default_module_type_filter(),
       automatic_name_delimiter: String::from("-"),
-      filename: Some(Filename::from(String::from("lib.js"))),
+      filename: Some(Filename::from(String::from("lib-[name].js"))),
     },
   ];
 
