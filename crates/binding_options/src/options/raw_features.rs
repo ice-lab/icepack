@@ -1,10 +1,9 @@
 use std::{sync::Arc, hash::Hasher};
-use futures_util::{FutureExt, future};
 use napi_derive::napi;
 use serde::Deserialize;
 use rspack_core::{
   Optimization, PluginExt, SideEffectOption, UsedExportsOption, SourceType,
-  BoxPlugin, Module, ModuleType,
+  BoxPlugin, Module, ModuleType, MangleExportsOption, Filename,
 };
 use rspack_error::internal_error;
 use rspack_ids::{
@@ -12,9 +11,10 @@ use rspack_ids::{
   NamedModuleIdsPlugin,
 };
 use crate::RspackRawOptimizationOptions;
-use rspack_plugin_split_chunks_new::{PluginOptions, CacheGroup};
+use rspack_plugin_split_chunks_new::{PluginOptions, CacheGroup, CacheGroupTest, CacheGroupTestFnCtx, ChunkNameGetter};
 use rspack_regex::RspackRegex;
 use rspack_hash::{RspackHash, HashFunction, HashDigest};
+use rspack_binding_options::RawSplitChunksOptions;
 
 pub struct SplitChunksStrategy {
   strategy: RawStrategyOptions,
@@ -28,6 +28,8 @@ pub struct SplitChunksStrategy {
   remove_empty_chunks: bool,
   remove_available_modules: bool,
   inner_graph: bool,
+  mangle_exports: String,
+  split_chunks: Option<RawSplitChunksOptions>
 }
 
 fn get_modules_size(module: &dyn Module) -> f64 {
@@ -38,7 +40,7 @@ fn get_modules_size(module: &dyn Module) -> f64 {
   size
 }
 
-fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_plugin_split_chunks_new::PluginOptions {
+fn get_plugin_options(strategy: RawStrategyOptions, split_chunks: Option<RawSplitChunksOptions>, context: String) -> rspack_plugin_split_chunks_new::PluginOptions {
   use rspack_plugin_split_chunks_new::SplitChunkSizes;
   let default_size_types = [SourceType::JavaScript, SourceType::Unknown];
   let create_sizes = |size: Option<f64>| {
@@ -48,20 +50,21 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
   };
 
   let re_node_modules = RspackRegex::new("node_modules").unwrap();
-  
   let cache_groups = vec![
     CacheGroup {
       key: String::from("framework"),
-      name: rspack_plugin_split_chunks_new::create_chunk_name_getter_by_const_name("framework".to_string()),
+      name: ChunkNameGetter::String("framework".to_string()),
       chunk_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
       priority: 40.0,
-      test: Arc::new(move |module: &dyn Module| -> bool {
-        module
-          .name_for_condition()
-          .map_or(false, |name| {
-            strategy.top_level_frameworks.iter().any(|framework| name.starts_with(framework))
-          })
-      }),
+      test: CacheGroupTest::Fn(Arc::new(move |ctx: CacheGroupTestFnCtx| -> Option<bool> {
+        Some(
+          ctx.module
+            .name_for_condition()
+            .map_or(false, |name| {
+              strategy.top_level_frameworks.iter().any(|framework| name.starts_with(framework))
+            })
+        )
+      })),
       max_initial_requests: 25,
       max_async_requests: 25,
       reuse_existing_chunk: true,
@@ -72,30 +75,34 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
       max_initial_size: SplitChunkSizes::empty(),
       id_hint: String::from("framework"),
       r#type: rspack_plugin_split_chunks_new::create_default_module_type_filter(),
+      automatic_name_delimiter: String::from("-"),
+      filename: Some(Filename::from(String::from("framework.js"))),
     },
     CacheGroup {
       key: String::from("lib"),
-      name: Arc::new(move |module| {
+      name: ChunkNameGetter::Fn(Arc::new(move |ctx| {
         let mut hash = RspackHash::new(&HashFunction::Xxhash64);
-        match module.module_type() {
+        match ctx.module.module_type() {
           ModuleType::Css | ModuleType::CssModule | ModuleType::CssAuto => {
-            module.update_hash(&mut hash);
+            ctx.module.update_hash(&mut hash);
           },
           _ => {
             let options = rspack_core::LibIdentOptions { context: &context };
-            let lib_ident = module.lib_ident(options);
+            let lib_ident = ctx.module.lib_ident(options);
             hash.write(lib_ident.unwrap().as_bytes());
           },
         }
-        future::ready(Some(hash.digest(&HashDigest::Hex).rendered(8).to_string())).boxed()
-      }),
+        Some(hash.digest(&HashDigest::Hex).rendered(8).to_string())
+      })),
       chunk_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
-      test: Arc::new(move |module: &dyn Module| -> bool {
-        module
-          .name_for_condition()
+      test: CacheGroupTest::Fn(Arc::new(move |ctx| {
+        Some(
+          ctx.module
+            .name_for_condition()
           .map_or(false, |name| re_node_modules.test(&name))
-        && get_modules_size(module) > 160000.0
-      }),
+          && get_modules_size(ctx.module) > 160000.0
+        )
+      })),
       priority: 30.0,
       min_chunks: 1,
       reuse_existing_chunk: true,
@@ -106,6 +113,8 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
       max_initial_size: SplitChunkSizes::default(),
       id_hint: String::from("lib"),
       r#type: rspack_plugin_split_chunks_new::create_default_module_type_filter(),
+      automatic_name_delimiter: String::from("-"),
+      filename: Some(Filename::from(String::from("lib.js"))),
     },
   ];
 
@@ -116,7 +125,9 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
       min_size: SplitChunkSizes::default(),
       max_async_size: SplitChunkSizes::default(),
       max_initial_size: SplitChunkSizes::default(),
+      automatic_name_delimiter: String::from("-"),
     },
+    hide_path_info: Some(true),
   }
 }
 
@@ -139,6 +150,8 @@ impl SplitChunksStrategy {
       provided_exports: option.provided_exports,
       real_content_hash: option.real_content_hash,
       inner_graph: option.inner_graph,
+      mangle_exports: option.mangle_exports,
+      split_chunks: option.split_chunks,
     }
   }
 }
@@ -148,7 +161,7 @@ impl FeatureApply for SplitChunksStrategy {
 
   fn apply(self, plugins: &mut Vec<Box<dyn rspack_core::Plugin>>, context: String) -> Result<Self::Options, rspack_error::Error> {
     let split_chunks_plugin = rspack_plugin_split_chunks_new::SplitChunksPlugin::new(
-      get_plugin_options(self.strategy, context),
+      get_plugin_options(self.strategy, self.split_chunks, context),
     ).boxed();
     plugins.push(split_chunks_plugin);
 
@@ -182,6 +195,7 @@ impl FeatureApply for SplitChunksStrategy {
       provided_exports: self.provided_exports,
       used_exports: UsedExportsOption::from(self.used_exports.as_str()),
       inner_graph: self.inner_graph,
+      mangle_exports: MangleExportsOption::from(self.mangle_exports.as_str()),
     })
   }
 }
