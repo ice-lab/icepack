@@ -14,6 +14,7 @@ use swc_core::{
         visit::{as_folder, VisitMut, VisitMutWith},
     },
 };
+use swc_ecma_utils::quote_str;
 
 pub struct ModuleImportVisitor {
     pub options: Vec<Config>,
@@ -44,13 +45,8 @@ impl VisitMut for ModuleImportVisitor {
                                     if named_import_spec.is_type_only {
                                         return;
                                     }
-
                                     let new_src = get_new_src(named_import_spec, &import_decl);
-                                    import_decl.src = Box::new(Str {
-                                        span: named_import_spec.span,
-                                        value: new_src.clone().into(),
-                                        raw: Some(gen_raw_string(&new_src).into()),
-                                    });
+                                    import_decl.src = Box::new(quote_str!(named_import_spec.span, new_src));
                                     import_decl.specifiers[0] = ImportSpecifier::Default(ImportDefaultSpecifier {
                                         span: named_import_spec.span,
                                         local: named_import_spec.local.clone(),
@@ -88,11 +84,7 @@ impl VisitMut for ModuleImportVisitor {
 
                                 match &mut import_decl.specifiers[0] {
                                     ImportSpecifier::Named(named_import_spec) => {
-                                        import_decl.src = Box::new(Str {
-                                            span: named_import_spec.span,
-                                            value: new_src.clone().into(),
-                                            raw: Some(gen_raw_string(&new_src).into()),
-                                        });
+                                        import_decl.src = Box::new(quote_str!(named_import_spec.span, new_src));
                                         if import_type.is_none() || match import_type.as_ref().unwrap() {
                                             ImportType::Default => true,
                                             _ => false
@@ -199,11 +191,7 @@ fn gen_path_string(mut p1: String, p2: &str) -> String {
 
 fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
     let import_decl = ImportDecl {
-        src: Box::new(Str {
-            span: DUMMY_SP,
-            value: src.clone().into(),
-            raw: Some(gen_raw_string(&src).into()),
-        }),
+        src: Box::new(quote_str!(src)),
         specifiers: vec![ImportSpecifier::Default(
             ImportDefaultSpecifier {
                 span: DUMMY_SP,
