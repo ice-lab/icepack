@@ -18,15 +18,14 @@ use swc_ecma_utils::quote_str;
 
 pub struct ModuleImportVisitor {
     pub options: Vec<Config>,
-    // cache the new import declarations
-    new_nodes: Vec<Option<ModuleItem>>,
+    new_stmts: Vec<ModuleItem>,
 }
 
 impl ModuleImportVisitor {
     pub fn new(options: Vec<Config>) -> Self {
         Self {
             options,
-            new_nodes: vec![],
+            new_stmts: vec![],
         }
     }
 }
@@ -64,7 +63,7 @@ impl VisitMut for ModuleImportVisitor {
                                         }
                                         let new_src: String = get_new_src(named_import_spec, &import_decl);
                                         let new_import_decl = create_default_import_decl(new_src, named_import_spec.local.clone());
-                                        self.new_nodes.push(Some(new_import_decl));
+                                        self.new_stmts.push(new_import_decl);
                                     }
                                     _ => ()
                                 }
@@ -112,34 +111,24 @@ impl VisitMut for ModuleImportVisitor {
                 }
             }
         }
+
+        if !is_empty_decl(import_decl) {
+            self.new_stmts.push(ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl.clone())));
+        }
+    }
+
+    fn visit_mut_module_item(&mut self, n: &mut ModuleItem) {
+        n.visit_mut_children_with(self);
+
+        if !n.is_module_decl() {
+            self.new_stmts.push(n.clone());
+        }
     }
 
     fn visit_mut_module_items(&mut self, stmts: &mut Vec<ModuleItem>) {
         stmts.visit_mut_children_with(self);
-        // Remove the empty module
-        stmts.retain(|stmt| {
-            match stmt {
-                ModuleItem::ModuleDecl(mod_decl) => {
-                    match mod_decl.clone().import() {
-                        Some(import) => {
-                            if import.src.value.is_empty() {
-                                return false;
-                            }
-                            true
-                        },
-                        None => false,
-                    };
-                    true
-                }
-                _ => true
-            }
-        });
-        // Add the new import declarations
-        self.new_nodes.clone().into_iter().for_each(|stmt| {
-            if let Some(stmt) = stmt {
-                stmts.push(stmt);
-            }
-        });
+
+        *stmts = self.new_stmts.clone();
     }
 }
 
@@ -160,6 +149,10 @@ fn is_hit_rule(cur_import: &ImportDecl, target: &Config) -> bool {
     }
 }
 
+fn is_empty_decl(decl: &ImportDecl) -> bool {
+    decl.specifiers.len() == 0
+}
+
 fn get_new_src(named_import_spec: &ImportNamedSpecifier, import_decl: &ImportDecl) -> String {
     if named_import_spec.imported.is_none() {
         gen_path_string((&import_decl.src.value).to_string(), &named_import_spec.local.sym)
@@ -173,14 +166,6 @@ fn get_new_src(named_import_spec: &ImportNamedSpecifier, import_decl: &ImportDec
             }
         }
     }
-}
-
-fn gen_raw_string(content: &str) -> String {
-    let mut s = String::new();
-    s.push_str("\"");
-    s.push_str(content);
-    s.push_str("\"");
-    s
 }
 
 fn gen_path_string(mut p1: String, p2: &str) -> String {
@@ -211,6 +196,18 @@ test!(
     |_| as_folder(ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("y"))])),
     single_literal_transform,
     r#"import { x } from "y";"#
+);
+
+test!(
+    Default::default(),
+    |_| as_folder(ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("z")), Config::LiteralConfig(String::from("o"))])),
+    multi_literal_transform,
+    r#"
+    import a from "b";
+    import { x, y } from "z";
+    import c from "d";
+    import { p, q } from "o";
+    "#
 );
 
 test!(
