@@ -3,9 +3,7 @@ use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
 use rspack_core::{rspack_sources::SourceMap, LoaderRunnerContext, Mode};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
-use rspack_error::{
-  internal_error, Result, Diagnostic,
-};
+use rspack_error::{internal_error, AnyhowError, Diagnostic, Result};
 use swc_core::{
   base::config::{InputSourceMap, Options, OutputCharset, Config, TransformConfig},
   ecma::parser::{Syntax, TsConfig},
@@ -135,8 +133,6 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         loader_context.emit_diagnostic(Diagnostic::warn(
           COMPILATION_LOADER_IDENTIFIER.to_string(),
           "Experimental plugins are not currently supported.".to_string(),
-          0,
-          0,
         ));
       }
 
@@ -144,15 +140,13 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         loader_context.emit_diagnostic(Diagnostic::warn(
           COMPILATION_LOADER_IDENTIFIER.to_string(),
           "`env` and `jsc.target` cannot be used together".to_string(),
-          0,
-          0,
         ));
       }
       swc_options
     };
     let devtool = &loader_context.context.options.devtool;
     let source = content.try_into_string()?;
-    let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options)?;
+    let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options).map_err(AnyhowError::from)?;
 
     let transform_options = &self.loader_options.transform_features;
     let compiler_context:&str = loader_context.context.options.context.as_ref();
@@ -165,7 +159,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       let routes_config_path: std::path::PathBuf = Path::new(compiler_context).join(".ice/route-manifest.json");
       let routes_content = load_routes_config(&routes_config_path);
       if routes_content.is_ok() {
-        *routes_config = Some(routes_content?);
+        *routes_config = Some(routes_content.map_err(AnyhowError::from)?);
       }
       if file_accessed {
         // If file accessed, then we need to clear the map for the current compilation.
@@ -180,7 +174,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         routes_config.as_ref(),
         transform_options
       )
-    })?;
+    }).map_err(AnyhowError::from)?;
 
     let codegen_options = ast::CodegenOptions {
       target: Some(built.target),
@@ -196,9 +190,10 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         emit_columns: !devtool.cheap(),
         names: Default::default(),
       },
+      inline_script: Some(false),
       keep_comments: Some(true),
     };
-    let program = compiler.transform(built)?;
+    let program = compiler.transform(built).map_err(AnyhowError::from)?;
     let ast = compiler.into_js_ast(program);
 
     // If swc-loader is the latest loader available,
@@ -218,7 +213,10 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     } else {
       let TransformOutput { code, map } = ast::stringify(&ast, codegen_options)?;
       loader_context.content = Some(code.into());
-      loader_context.source_map = map.map(|m| SourceMap::from_json(&m)).transpose()?;
+      loader_context.source_map = map
+        .map(|m| SourceMap::from_json(&m))
+        .transpose()
+        .map_err(|e| internal_error!(e.to_string()))?;
     }
 
     Ok(())

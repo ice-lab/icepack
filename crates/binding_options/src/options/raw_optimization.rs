@@ -1,12 +1,13 @@
 use better_scoped_tls::scoped_tls;
 use napi_derive::napi;
-use rspack_core::{Optimization, PluginExt, SideEffectOption, UsedExportsOption};
+use rspack_core::{
+  MangleExportsOption, Optimization, PluginExt, SideEffectOption, UsedExportsOption,
+};
 use rspack_error::internal_error;
 use rspack_ids::{
   DeterministicChunkIdsPlugin, DeterministicModuleIdsPlugin, NamedChunkIdsPlugin,
   NamedModuleIdsPlugin,
 };
-use rspack_plugin_split_chunks::SplitChunksPlugin;
 use serde::Deserialize;
 
 use rspack_binding_options::{RawOptionsApply, RawSplitChunksOptions};
@@ -27,6 +28,7 @@ pub struct RspackRawOptimizationOptions {
   pub provided_exports: bool,
   pub inner_graph: bool,
   pub real_content_hash: bool,
+  pub mangle_exports: String,
 }
 
 impl RawOptionsApply for RspackRawOptimizationOptions {
@@ -36,17 +38,6 @@ impl RawOptionsApply for RspackRawOptimizationOptions {
     self,
     plugins: &mut Vec<Box<dyn rspack_core::Plugin>>,
   ) -> Result<Self::Options, rspack_error::Error> {
-    if let Some(options) = self.split_chunks {
-      let split_chunks_plugin = IS_ENABLE_NEW_SPLIT_CHUNKS.with(|is_enable_new_split_chunks| {
-        if *is_enable_new_split_chunks {
-          rspack_plugin_split_chunks_new::SplitChunksPlugin::new(options.into()).boxed()
-        } else {
-          SplitChunksPlugin::new(options.into()).boxed()
-        }
-      });
-
-      plugins.push(split_chunks_plugin);
-    }
     let chunk_ids_plugin = match self.chunk_ids.as_ref() {
       "named" => NamedChunkIdsPlugin::new(None, None).boxed(),
       "deterministic" => DeterministicChunkIdsPlugin::default().boxed(),
@@ -77,6 +68,7 @@ impl RawOptionsApply for RspackRawOptimizationOptions {
       provided_exports: self.provided_exports,
       used_exports: UsedExportsOption::from(self.used_exports.as_str()),
       inner_graph: self.inner_graph,
+      mangle_exports: MangleExportsOption::from(self.mangle_exports.as_str()),
     })
   }
 }

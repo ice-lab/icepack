@@ -1,22 +1,37 @@
+/**
+ * Some code is modified based on
+ * https://github.com/swc-project/swc/blob/5dacaa174baaf6bf40594d79d14884c8c2fc0de2/crates/swc/src/lib.rs
+ * Apache-2.0 licensed
+ * Author Donny/강동윤
+ * Copyright (c)
+ */
 use std::env;
 use std::{path::PathBuf, sync::Arc};
+
 use anyhow::{Context, Error};
 use dashmap::DashMap;
 use rspack_ast::javascript::{Ast as JsAst, Context as JsAstContext, Program as JsProgram};
-use swc_core:: {
-  base::{
-    config::{Options, JsMinifyCommentOption, BuiltInput, IsModule},
-    try_with_handler, SwcComments
-  },
-  common::{
-    Globals, SourceFile, SourceMap, GLOBALS, Mark, FileName, FilePathMapping, BytePos,
-    comments::{SingleThreadedComments, Comments, Comment, CommentKind}, 
-    errors::{Handler, HANDLER},
-  },
-  ecma::{transforms::base::helpers::{self, Helpers}, ast::{Program, EsVersion}, visit::{Fold, FoldWith},
-  parser::{parse_file_as_module, Syntax, parse_file_as_script, parse_file_as_program}},
-};
 use swc_config::config_types::BoolOr;
+use swc_core::base::config::{
+  BuiltInput, IsModule, JsMinifyCommentOption,
+};
+use swc_core::base::SwcComments;
+use swc_core::common::comments::{Comment, CommentKind, Comments};
+use swc_core::common::errors::{Handler, HANDLER};
+use swc_core::common::{
+  comments::SingleThreadedComments, FileName, FilePathMapping, Mark, SourceMap, GLOBALS,
+};
+use swc_core::common::{BytePos, SourceFile};
+use swc_core::ecma::ast::{EsVersion, Program};
+use swc_core::ecma::parser::{
+  parse_file_as_module, parse_file_as_program, parse_file_as_script, Syntax,
+};
+use swc_core::ecma::transforms::base::helpers::{self, Helpers};
+use swc_core::ecma::visit::{Fold, FoldWith};
+use swc_core::{
+  base::{config::Options, try_with_handler},
+  common::Globals,
+};
 
 fn minify_file_comments(
   comments: &SingleThreadedComments,
@@ -72,14 +87,14 @@ impl SwcCompiler {
       options.top_level_mark = Some(top_level_mark);
       options.unresolved_mark = Some(unresolved_mark);
     });
-    // TODO: support read config of .swcrc.
+
     let fm = cm.new_source_file(FileName::Real(resource_path), source);
     let comments = SingleThreadedComments::default();
     let helpers = GLOBALS.set(&globals, || {
       let external_helpers = options.config.jsc.external_helpers;
       Helpers::new(external_helpers.into())
     });
-    
+
     Ok(Self {
       cm,
       fm,
@@ -104,8 +119,8 @@ impl SwcCompiler {
     comments: Option<&dyn Comments>,
   ) -> Result<Program, Error> {
     let mut error = false;
-    let mut errors = vec![];
 
+    let mut errors = vec![];
     let program_result = match is_module {
       IsModule::Bool(true) => {
         parse_file_as_module(&fm, syntax, target, comments, &mut errors).map(Program::Module)
@@ -127,7 +142,7 @@ impl SwcCompiler {
     });
 
     if error {
-      return  Err(anyhow::anyhow!("Syntax Error"));
+      return Err(anyhow::anyhow!("Syntax Error"));
     }
 
     if env::var("SWC_DEBUG").unwrap_or_default() == "1" {
@@ -243,8 +258,8 @@ impl IntoSwcComments for SingleThreadedComments {
       (l.take(), t.take())
     };
     SwcComments {
-      leading: Arc::new(DashMap::from_iter(l.into_iter())),
-      trailing: Arc::new(DashMap::from_iter(t.into_iter())),
+      leading: Arc::new(DashMap::from_iter(l)),
+      trailing: Arc::new(DashMap::from_iter(t)),
     }
   }
 }

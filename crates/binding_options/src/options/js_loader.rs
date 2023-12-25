@@ -94,5 +94,5 @@ pub async fn run_builtin_loader(
     cx.__loader_index = 0;
   }
 
-  JsLoaderContext::try_from(&cx).map_err(|e| Error::from_reason(e.to_string()))
+  JsLoaderContext::try_from(&mut cx).map_err(|e| Error::from_reason(e.to_string()))
 }
