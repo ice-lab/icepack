@@ -1,19 +1,35 @@
 use std::{str::FromStr,env, fs,path::{Path, PathBuf}, sync::Arc};
-use loader_compilation::CompilationLoader;
-use rspack_core::{run_loaders, CompilerContext, CompilerOptions, SideEffectOption};
-use rspack_loader_runner::ResourceData;
+use loader_compilation::{CompilationLoader, LoaderOptions};
+use rspack_core::{
+  run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData, SideEffectOption,
+};
+use swc_core::ecma::ast::EsVersion;
+use swc_core::base::config::Config;
+
+use rspack_ast::RspackAst;
+use rspack_plugin_javascript::ast;
 
 async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
   let tests_path = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"))).join("tests");
-  let actual_path = tests_path.join(actual);
   let expected_path = tests_path.join(expected);
+  let actual_path = tests_path.join(actual);
+  let parent_path = actual_path.parent().unwrap().to_path_buf();
+
+  let mut options = Config::default();
+  options.jsc.target = Some(EsVersion::Es2020);
   let (result, _) = run_loaders(
-    &[Arc::new(CompilationLoader::default())],
+    &[Arc::new(CompilationLoader::new(LoaderOptions {
+      swc_options: options,
+      transform_features: Default::default(),
+      compile_rules: Default::default(),
+    })) as Arc<dyn Loader<LoaderRunnerContext>>],
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),
     &[],
     CompilerContext {
+      module: None,
+      module_context: None,
       options: std::sync::Arc::new(CompilerOptions {
-        context: rspack_core::Context::default(),
+        context: rspack_core::Context::new(parent_path.to_string_lossy().to_string()),
         dev_server: rspack_core::DevServerOptions::default(),
         devtool: rspack_core::Devtool::from("source-map".to_string()),
         mode: rspack_core::Mode::None,
@@ -54,6 +70,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
           ),
           worker_wasm_loading: rspack_core::WasmLoading::Disable,
           worker_public_path: String::new(),
+          script_type: String::from("false"),
         },
         target: rspack_core::Target::new(&vec![String::from("web")]).expect("TODO:"),
         resolve: rspack_core::Resolve::default(),
@@ -71,26 +88,68 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
           side_effects: SideEffectOption::False,
           provided_exports: Default::default(),
           used_exports: Default::default(),
+          inner_graph: Default::default(),
+          mangle_exports: Default::default(),
         },
         profile: false,
       }),
       resolver_factory: Default::default(),
-    }
+    },
   )
   .await
   .expect("TODO:")
   .split_into_parts();
-
-  let result = result.content.try_into_string().expect("TODO:");
+  let code: String;
+  let code_ast = result.additional_data.get::<RspackAst>().unwrap();
+  let code_gen_options = result.additional_data.get::<ast::CodegenOptions>().unwrap();
+  if let RspackAst::JavaScript(code_ast) = code_ast {
+    code = ast::stringify(code_ast, code_gen_options.clone()).unwrap().code;
+  } else {
+    panic!("TODO:");
+  }
+  
   if env::var("UPDATE").is_ok() {
+    let result = code.into_bytes();
     fs::write(expected_path, result).expect("TODO:");
   } else {
     let expected = fs::read_to_string(expected_path).expect("TODO:");
-    assert_eq!(result, expected);
+    assert_eq!(code, expected);
   }
 }
 
 #[tokio::test]
 async fn basic() {
   loader_test("fixtures/basic/input.js", "fixtures/basic/output.js").await;
+}
+#[tokio::test]
+async fn named() {
+  loader_test("fixtures/named/input.js", "fixtures/named/output.js").await;
+}
+#[tokio::test]
+async fn multiple() {
+  loader_test("fixtures/multiple/input.js", "fixtures/multiple/output.js").await;
+}
+#[tokio::test]
+async fn default() {
+  loader_test("fixtures/default/input.js", "fixtures/default/output.js").await;
+}
+#[tokio::test]
+async fn require_basic() {
+  loader_test("fixtures/require_basic/input.js", "fixtures/require_basic/output.js").await;
+}
+#[tokio::test]
+async fn require_named() {
+  loader_test("fixtures/require_named/input.js", "fixtures/require_named/output.js").await;
+}
+#[tokio::test]
+async fn require_default() {
+  loader_test("fixtures/require_default/input.js", "fixtures/require_default/output.js").await;
+}
+#[tokio::test]
+async fn require_rest() {
+  loader_test("fixtures/require_rest/input.js", "fixtures/require_rest/output.js").await;
+}
+#[tokio::test]
+async fn require_scoped() {
+  loader_test("fixtures/require_scoped/input.js", "fixtures/require_scoped/output.js").await;
 }

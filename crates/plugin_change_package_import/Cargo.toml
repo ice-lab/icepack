@@ -19,4 +19,3 @@ swc_core = { workspace = true, features = [
 swc_ecma_utils = { version = "0.125.0" }
 
 [dev-dependencies]
-testing = { workspace = true }

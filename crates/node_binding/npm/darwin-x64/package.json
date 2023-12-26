@@ -1,6 +1,6 @@
 {
   "name": "@ice/pack-binding-darwin-x64",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "os": [
     "darwin"
   ],
@@ -14,5 +14,8 @@
   "license": "MIT",
   "engines": {
     "node": ">= 10"
+  },
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
   }
 }

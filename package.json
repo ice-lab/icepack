@@ -1,6 +1,6 @@
 {
   "name": "ice-monorepo",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "homepage": "https://ice.work",
   "bugs": "https://github.com/alibaba/ice/issues",

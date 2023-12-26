@@ -1,19 +1,26 @@
 {
   "name": "@ice/pack-binding",
-  "version": "0.0.0",
+  "version": "0.0.4",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
     "name": "pack-binding",
     "triples": {
       "additional": [
-        "aarch64-apple-darwin"
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-musl",
+        "universal-apple-darwin"
       ]
     }
   },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^2.16.3"
+    "@napi-rs/cli": "^2.16.4"
   },
   "ava": {
     "timeout": "3m"
@@ -29,5 +36,8 @@
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",
     "version": "napi version"
+  },
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
   }
 }

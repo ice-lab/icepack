@@ -4,9 +4,6 @@
 #[macro_use]
 extern crate napi_derive;
 
-#[macro_use]
-extern crate rspack_binding_macros;
-
 use std::collections::HashSet;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -14,27 +11,26 @@ use std::sync::Mutex;
 
 use napi::bindgen_prelude::*;
 use once_cell::sync::Lazy;
+use rspack_binding_options::BuiltinPlugin;
 use binding_options::RSPackRawOptions;
+use rspack_binding_values::SingleThreadedHashMap;
 use rspack_core::PluginExt;
 use rspack_fs_node::{AsyncNodeWritableFileSystem, ThreadsafeNodeFS};
-use rspack_napi_shared::NAPI_ENV;
 
 mod hook;
-mod js_values;
 mod loader;
+mod panic;
 mod plugins;
-mod utils;
 
 use hook::*;
-use js_values::*;
-
 // Napi macro registered this successfully
 #[allow(unused)]
-use loader::*;
+use loader::run_builtin_loader;
 use plugins::*;
 use rspack_binding_options::*;
+use rspack_binding_values::*;
+use rspack_napi_shared::set_napi_env;
 use rspack_tracing::chrome::FlushGuard;
-use utils::*;
 
 #[cfg(not(target_os = "linux"))]
 #[global_allocator]
@@ -110,7 +106,6 @@ impl Rspack {
 
   #[allow(clippy::unwrap_in_result, clippy::unwrap_used)]
   #[napi(
-    catch_unwind,
     js_name = "unsafe_set_disabled_hooks",
     ts_args_type = "hooks: Array<string>"
   )]
@@ -125,7 +120,6 @@ impl Rspack {
   /// Warning:
   /// Calling this method recursively might cause a deadlock.
   #[napi(
-    catch_unwind,
     js_name = "unsafe_build",
     ts_args_type = "callback: (err: null | Error) => void"
   )]
@@ -152,7 +146,6 @@ impl Rspack {
   /// Warning:
   /// Calling this method recursively will cause a deadlock.
   #[napi(
-    catch_unwind,
     js_name = "unsafe_rebuild",
     ts_args_type = "changed_files: string[], removed_files: string[], callback: (err: null | Error) => void"
   )]
@@ -194,7 +187,7 @@ impl Rspack {
   /// Calling this method under the build or rebuild method might cause a deadlock.
   ///
   /// **Note** that this method is not safe if you cache the _JsCompilation_ on the Node side, as it will be invalidated by the next build and accessing a dangling ptr is a UB.
-  #[napi(catch_unwind, js_name = "unsafe_last_compilation")]
+  #[napi(js_name = "unsafe_last_compilation")]
   pub fn unsafe_last_compilation<F: Fn(JsCompilation) -> Result<()>>(&self, f: F) -> Result<()> {
     let handle_last_compilation = |compiler: &mut Pin<Box<rspack_core::Compiler<_>>>| {
       // Safety: compiler is stored in a global hashmap, and compilation is only available in the callback of this function, so it is safe to cast to a static lifetime. See more in the warning part of this method.
@@ -214,7 +207,7 @@ impl Rspack {
   /// Warning:
   ///
   /// Anything related to this compiler will be invalidated after this method is called.
-  #[napi(catch_unwind, js_name = "unsafe_drop")]
+  #[napi(js_name = "unsafe_drop")]
   pub fn drop(&self) -> Result<()> {
     unsafe { COMPILERS.remove(&self.id) };
 
@@ -231,7 +224,7 @@ impl ObjectFinalize for Rspack {
 
 impl Rspack {
   fn prepare_environment(env: &Env) {
-    NAPI_ENV.with(|napi_env| *napi_env.borrow_mut() = Some(env.raw()));
+    set_napi_env(env.raw());
   }
 }
 
@@ -242,8 +235,12 @@ enum TraceState {
   Off,
 }
 
-static GLOBAL_TRACE_STATE: Lazy<Mutex<TraceState>> =
-  Lazy::new(|| Mutex::new(TraceState::default()));
+#[ctor]
+fn init() {
+  panic::install_panic_handler();
+}
+
+static GLOBAL_TRACE_STATE: Mutex<TraceState> = Mutex::new(TraceState::Off);
 
 /**
  * Some code is modified based on
@@ -252,7 +249,7 @@ static GLOBAL_TRACE_STATE: Lazy<Mutex<TraceState>> =
  * Author Donny/강동윤
  * Copyright (c)
  */
-#[napi(catch_unwind)]
+#[napi]
 pub fn register_global_trace(
   filter: String,
   #[napi(ts_arg_type = "\"chrome\" | \"logger\"")] layer: String,
@@ -275,12 +272,14 @@ pub fn register_global_trace(
   }
 }
 
-#[napi(catch_unwind)]
+#[napi]
 pub fn cleanup_global_trace() {
   let mut state = GLOBAL_TRACE_STATE
     .lock()
     .expect("Failed to lock GLOBAL_TRACE_STATE");
-  if let TraceState::On(guard) = &mut *state && let Some(g) = guard.take() {
+  if let TraceState::On(guard) = &mut *state
+    && let Some(g) = guard.take()
+  {
     g.flush();
     drop(g);
     let new_state = TraceState::Off;

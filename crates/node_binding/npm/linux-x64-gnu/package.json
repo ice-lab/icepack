@@ -1,6 +1,6 @@
 {
   "name": "@ice/pack-binding-linux-x64-gnu",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "os": [
     "linux"
   ],
@@ -17,5 +17,8 @@
   },
   "libc": [
     "glibc"
-  ]
+  ],
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
+  }
 }
