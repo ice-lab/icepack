@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+  path::Path,
+  collections::HashMap,
+};
 use serde::{Serialize, Deserialize};
 
 use rspack_core::{
@@ -19,6 +22,7 @@ pub struct AssetsManifest {
   pub entries: HashMap<String, Vec<String>>,
   pub assets: HashMap<String, String>,
   pub public_path: String,
+  pub data_loader: Option<String>,
 }
 
 const AUTO_PUBLIC_PATH_PLACEHOLDER: &str = "__RSPACK_PLUGIN_CSS_AUTO_PUBLIC_PATH__";
@@ -50,10 +54,11 @@ impl Plugin for ManifestPlugin {
       entries: HashMap::new(),
       assets: HashMap::new(),
       public_path: public_path.to_string(),
+      data_loader: None,
     };
     let entry_points = &compilation.entrypoints;
     let assets = &compilation.assets();
-    
+
     assets.into_iter().for_each(|(_, asset)| {
       let version = &asset.info.version;
       let source_file = &asset.info.source_filename;
@@ -80,6 +85,13 @@ impl Plugin for ManifestPlugin {
       });
       assets_mainfest.entries.insert(name.to_string(), files);
     });
+
+    // Check .ice/data-loader.ts is exists
+    let data_loader_file = Path::new(&compilation.options.context.as_str()).join(".ice/data-loader.ts");
+    if data_loader_file.exists() {
+      assets_mainfest.data_loader = Some("js/data-loader.js".to_string());
+    }
+
     let page_chunk_name_regex = regex::Regex::new(r"^p_").unwrap();
     compilation
       .chunk_by_ukey
