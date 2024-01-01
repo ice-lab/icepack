@@ -1,0 +1,21 @@
+[package]
+name = "swc_plugin_change_package_import"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+
+[dependencies]
+serde = { workspace = true }
+swc_core = { workspace = true, features = [
+    "ecma_plugin_transform",
+    "ecma_ast",
+    "common",
+] }
+swc_ecma_utils = { version = "0.125.0" }
+
+[dev-dependencies]
