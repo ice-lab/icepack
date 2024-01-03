@@ -132,6 +132,7 @@ export interface JsHooks {
   afterEmit: (...args: any[]) => any
   make: (...args: any[]) => any
   optimizeModules: (...args: any[]) => any
+  afterOptimizeModules: (...args: any[]) => any
   optimizeTree: (...args: any[]) => any
   optimizeChunkModules: (...args: any[]) => any
   beforeCompile: (...args: any[]) => any
@@ -216,10 +217,16 @@ export interface JsCompatSource {
 export interface JsStatsError {
   message: string
   formatted: string
+  moduleIdentifier?: string
+  moduleName?: string
+  moduleId?: string
 }
 export interface JsStatsWarning {
   message: string
   formatted: string
+  moduleIdentifier?: string
+  moduleName?: string
+  moduleId?: string
 }
 export interface JsStatsLogging {
   name: string
@@ -392,6 +399,7 @@ export interface RawContainerPluginOptions {
   runtime?: string
   filename?: string
   exposes: Array<RawExposeOptions>
+  enhanced: boolean
 }
 export interface RawExposeOptions {
   key: string
@@ -402,6 +410,7 @@ export interface RawContainerReferencePluginOptions {
   remoteType: string
   remotes: Array<RawRemoteOptions>
   shareScope?: string
+  enhanced: boolean
 }
 export interface RawRemoteOptions {
   key: string
@@ -414,6 +423,10 @@ export interface RawProvideOptions {
   shareScope: string
   version?: string | false | undefined
   eager: boolean
+}
+export interface RawConsumeSharedPluginOptions {
+  consumes: Array<RawConsumeOptions>
+  enhanced: boolean
 }
 export interface RawConsumeOptions {
   key: string
@@ -514,6 +527,7 @@ export const enum BuiltinPluginName {
   EnableChunkLoadingPlugin = 'EnableChunkLoadingPlugin',
   EnableLibraryPlugin = 'EnableLibraryPlugin',
   EnableWasmLoadingPlugin = 'EnableWasmLoadingPlugin',
+  ChunkPrefetchPreloadPlugin = 'ChunkPrefetchPreloadPlugin',
   CommonJsChunkFormatPlugin = 'CommonJsChunkFormatPlugin',
   ArrayPushCallbackChunkFormatPlugin = 'ArrayPushCallbackChunkFormatPlugin',
   ModuleChunkFormatPlugin = 'ModuleChunkFormatPlugin',
@@ -524,11 +538,33 @@ export const enum BuiltinPluginName {
   MergeDuplicateChunksPlugin = 'MergeDuplicateChunksPlugin',
   SplitChunksPlugin = 'SplitChunksPlugin',
   OldSplitChunksPlugin = 'OldSplitChunksPlugin',
+  ShareRuntimePlugin = 'ShareRuntimePlugin',
   ContainerPlugin = 'ContainerPlugin',
   ContainerReferencePlugin = 'ContainerReferencePlugin',
-  ModuleFederationRuntimePlugin = 'ModuleFederationRuntimePlugin',
   ProvideSharedPlugin = 'ProvideSharedPlugin',
   ConsumeSharedPlugin = 'ConsumeSharedPlugin',
+  NamedModuleIdsPlugin = 'NamedModuleIdsPlugin',
+  DeterministicModuleIdsPlugin = 'DeterministicModuleIdsPlugin',
+  NamedChunkIdsPlugin = 'NamedChunkIdsPlugin',
+  DeterministicChunkIdsPlugin = 'DeterministicChunkIdsPlugin',
+  RealContentHashPlugin = 'RealContentHashPlugin',
+  RemoveEmptyChunksPlugin = 'RemoveEmptyChunksPlugin',
+  EnsureChunkConditionsPlugin = 'EnsureChunkConditionsPlugin',
+  WarnCaseSensitiveModulesPlugin = 'WarnCaseSensitiveModulesPlugin',
+  DataUriPlugin = 'DataUriPlugin',
+  FileUriPlugin = 'FileUriPlugin',
+  RuntimePlugin = 'RuntimePlugin',
+  JsonModulesPlugin = 'JsonModulesPlugin',
+  InferAsyncModulesPlugin = 'InferAsyncModulesPlugin',
+  JavascriptModulesPlugin = 'JavascriptModulesPlugin',
+  AsyncWebAssemblyModulesPlugin = 'AsyncWebAssemblyModulesPlugin',
+  AssetModulesPlugin = 'AssetModulesPlugin',
+  SourceMapDevToolPlugin = 'SourceMapDevToolPlugin',
+  EvalSourceMapDevToolPlugin = 'EvalSourceMapDevToolPlugin',
+  SideEffectsFlagPlugin = 'SideEffectsFlagPlugin',
+  FlagDependencyExportsPlugin = 'FlagDependencyExportsPlugin',
+  FlagDependencyUsagePlugin = 'FlagDependencyUsagePlugin',
+  MangleExportsPlugin = 'MangleExportsPlugin',
   HttpExternalsRspackPlugin = 'HttpExternalsRspackPlugin',
   CopyRspackPlugin = 'CopyRspackPlugin',
   HtmlRspackPlugin = 'HtmlRspackPlugin',
@@ -538,6 +574,7 @@ export const enum BuiltinPluginName {
 export interface BuiltinPlugin {
   name: BuiltinPluginName
   options: unknown
+  canInherentFromParent?: boolean
 }
 export interface RawCacheOptions {
   type: string
@@ -552,6 +589,14 @@ export interface RawCacheOptions {
 }
 export interface RawDevServer {
   hot: boolean
+}
+export interface RawSourceMapDevToolPluginOptions {
+  filename?: string
+  append?: boolean
+  namespace: string
+  columns: boolean
+  noSources: boolean
+  publicPath?: string
 }
 export interface RawEntryPluginOptions {
   context: string
@@ -578,12 +623,9 @@ export interface RawRspackFuture {
   disableTransformByDefault: boolean
 }
 export interface RawExperiments {
-  lazyCompilation: boolean
   incrementalRebuild: RawIncrementalRebuild
-  asyncWebAssembly: boolean
   newSplitChunks: boolean
   topLevelAwait: boolean
-  css: boolean
   rspackFuture: RawRspackFuture
 }
 export interface RawHttpExternalsRspackPluginOptions {
@@ -727,6 +769,9 @@ export interface RawParserOptions {
 }
 export interface RawJavascriptParserOptions {
   dynamicImportMode: string
+  dynamicImportPreload: string
+  dynamicImportPrefetch: string
+  url: string
 }
 export interface RawAssetParserOptions {
   dataUrlCondition?: RawAssetParserDataUrl
@@ -781,16 +826,11 @@ export interface RawNodeOption {
   global: string
 }
 export interface RawOptimizationOptions {
-  splitChunks?: RawSplitChunksOptions
-  moduleIds: string
-  chunkIds: string
   removeAvailableModules: boolean
-  removeEmptyChunks: boolean
   sideEffects: string
   usedExports: string
   providedExports: boolean
   innerGraph: boolean
-  realContentHash: boolean
   mangleExports: string
 }
 export interface RawTrustedTypes {
@@ -906,7 +946,7 @@ export interface RawSplitChunksOptions {
   name?: string | false | Function
   cacheGroups?: Array<RawCacheGroupOptions>
   /** What kind of chunks should be selected. */
-  chunks?: RegExp | 'async' | 'initial' | 'all'
+  chunks?: RegExp | 'async' | 'initial' | 'all' | Function
   automaticNameDelimiter?: string
   maxAsyncRequests?: number
   maxInitialRequests?: number
@@ -966,6 +1006,7 @@ export interface RawOptions {
   experiments: RawExperiments
   node?: RawNodeOption
   profile: boolean
+  bail: boolean
   builtins: RawBuiltins
 }
 export interface RawStrategyOptions {
@@ -976,16 +1017,11 @@ export interface RawFeatures {
   splitChunksStrategy?: RawStrategyOptions
 }
 export interface RspackRawOptimizationOptions {
-  splitChunks?: RawSplitChunksOptions
-  moduleIds: string
-  chunkIds: string
   removeAvailableModules: boolean
-  removeEmptyChunks: boolean
   sideEffects: string
   usedExports: string
   providedExports: boolean
   innerGraph: boolean
-  realContentHash: boolean
   mangleExports: string
 }
 export interface RsPackRawOptions {
@@ -1005,6 +1041,7 @@ export interface RsPackRawOptions {
   experiments: RawExperiments
   node?: RawNodeOption
   profile: boolean
+  bail: boolean
   builtins: RawBuiltins
   features: RawFeatures
 }
