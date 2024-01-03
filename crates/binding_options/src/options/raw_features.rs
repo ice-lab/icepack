@@ -5,31 +5,19 @@ use rspack_core::{
   Optimization, PluginExt, SideEffectOption, UsedExportsOption, SourceType,
   BoxPlugin, Module, ModuleType, MangleExportsOption, Filename,
 };
-use rspack_error::internal_error;
-use rspack_ids::{
-  DeterministicChunkIdsPlugin, DeterministicModuleIdsPlugin, NamedChunkIdsPlugin,
-  NamedModuleIdsPlugin,
-};
 use crate::RspackRawOptimizationOptions;
 use rspack_plugin_split_chunks_new::{PluginOptions, CacheGroup, CacheGroupTest, CacheGroupTestFnCtx, ChunkNameGetter};
 use rspack_regex::RspackRegex;
 use rspack_hash::{RspackHash, HashFunction, HashDigest};
-use rspack_binding_options::RawSplitChunksOptions;
 
 pub struct SplitChunksStrategy {
   strategy: RawStrategyOptions,
-  // Get the neccessary options from RawOptimizationOptions.
-  chunk_ids: String,
-  module_ids: String,
   side_effects: String,
   used_exports: String,
   provided_exports: bool,
-  real_content_hash: bool,
-  remove_empty_chunks: bool,
   remove_available_modules: bool,
   inner_graph: bool,
   mangle_exports: String,
-  split_chunks: Option<RawSplitChunksOptions>
 }
 
 fn get_modules_size(module: &dyn Module) -> f64 {
@@ -40,7 +28,7 @@ fn get_modules_size(module: &dyn Module) -> f64 {
   size
 }
 
-fn get_plugin_options(strategy: RawStrategyOptions, split_chunks: Option<RawSplitChunksOptions>, context: String) -> rspack_plugin_split_chunks_new::PluginOptions {
+fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_plugin_split_chunks_new::PluginOptions {
   use rspack_plugin_split_chunks_new::SplitChunkSizes;
   let default_size_types = [SourceType::JavaScript, SourceType::Unknown];
   let create_sizes = |size: Option<f64>| {
@@ -141,17 +129,12 @@ impl SplitChunksStrategy {
   pub fn new(strategy: RawStrategyOptions, option: RspackRawOptimizationOptions) -> Self {
     Self {
       strategy,
-      chunk_ids: option.chunk_ids,
-      module_ids: option.module_ids,
       remove_available_modules: option.remove_available_modules,
-      remove_empty_chunks: option.remove_empty_chunks,
       side_effects: option.side_effects,
       used_exports: option.used_exports,
       provided_exports: option.provided_exports,
-      real_content_hash: option.real_content_hash,
       inner_graph: option.inner_graph,
       mangle_exports: option.mangle_exports,
-      split_chunks: option.split_chunks,
     }
   }
 }
@@ -161,36 +144,12 @@ impl FeatureApply for SplitChunksStrategy {
 
   fn apply(self, plugins: &mut Vec<Box<dyn rspack_core::Plugin>>, context: String) -> Result<Self::Options, rspack_error::Error> {
     let split_chunks_plugin = rspack_plugin_split_chunks_new::SplitChunksPlugin::new(
-      get_plugin_options(self.strategy, self.split_chunks, context),
+      get_plugin_options(self.strategy, context),
     ).boxed();
     plugins.push(split_chunks_plugin);
 
-    let chunk_ids_plugin = match self.chunk_ids.as_ref() {
-      "named" => NamedChunkIdsPlugin::new(None, None).boxed(),
-      "deterministic" => DeterministicChunkIdsPlugin::default().boxed(),
-      _ => {
-        return Err(internal_error!(
-          "'chunk_ids' should be 'named' or 'deterministic'."
-        ))
-      }
-    };
-    plugins.push(chunk_ids_plugin);
-    let module_ids_plugin = match self.module_ids.as_ref() {
-      "named" => NamedModuleIdsPlugin::default().boxed(),
-      "deterministic" => DeterministicModuleIdsPlugin::default().boxed(),
-      _ => {
-        return Err(internal_error!(
-          "'module_ids' should be 'named' or 'deterministic'."
-        ))
-      }
-    };
-    plugins.push(module_ids_plugin);
-    if self.real_content_hash {
-      plugins.push(rspack_plugin_real_content_hash::RealContentHashPlugin.boxed());
-    }
     Ok(Optimization {
       remove_available_modules: self.remove_available_modules,
-      remove_empty_chunks: self.remove_empty_chunks,
       side_effects: SideEffectOption::from(self.side_effects.as_str()),
       provided_exports: self.provided_exports,
       used_exports: UsedExportsOption::from(self.used_exports.as_str()),
