@@ -1,17 +1,11 @@
 use std::path::PathBuf;
-use swc_core::{
-    ecma::{
-        transforms::{
-            testing::{
-                test_fixture,
-                FixtureTestConfig,
-            }
-        }
-    }
+use swc_core::ecma::{
+    visit::as_folder,
+    transforms::testing::{FixtureTestConfig, test_fixture},
 };
 use swc_plugin_change_package_import::{
-    config::Config,
-    change_package_import::ModuleImportVisitor
+    ModuleImportVisitor,
+    Config,
 };
 
 #[testing::fixture("tests/fixture/1/input.js")]
@@ -20,7 +14,7 @@ fn test_it(input: PathBuf) {
     test_fixture(
         Default::default(),
         &|t| {
-            ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("y"))])
+            as_folder(ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("y"))]))
         },
         &input,
         &output,
