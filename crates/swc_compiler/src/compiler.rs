@@ -12,9 +12,7 @@ use anyhow::{Context, Error};
 use dashmap::DashMap;
 use rspack_ast::javascript::{Ast as JsAst, Context as JsAstContext, Program as JsProgram};
 use swc_config::config_types::BoolOr;
-use swc_core::base::config::{
-  BuiltInput, IsModule, JsMinifyCommentOption,
-};
+use swc_core::base::config::{BuiltInput, IsModule, JsMinifyCommentOption};
 use swc_core::base::SwcComments;
 use swc_core::common::comments::{Comment, CommentKind, Comments};
 use swc_core::common::errors::{Handler, HANDLER};
@@ -68,7 +66,7 @@ fn minify_file_comments(
   }
 }
 
-pub(crate) struct SwcCompiler {
+pub struct SwcCompiler {
   cm: Arc<SourceMap>,
   fm: Arc<SourceFile>,
   comments: SingleThreadedComments,
@@ -150,7 +148,6 @@ impl SwcCompiler {
     }
 
     res
-
   }
 
   pub fn parse<'a, P>(
@@ -220,7 +217,7 @@ impl SwcCompiler {
   }
 }
 
-pub(crate) trait IntoJsAst {
+pub trait IntoJsAst {
   fn into_js_ast(self, program: Program) -> JsAst;
 }
 

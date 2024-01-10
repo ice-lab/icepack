@@ -1,0 +1,13 @@
+[package]
+name = "swc_optimize_barrel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = "1.0.100"
+serde = { workspace = true, features = ["derive"] }
+swc_core = { workspace = true, features = [
+  "base",
+  "ecma_ast",
+  "common"
+]}

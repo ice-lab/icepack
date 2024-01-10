@@ -1,14 +1,13 @@
 use std::path::Path;
-use anyhow::{Error, Context};
+
+use anyhow::{Context, Error};
 use either::Either;
 use serde::Deserialize;
 use swc_core::common::chain;
-use swc_core::ecma::{
-  transforms::base::pass::noop, visit::Fold,
-};
+use swc_core::ecma::{transforms::base::pass::noop, visit::Fold};
+use swc_env_replacement::env_replacement;
 use swc_keep_export::keep_export;
 use swc_remove_export::remove_export;
-use swc_env_replacement::env_replacement;
 
 macro_rules! either {
   ($config:expr, $f:expr) => {
@@ -92,25 +91,30 @@ pub(crate) fn transform<'a>(
   feature_options: &TransformFeatureOptions,
 ) -> impl Fold + 'a {
   chain!(
-    either!(Some(&vec!["@uni/env".to_string(), "universal-env".to_string()]), |options: &Vec<String>| {
-      env_replacement(options.clone())
-    }),
-    either!(feature_options.keep_export, |options: &Vec<String>| {
-      let mut exports_name = options.clone();
-      // Special case for app entry.
-      // When keep pageConfig, we should also keep the default export of app entry.
-      if match_app_entry(resource_path) && exports_name.contains(&String::from("pageConfig")) {
-        exports_name.push(String::from("default"));
+    either!(
+      Some(&vec!["@uni/env".to_string(), "universal-env".to_string()]),
+      |options: &Vec<String>| { env_replacement(options.clone()) }
+    ),
+    either!(
+      feature_options.keep_export,
+      |options: &Vec<String>| {
+        let mut exports_name = options.clone();
+        // Special case for app entry.
+        // When keep pageConfig, we should also keep the default export of app entry.
+        if match_app_entry(resource_path) && exports_name.contains(&String::from("pageConfig")) {
+          exports_name.push(String::from("default"));
+        }
+        keep_export(exports_name)
+      },
+      || { match_app_entry(resource_path) || match_route_entry(resource_path, routes_config) }
+    ),
+    either!(
+      feature_options.remove_export,
+      |options: &Vec<String>| { remove_export(options.clone()) },
+      || {
+        // Remove export only work for app entry and route entry.
+        match_app_entry(resource_path) || match_route_entry(resource_path, routes_config)
       }
-      keep_export(exports_name)
-    }, || {
-      match_app_entry(resource_path) || match_route_entry(resource_path, routes_config)
-    }),
-    either!(feature_options.remove_export, |options: &Vec<String>| {
-      remove_export(options.clone())
-    }, || {
-      // Remove export only work for app entry and route entry.
-      match_app_entry(resource_path) || match_route_entry(resource_path, routes_config)
-    }),
+    ),
   )
 }

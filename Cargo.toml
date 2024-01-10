@@ -3,11 +3,15 @@ members  = [
   "crates/.rspack_crates/*",
   "crates/binding_options",
   "crates/node_binding",
+  "crates/swc_compiler",
   "crates/loader_compilation",
+  "crates/loader_barrel",
   "crates/plugin_manifest",
   "crates/swc_env_replacement",
   "crates/swc_keep_export",
   "crates/swc_remove_export",
+  "crates/swc_named_import_transform",
+  "crates/swc_optimize_barrel",
   "crates/plugin_specilize_module_name"
 ]
 resolver = "2"

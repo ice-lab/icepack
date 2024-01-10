@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-dashmap = { workspace = true }
 either = "1"
 lazy_static = "1.4.0"
 once_cell = { workspace = true }
@@ -29,6 +28,7 @@ swc_core = { workspace = true, features = [
 ] }
 swc_emotion = { workspace = true }
 xxhash-rust = { workspace = true, features = ["xxh32"] }
+swc_compiler = { path = "../swc_compiler" }
 swc_env_replacement = { path = "../swc_env_replacement" }
 swc_keep_export = { path = "../swc_keep_export" }
 swc_remove_export = { path = "../swc_remove_export" }

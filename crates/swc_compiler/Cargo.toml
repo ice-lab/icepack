@@ -1,0 +1,15 @@
+[package]
+name = "swc_compiler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+dashmap = { workspace = true }
+rspack_ast = { path = "../.rspack_crates/rspack_ast" }
+swc_config = { workspace = true }
+swc_core = { workspace = true, features = [
+  "base",
+  "ecma_ast",
+  "common"
+] }
