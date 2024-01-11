@@ -32,6 +32,7 @@ swc_compiler = { path = "../swc_compiler" }
 swc_env_replacement = { path = "../swc_env_replacement" }
 swc_keep_export = { path = "../swc_keep_export" }
 swc_remove_export = { path = "../swc_remove_export" }
+swc_named_import_transform = { path = "../swc_named_import_transform" }
 
 [dev-dependencies]
 indexmap       = { workspace = true }

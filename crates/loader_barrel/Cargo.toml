@@ -11,6 +11,7 @@ regex = { workspace = true }
 anyhow = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 swc_core = { workspace = true, features = [
   "base",
   "common"

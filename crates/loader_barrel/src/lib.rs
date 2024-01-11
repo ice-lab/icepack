@@ -12,6 +12,7 @@ use rspack_core::{
   DependencyCategory, LoaderRunnerContext, ResolveOptionsWithDependencyType, ResolveResult,
   Resolver,
 };
+use serde::Deserialize;
 use rspack_error::{internal_error, AnyhowError, Result};
 use rspack_loader_runner::{Content, Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
@@ -31,6 +32,8 @@ use tokio::sync::Mutex;
 
 pub const BARREL_LOADER_IDENTIFIER: &str = "builtin:barrel-loader";
 
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct LoaderOptions {
   pub names: Vec<String>,
 }

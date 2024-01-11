@@ -8,6 +8,7 @@ use swc_core::ecma::{transforms::base::pass::noop, visit::Fold};
 use swc_env_replacement::env_replacement;
 use swc_keep_export::keep_export;
 use swc_remove_export::remove_export;
+use swc_named_import_transform::{named_import_transform, TransfromConfig};
 
 macro_rules! either {
   ($config:expr, $f:expr) => {
@@ -83,6 +84,7 @@ fn match_app_entry(resource_path: &Path) -> bool {
 pub struct TransformFeatureOptions {
   pub keep_export: Option<Vec<String>>,
   pub remove_export: Option<Vec<String>>,
+  pub optimize_import: Option<Vec<String>>,
 }
 
 pub(crate) fn transform<'a>(
@@ -91,6 +93,14 @@ pub(crate) fn transform<'a>(
   feature_options: &TransformFeatureOptions,
 ) -> impl Fold + 'a {
   chain!(
+    either!(
+      feature_options.optimize_import,
+      |options: &Vec<String>| {
+        named_import_transform(TransfromConfig {
+          packages: options.clone(),
+        })
+      }
+    ),
     either!(
       Some(&vec!["@uni/env".to_string(), "universal-env".to_string()]),
       |options: &Vec<String>| { env_replacement(options.clone()) }

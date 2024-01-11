@@ -18,7 +18,6 @@ pub struct Config {
 }
 
 pub fn optimize_barrel(config: Config) -> impl Fold {
-  println!("Optimizing barrel: {:?}", config);
   OptimizeBarrel {
     wildcard: config.wildcard,
   }
@@ -209,7 +208,6 @@ impl Fold for OptimizeBarrel {
 
     // If the file is not a barrel file, we export nothing.
     if !is_barrel {
-      println!("Not a barrel file: {:?}", items);
       new_items = vec![];
     } else {
       // Otherwise we export the meta information.

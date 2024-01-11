@@ -1465,6 +1465,7 @@ dependencies = [
  "rspack_loader_runner",
  "rspack_plugin_javascript",
  "rspack_regex",
+ "serde",
  "serde_json",
  "swc_compiler",
  "swc_core",
@@ -1498,6 +1499,7 @@ dependencies = [
  "swc_emotion",
  "swc_env_replacement",
  "swc_keep_export",
+ "swc_named_import_transform",
  "swc_remove_export",
  "tokio",
  "xxhash-rust",
@@ -5302,7 +5304,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "swc_named_import_transfrom"
+name = "swc_named_import_transform"
 version = "0.1.0"
 dependencies = [
  "swc_core",
