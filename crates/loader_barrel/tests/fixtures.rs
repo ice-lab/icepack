@@ -10,7 +10,6 @@ use rspack_core::{
   run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData,
   SideEffectOption,
 };
-use rspack_loader_runner::Identifier;
 use swc_core::base::config::Config;
 use swc_core::ecma::ast::EsVersion;
 
@@ -29,7 +28,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     &ResourceData::new(actual_path.to_string_lossy().to_string(), actual_path),
     &[],
     CompilerContext {
-      module: Identifier::from("test"),
+      module: Default::default(),
       module_context: None,
       options: std::sync::Arc::new(CompilerOptions {
         bail: false,
@@ -114,5 +113,28 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
 
 #[tokio::test]
 async fn basic() {
-  loader_test("fixtures/wildcard/input.js", "fixtures/wildcard/output.js").await;
+  loader_test("fixtures/basic/input.js", "fixtures/basic/output.js").await;
+}
+
+#[tokio::test]
+async fn import() {
+  loader_test(
+    "fixtures/import-all/input.js",
+    "fixtures/import-all/output.js",
+  )
+  .await;
+}
+
+#[tokio::test]
+async fn named() {
+  loader_test("fixtures/named/input.js", "fixtures/named/output.js").await;
+}
+
+#[tokio::test]
+async fn client() {
+  loader_test(
+    "fixtures/use-client/input.js",
+    "fixtures/use-client/output.js",
+  )
+  .await;
 }

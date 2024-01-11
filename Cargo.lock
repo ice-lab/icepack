@@ -287,6 +287,7 @@ dependencies = [
  "derivative",
  "futures-util",
  "glob",
+ "loader_barrel",
  "loader_compilation",
  "napi",
  "napi-derive",
@@ -1455,6 +1456,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "futures",
  "lazy_static",
  "regex",
  "rspack_ast",

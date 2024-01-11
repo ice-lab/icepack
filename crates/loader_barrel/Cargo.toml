@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 lazy_static = "1.4.0"
 serde_json = "1.0.100"
+futures = { workspace = true }
 regex = { workspace = true }
 anyhow = { workspace = true }
 tokio = { workspace = true }
