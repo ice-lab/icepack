@@ -36,6 +36,7 @@ pub const BARREL_LOADER_IDENTIFIER: &str = "builtin:barrel-loader";
 #[serde(rename_all = "camelCase", default)]
 pub struct LoaderOptions {
   pub names: Vec<String>,
+  pub cache_dir: Option<String>,
 }
 
 pub struct BarrelLoader {
@@ -74,6 +75,7 @@ async fn get_barrel_map(
   mut visited: HashSet<PathBuf>,
   resolver: Arc<Resolver>,
   file: PathBuf,
+  cache_dir: Option<String>,
   is_wildcard: bool,
   source: Option<String>,
 ) -> Result<Option<TransfromMapping>> {
@@ -102,6 +104,7 @@ async fn get_barrel_map(
       ..Default::default()
     }));
   }
+  swc_options.config.jsc.experimental.cache_root = cache_dir.clone();
 
   let code = {
     // Drop the block for SwcCompiler will create Rc.
@@ -186,7 +189,7 @@ async fn get_barrel_map(
           .map_err(|err| internal_error!("Failed to resolve {err:?}"))?;
         if let ResolveResult::Resource(resource) = wildcard_resolve {
           let res =
-            get_barrel_map_boxed(visited.clone(), resolver.clone(), resource.path, true, None)
+            get_barrel_map_boxed(visited.clone(), resolver.clone(), resource.path, cache_dir.clone(), true, None)
               .await?;
           if let Some(TransfromMapping {
             export_list: sub_export_list,
@@ -214,10 +217,11 @@ fn get_barrel_map_boxed(
   visited: HashSet<PathBuf>,
   resolver: Arc<Resolver>,
   file: PathBuf,
+  cache_dir: Option<String>,
   is_wildcard: bool,
   source: Option<String>,
 ) -> Pin<Box<dyn Future<Output = Result<Option<TransfromMapping>>> + Send>> {
-  Box::pin(get_barrel_map(visited, resolver, file, is_wildcard, source))
+  Box::pin(get_barrel_map(visited, resolver, file, cache_dir, is_wildcard, source))
 }
 
 #[async_trait::async_trait]
@@ -251,6 +255,7 @@ impl Loader<LoaderRunnerContext> for BarrelLoader {
           visited,
           resolver,
           resource_path.clone(),
+          self.loader_options.cache_dir.clone(),
           false,
           Some(source),
         )
