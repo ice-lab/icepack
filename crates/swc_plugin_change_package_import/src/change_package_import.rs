@@ -10,9 +10,9 @@ use swc_core::{
         ast::*,
         atoms::{JsWord},
         visit::{VisitMut, VisitMutWith},
+        utils::{quote_str, swc_ecma_ast::ImportSpecifier},
     },
 };
-use swc_ecma_utils::quote_str;
 
 pub struct ModuleImportVisitor {
     // 用户配置
@@ -100,7 +100,7 @@ impl VisitMut for ModuleImportVisitor {
                                                     }))
                                                 }
 
-                                                new_import_decl = create_named_import_decl(rules.to.to_string(), vec![swc_ecma_utils::swc_ecma_ast::ImportSpecifier::Named(named_import_spec_copy)]);
+                                                new_import_decl = create_named_import_decl(rules.to.to_string(), vec![ImportSpecifier::Named(named_import_spec_copy)]);
                                             }
 
                                             self.new_stmts.push(new_import_decl);

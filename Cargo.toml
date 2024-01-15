@@ -9,7 +9,7 @@ members  = [
   "crates/swc_keep_export",
   "crates/swc_remove_export",
   "crates/plugin_specilize_module_name",
-  "crates/plugin_change_package_import",
+    "crates/swc_plugin_change_package_import",
 ]
 resolver = "2"
 
