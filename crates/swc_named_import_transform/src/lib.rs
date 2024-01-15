@@ -54,9 +54,11 @@ impl Fold for NamedImportTransform {
         names.sort();
 
         let new_src = format!(
-          "__barrel_optimize__?names={}!=!{}",
+          // Add unique query string to avoid loader cache.
+          "__barrel_optimize__?names={}!=!{}?{}",
           names.join(","),
-          src_value
+          src_value,
+          names.join(","),
         );
 
         // Create a new import declaration, keep everything the same except the source
