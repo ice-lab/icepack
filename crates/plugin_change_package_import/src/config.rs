@@ -1,35 +1,58 @@
 use std::collections::HashMap;
 
-///
-/// ```js
-/// config: [ "lib-a" ]
-/// ```
-///
-/// ```js
-/// config: [{
-///     "lib-a": {
-///         to: "lib-a/x",
-///         import_type: "named",
-///     },
-/// }]
-/// ```
 #[derive(Debug)]
 pub enum Config {
+    /// 配置：
+    /// ```rs
+    /// Config::LiteralConfig(String::from("antd"))
+    /// ```
+    /// 效果：
+    /// ```js
+    /// import { Button } from "antd";
+    /// // --->
+    /// import Button from "antd/Button";
+    /// ```
     LiteralConfig(String),
+    /// 配置：
+    /// ```rs
+    /// Config::SpecificConfig(
+    //      SpecificConfigs {
+    //          name: String::from("ice"),
+    //          map: HashMap::from([
+    //              (
+    //                  "a".to_string(),
+    //                  MapProperty {
+    //                      to: String::from("@ice/x/y"),
+    //                      import_type: None,
+    //                      name: None,
+    //                  }
+    //               ),
+    //          ]),
+    //      }
+    //  ),
+    /// ```
+    /// 效果：
+    /// ```js
+    /// import { a } from "ice";
+    /// // --->
+    /// import a from "@ice/x/y";
+    /// ```
+    ///
+    /// 更多配置请参考[文档](https://alidocs.dingtalk.com/i/nodes/20eMKjyp810mMdK4Ho1LpqX7JxAZB1Gv?utm_scene=team_space)
     SpecificConfig(SpecificConfigs),
 }
 
 #[derive(Debug)]
 pub struct SpecificConfigs {
-    pub(crate) name: String,
-    pub(crate) map: HashMap<String, MapProperty>,
+    pub name: String,
+    pub map: HashMap<String, MapProperty>,
 }
 
 #[derive(Debug)]
 pub struct MapProperty {
-    pub(crate) to: String,
-    pub(crate) import_type: Option<ImportType>,
-    pub(crate) name: Option<String>,
+    pub to: String,
+    pub import_type: Option<ImportType>,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]

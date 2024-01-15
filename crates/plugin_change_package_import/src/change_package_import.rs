@@ -1,5 +1,4 @@
-use crate::config::{Config, ImportType, MapProperty, SpecificConfigs};
-use std::collections::HashMap;
+use crate::config::{Config, ImportType, MapProperty};
 use swc_core::{
     common::{
         DUMMY_SP,
@@ -10,8 +9,7 @@ use swc_core::{
     ecma::{
         ast::*,
         atoms::{JsWord},
-        transforms::testing::test,
-        visit::{as_folder, VisitMut, VisitMutWith},
+        visit::{VisitMut, VisitMutWith},
     },
 };
 use swc_ecma_utils::quote_str;
@@ -38,13 +36,14 @@ impl VisitMut for ModuleImportVisitor {
             match option {
                 Config::LiteralConfig(_) => {
                     if is_hit_rule(import_decl, option) {
+                        // import { a } from "b";
                         if import_decl.specifiers.len() == 1 {
                             match &import_decl.specifiers[0] {
                                 ImportSpecifier::Named(named_import_spec) => {
                                     if named_import_spec.is_type_only {
-                                        return;
+                                        continue;
                                     }
-                                    let new_src = get_new_src(named_import_spec, &import_decl);
+                                    let new_src = get_new_src(named_import_spec);
                                     import_decl.src = Box::new(quote_str!(named_import_spec.span, new_src));
                                     import_decl.specifiers[0] = ImportSpecifier::Default(ImportDefaultSpecifier {
                                         span: named_import_spec.span,
@@ -53,15 +52,15 @@ impl VisitMut for ModuleImportVisitor {
                                 }
                                 _ => ()
                             }
+                            // import { a, b } from "c";
                         } else {
                             for specifier in &import_decl.specifiers {
-                                println!("[specifier] · · · -------------------> · · · {:?}", &specifier);
                                 match specifier {
                                     ImportSpecifier::Named(named_import_spec) => {
                                         if named_import_spec.is_type_only {
-                                            return;
+                                            continue;
                                         }
-                                        let new_src: String = get_new_src(named_import_spec, &import_decl);
+                                        let new_src: String = get_new_src(named_import_spec);
                                         let new_import_decl = create_default_import_decl(new_src, named_import_spec.local.clone());
                                         self.new_stmts.push(new_import_decl);
                                     }
@@ -75,15 +74,34 @@ impl VisitMut for ModuleImportVisitor {
                 }
                 Config::SpecificConfig(config) => {
                     if is_hit_rule(import_decl, option) {
-                        println!("· · · -------------------> · · · Hit the specific rule!");
                         if import_decl.specifiers.len() == 1 {
-                            for (_pkg_name, rules) in config.map.iter() {
+                            for (target, rules) in config.map.iter() {
                                 let MapProperty { to, import_type, name } = rules;
-                                let new_src = gen_path_string(config.name.clone(), to);
 
                                 match &mut import_decl.specifiers[0] {
                                     ImportSpecifier::Named(named_import_spec) => {
-                                        import_decl.src = Box::new(quote_str!(named_import_spec.span, new_src));
+                                        if named_import_spec.is_type_only {
+                                            continue;
+                                        }
+
+                                        if named_import_spec.imported.is_some() {
+                                            match named_import_spec.imported.clone().unwrap() {
+                                                ModuleExportName::Ident(ident) => {
+                                                    if ident.sym.to_string() != *target {
+                                                        continue;
+                                                    }
+                                                }
+                                                ModuleExportName::Str(str) => {
+                                                    if str.value.to_string() != *target {
+                                                        continue;
+                                                    }
+                                                }
+                                            }
+                                        } else if named_import_spec.local.sym.to_string() != *target {
+                                            continue;
+                                        }
+
+                                        import_decl.src = Box::new(quote_str!(named_import_spec.span, to.to_string()));
                                         if import_type.is_none() || match import_type.as_ref().unwrap() {
                                             ImportType::Default => true,
                                             _ => false
@@ -104,7 +122,60 @@ impl VisitMut for ModuleImportVisitor {
                                 }
                             }
                         } else {
-                            // Not support multiple case now 
+                            let target_fields: Vec<&String> = config.map.keys().clone().collect();
+
+                            // 当导入的字段数量与配置的字段数量不一致时，需保留未命中配置的导入字段
+                            if target_fields.len() != import_decl.specifiers.len() {
+                                let mut named_import_spec_copy = import_decl.clone();
+                                named_import_spec_copy.specifiers = named_import_spec_copy.specifiers.into_iter().filter(|specifier| {
+                                    match specifier {
+                                        ImportSpecifier::Named(named_import_spec) => {
+                                            !target_fields.contains(&&named_import_spec.local.sym.to_string())
+                                        }
+                                        _ => true
+                                    }
+                                }).collect::<Vec<_>>();
+
+                                self.new_stmts.push(ModuleItem::ModuleDecl(ModuleDecl::Import(named_import_spec_copy)));
+                            }
+
+                            for (target, rules) in config.map.iter() {
+                                for specifier in &import_decl.specifiers {
+                                    match specifier {
+                                        ImportSpecifier::Named(named_import_spec) => {
+                                            if target == &named_import_spec.local.sym.to_string() {
+                                                let new_import_decl: ModuleItem;
+                                                if rules.import_type.is_none() || match rules.import_type.as_ref().unwrap() {
+                                                    ImportType::Default => true,
+                                                    _ => false
+                                                } {
+                                                    // Default import mode
+                                                    new_import_decl = create_default_import_decl(rules.to.to_string(), named_import_spec.local.clone());
+                                                } else {
+                                                    // Named import mode
+                                                    let mut named_import_spec_copy = named_import_spec.clone();
+
+                                                    named_import_spec_copy.local.sym = target.clone().into();
+
+                                                    if rules.name.is_some() {
+                                                        named_import_spec_copy.imported = Some(ModuleExportName::Str(Str {
+                                                            span: named_import_spec.span,
+                                                            value: rules.name.clone().unwrap().into(),
+                                                            raw: Some(rules.name.clone().unwrap().clone().into()),
+                                                        }))
+                                                    }
+
+                                                    new_import_decl = create_named_import_decl(rules.to.to_string(), vec![swc_ecma_utils::swc_ecma_ast::ImportSpecifier::Named(named_import_spec_copy)]);
+                                                }
+
+                                                self.new_stmts.push(new_import_decl);
+                                            }
+                                        }
+                                        _ => ()
+                                    }
+                                }
+                            }
+                            import_decl.take();
                         }
                         break;
                     }
@@ -150,28 +221,22 @@ fn is_hit_rule(cur_import: &ImportDecl, target: &Config) -> bool {
 }
 
 fn is_empty_decl(decl: &ImportDecl) -> bool {
-    decl.specifiers.len() == 0
+    decl.specifiers.len() == 0 && decl.src.value == JsWord::from("".to_string())
 }
 
-fn get_new_src(named_import_spec: &ImportNamedSpecifier, import_decl: &ImportDecl) -> String {
+fn get_new_src(named_import_spec: &ImportNamedSpecifier) -> String {
     if named_import_spec.imported.is_none() {
-        gen_path_string((&import_decl.src.value).to_string(), &named_import_spec.local.sym)
+        (&named_import_spec.local.sym).to_string()
     } else {
         match &named_import_spec.imported.clone().unwrap() {
             ModuleExportName::Ident(ident) => {
-                gen_path_string((&import_decl.src.value).to_string(), &ident.sym)
+                (&ident.sym).to_string()
             }
             ModuleExportName::Str(str) => {
-                gen_path_string((&import_decl.src.value).to_string(), &str.value)
+                (&str.value).to_string()
             }
         }
     }
-}
-
-fn gen_path_string(mut p1: String, p2: &str) -> String {
-    p1.push_str("/");
-    p1.push_str(p2);
-    p1
 }
 
 fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
@@ -190,128 +255,13 @@ fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
     ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl))
 }
 
-// #[cfg(test)]
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("y"))])),
-//     single_literal_transform,
-//     r#"import { x } from "y";"#
-// );
-
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("z")), Config::LiteralConfig(String::from("o"))])),
-//     multi_literal_transform,
-//     r#"
-//     import a from "b";
-//     import { x, y } from "z";
-//     import c from "d";
-//     import { p, q } from "o";
-//     "#
-// );
-
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(
-//         vec![
-//             Config::LiteralConfig(String::from("y")),
-//             Config::LiteralConfig(String::from("c"))
-//         ]
-//     )),
-//     multiple_literal_transform,
-//     r#"
-//         import { x } from "y";
-//         import { a as b } from "c";
-//         import { n } from "m";
-
-//         console.log("hello world");
-//     "#
-// );
-
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(
-//         vec![
-//             Config::LiteralConfig(String::from("y")),
-//             Config::LiteralConfig(String::from("i")),
-//         ]
-//     )),
-//     multiple_literal_transform_2,
-//     r#"
-//         import { x as a, z as b } from "y";
-//         // import { a, c, d } from "i";
-//     "#
-// );
-
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(
-//         vec![Config::SpecificConfig(
-//             SpecificConfigs {
-//                 name: String::from("y"),
-//                 map: HashMap::from([
-//                     (
-//                         "x".to_string(), MapProperty {
-//                             to: String::from("m/n"),
-//                             import_type: Some(ImportType::Named),
-//                             name: Some(String::from("a")),
-//                         }
-//                     ),
-//                 ])
-//             }
-//         )]
-//     )),
-//     single_specific_transform,
-//     r#"import { x } from "y";"#
-// );
-
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(
-//         vec![Config::SpecificConfig(
-//             SpecificConfigs {
-//                 name: String::from("y"),
-//                 map: HashMap::from([
-//                     (
-//                         "x".to_string(), MapProperty {
-//                             to: String::from("m/n"),
-//                             import_type: Some(ImportType::Named),
-//                             name: Some(String::from("a")),
-//                         }
-//                     ),
-//                 ])
-//             }
-//         )]
-//     )),
-//     single_specific_transform_import,
-//     r#"import { x as k } from "y";"#
-// );
-
-// test!(
-//     Default::default(),
-//     |_| as_folder(ModuleImportVisitor::new(
-//         vec![
-//             Config::LiteralConfig(String::from("antd")),
-//             Config::SpecificConfig(
-//                 SpecificConfigs {
-//                     name: String::from("ice"),
-//                     map: HashMap::from([
-//                         (
-//                             "a".to_string(), MapProperty {
-//                                 to: String::from("x/y"),
-//                                 import_type: None,
-//                                 name: None,
-//                             }
-//                         ),
-//                     ])
-//                 }
-//             )
-//         ]
-//     )),
-//     mix_specific_transform,
-//     r#"
-//         import { Button, Spin } from "antd";
-//         import { a } from "ice";
-//         import { isArray } from "lodash";
-//     "#
-// );
+fn create_named_import_decl(src: String, specifiers: Vec<ImportSpecifier>) -> ModuleItem {
+    let import_decl = ImportDecl {
+        src: Box::new(quote_str!(src)),
+        specifiers,
+        span: DUMMY_SP,
+        type_only: false,
+        with: None,
+    };
+    ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl))
+}
