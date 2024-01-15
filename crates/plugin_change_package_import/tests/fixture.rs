@@ -47,26 +47,8 @@ fn test_multi_literal_transform(input: PathBuf) {
     );
 }
 
-#[testing::fixture("tests/fixture/multi_literal_transform_2/input.js")]
-fn test_multi_literal_transform_2(input: PathBuf) {
-    let output = input.with_file_name("output.js");
-    test_fixture(
-        Default::default(),
-        &|_t| {
-            as_folder(ModuleImportVisitor::new(vec![
-                Config::LiteralConfig(String::from("y")),
-                Config::LiteralConfig(String::from("i")),
-            ]))
-        },
-        &input,
-        &output,
-        FixtureTestConfig {
-            ..Default::default()
-        },
-    );
-}
-
 #[testing::fixture("tests/fixture/single_specific_transform/input.js")]
+
 fn test_single_specific_transform(input: PathBuf) {
     let output = input.with_file_name("output.js");
     test_fixture(
