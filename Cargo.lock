@@ -287,6 +287,7 @@ dependencies = [
  "derivative",
  "futures-util",
  "glob",
+ "loader_barrel",
  "loader_compilation",
  "napi",
  "napi-derive",
@@ -1450,12 +1451,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "969488b55f8ac402214f3f5fd243ebb7206cf82de60d3172994707a4bcc2b829"
 
 [[package]]
+name = "loader_barrel"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "futures",
+ "lazy_static",
+ "regex",
+ "rspack_ast",
+ "rspack_core",
+ "rspack_error",
+ "rspack_loader_runner",
+ "rspack_plugin_javascript",
+ "rspack_regex",
+ "serde",
+ "serde_json",
+ "swc_compiler",
+ "swc_core",
+ "swc_optimize_barrel",
+ "tokio",
+]
+
+[[package]]
 name = "loader_compilation"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "dashmap",
  "either",
  "indexmap 1.9.3",
  "lazy_static",
@@ -1470,11 +1493,13 @@ dependencies = [
  "rspack_testing",
  "serde",
  "serde_json",
+ "swc_compiler",
  "swc_config",
  "swc_core",
  "swc_emotion",
  "swc_env_replacement",
  "swc_keep_export",
+ "swc_named_import_transform",
  "swc_remove_export",
  "tokio",
  "xxhash-rust",
@@ -4169,6 +4194,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_compiler"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dashmap",
+ "rspack_ast",
+ "swc_config",
+ "swc_core",
+]
+
+[[package]]
 name = "swc_compiler_base"
 version = "0.3.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5268,6 +5304,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "swc_named_import_transform"
+version = "0.1.0"
+dependencies = [
+ "swc_core",
+]
+
+[[package]]
 name = "swc_node_comments"
 version = "0.20.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5276,6 +5319,15 @@ dependencies = [
  "dashmap",
  "swc_atoms",
  "swc_common",
+]
+
+[[package]]
+name = "swc_optimize_barrel"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "swc_core",
 ]
 
 [[package]]

@@ -1,14 +1,16 @@
 // transform code is modified based on swc plugin of remove_export:
 // https://github.com/ice-lab/swc-plugins/tree/main/packages/remove-export
-use fxhash::FxHashSet;
 use std::mem::take;
-use swc_core::ecma::{
-  ast::*,
-  visit::{Fold, FoldWith, noop_fold_type},
-};
+
+use fxhash::FxHashSet;
 use rspack_error::Error;
 use swc_core::common::{
-  DUMMY_SP, pass::{Repeat, Repeated}
+  pass::{Repeat, Repeated},
+  DUMMY_SP,
+};
+use swc_core::ecma::{
+  ast::*,
+  visit::{noop_fold_type, Fold, FoldWith},
 };
 
 /// State of the transforms. Shared by the analyzer and the transform.
@@ -60,13 +62,13 @@ impl Analyzer<'_> {
     }
   }
 
-  fn check_default<T:FoldWith<Self>>(&mut self, e: T) -> T {
+  fn check_default<T: FoldWith<Self>>(&mut self, e: T) -> T {
     if self.state.should_remove_default() {
       let old_in_data = self.in_data_fn;
       self.in_data_fn = true;
       let e = e.fold_children_with(self);
       self.in_data_fn = old_in_data;
-      return e
+      return e;
     }
 
     return e.fold_children_with(self);
@@ -113,7 +115,11 @@ impl Fold for Analyzer<'_> {
           return s;
         }
         if let Pat::Ident(id) = &d.decls[0].name {
-          if self.state.remove_exports.contains(&String::from(&*id.id.sym)) {
+          if self
+            .state
+            .remove_exports
+            .contains(&String::from(&*id.id.sym))
+          {
             self.in_data_fn = true;
             self.add_ref(id.to_id());
           }
@@ -239,7 +245,7 @@ impl Fold for Analyzer<'_> {
   fn fold_prop(&mut self, p: Prop) -> Prop {
     let p = p.fold_children_with(self);
     if let Prop::Shorthand(i) = &p {
-        self.add_ref(i.to_id());
+      self.add_ref(i.to_id());
     }
     p
   }
@@ -271,7 +277,7 @@ impl RemoveExport {
   /// Mark identifiers in `n` as a candidate for removal.
   fn mark_as_candidate<N>(&mut self, n: N) -> N
   where
-      N: for<'a> FoldWith<Analyzer<'a>>,
+    N: for<'a> FoldWith<Analyzer<'a>>,
   {
     // Analyzer never change `in_data_fn` to false, so all identifiers in `n` will
     // be marked as referenced from a data function.
@@ -293,7 +299,7 @@ impl RemoveExport {
         params: vec![],
         body: Some(BlockStmt {
           span: DUMMY_SP,
-          stmts: vec![]
+          stmts: vec![],
         }),
         span: DUMMY_SP,
         is_generator: false,
@@ -301,7 +307,7 @@ impl RemoveExport {
         decorators: vec![],
         return_type: None,
         type_params: None,
-      })
+      }),
     };
   }
 }
@@ -349,9 +355,9 @@ impl Fold for RemoveExport {
     {
       // Fill the state.
       let mut v = Analyzer {
-          state: &mut self.state,
-          in_lhs_of_var: false,
-          in_data_fn: false,
+        state: &mut self.state,
+        in_lhs_of_var: false,
+        in_data_fn: false,
       };
       m = m.fold_with(&mut v);
     }
@@ -440,7 +446,7 @@ impl Fold for RemoveExport {
   fn fold_default_decl(&mut self, d: DefaultDecl) -> DefaultDecl {
     if self.state.should_remove_default() {
       // Replace with an empty function
-      return DefaultDecl::Fn(self.create_empty_fn())
+      return DefaultDecl::Fn(self.create_empty_fn());
     }
     d
   }
@@ -450,7 +456,7 @@ impl Fold for RemoveExport {
       // Replace with an empty function
       return ExportDefaultExpr {
         span: DUMMY_SP,
-        expr: Box::new(Expr::Fn(self.create_empty_fn()))
+        expr: Box::new(Expr::Fn(self.create_empty_fn())),
       };
     }
     n
@@ -559,7 +565,7 @@ impl Fold for RemoveExport {
 
     self.in_lhs_of_var = false;
     if name.is_invalid() {
-        d.init = self.mark_as_candidate(d.init);
+      d.init = self.mark_as_candidate(d.init);
     }
     let init = d.init.fold_with(self);
     self.in_lhs_of_var = old;

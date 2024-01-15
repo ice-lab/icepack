@@ -9,10 +9,10 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 
+use binding_options::RSPackRawOptions;
 use napi::bindgen_prelude::*;
 use once_cell::sync::Lazy;
 use rspack_binding_options::BuiltinPlugin;
-use binding_options::RSPackRawOptions;
 use rspack_binding_values::SingleThreadedHashMap;
 use rspack_core::PluginExt;
 use rspack_fs_node::{AsyncNodeWritableFileSystem, ThreadsafeNodeFS};

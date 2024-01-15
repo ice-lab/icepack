@@ -1,27 +1,26 @@
-use std::{path::Path, collections::HashMap, sync::Mutex};
+use std::{collections::HashMap, path::Path, sync::Mutex};
+
 use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
 use rspack_core::{rspack_sources::SourceMap, LoaderRunnerContext, Mode};
-use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_error::{internal_error, AnyhowError, Diagnostic, Result};
-use swc_core::{
-  base::config::{InputSourceMap, Options, OutputCharset, Config, TransformConfig},
-  ecma::parser::{Syntax, TsConfig},
-};
-
-use swc_config::{config_types::MergingOption, merge::Merge};
+use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
   TransformOutput,
 };
-use serde::Deserialize;
 use rspack_regex::RspackRegex;
+use serde::Deserialize;
+use swc_config::{config_types::MergingOption, merge::Merge};
+use swc_core::{
+  base::config::{Config, InputSourceMap, Options, OutputCharset, TransformConfig},
+  ecma::parser::{Syntax, TsConfig},
+};
 
-mod compiler;
 mod transform;
 
+use swc_compiler::{IntoJsAst, SwcCompiler};
 use transform::*;
-use compiler::{SwcCompiler, IntoJsAst};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -53,7 +52,7 @@ pub const COMPILATION_LOADER_IDENTIFIER: &str = "builtin:compilation-loader";
 impl From<LoaderOptions> for CompilationOptions {
   fn from(value: LoaderOptions) -> Self {
     let transform_features = value.transform_features;
-    let compile_rules  = value.compile_rules;
+    let compile_rules = value.compile_rules;
     CompilationOptions {
       swc_options: Options {
         config: value.swc_options,
@@ -62,7 +61,7 @@ impl From<LoaderOptions> for CompilationOptions {
       transform_features,
       compile_rules,
     }
-  } 
+  }
 }
 
 impl CompilationLoader {
@@ -116,16 +115,20 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
           .transform
           .merge(MergingOption::from(Some(transform)));
       }
-      
+
       let file_extension = resource_path.extension().unwrap();
       let ts_extensions = vec!["tsx", "ts", "mts"];
       if ts_extensions.iter().any(|ext| ext == &file_extension) {
-        swc_options.config.jsc.syntax = Some(Syntax::Typescript(TsConfig { tsx: true, decorators: true, ..Default::default() }));
+        swc_options.config.jsc.syntax = Some(Syntax::Typescript(TsConfig {
+          tsx: true,
+          decorators: true,
+          ..Default::default()
+        }));
       }
 
       if let Some(pre_source_map) = std::mem::take(&mut loader_context.source_map) {
         if let Ok(source_map) = pre_source_map.to_json() {
-          swc_options.config.input_source_map = Some(InputSourceMap:: Str(source_map))
+          swc_options.config.input_source_map = Some(InputSourceMap::Str(source_map))
         }
       }
 
@@ -146,17 +149,19 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     };
     let devtool = &loader_context.context.options.devtool;
     let source = content.try_into_string()?;
-    let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options).map_err(AnyhowError::from)?;
+    let compiler = SwcCompiler::new(resource_path.clone(), source.clone(), swc_options)
+      .map_err(AnyhowError::from)?;
 
     let transform_options = &self.loader_options.transform_features;
-    let compiler_context:&str = loader_context.context.options.context.as_ref();
+    let compiler_context: &str = loader_context.context.options.context.as_ref();
     let mut file_access = GLOBAL_FILE_ACCESS.lock().unwrap();
     let mut routes_config = GLOBAL_ROUTES_CONFIG.lock().unwrap();
     let file_accessed = file_access.contains_key(&resource_path.to_string_lossy().to_string());
 
     if routes_config.is_none() || file_accessed {
       // Load routes config for transform.
-      let routes_config_path: std::path::PathBuf = Path::new(compiler_context).join(".ice/route-manifest.json");
+      let routes_config_path: std::path::PathBuf =
+        Path::new(compiler_context).join(".ice/route-manifest.json");
       let routes_content = load_routes_config(&routes_config_path);
       if routes_content.is_ok() {
         *routes_config = Some(routes_content.map_err(AnyhowError::from)?);
@@ -168,13 +173,11 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
     }
     file_access.insert(resource_path.to_string_lossy().to_string(), true);
 
-    let built = compiler.parse(None, |_| {
-      transform(
-        &resource_path,
-        routes_config.as_ref(),
-        transform_options
-      )
-    }).map_err(AnyhowError::from)?;
+    let built = compiler
+      .parse(None, |_| {
+        transform(&resource_path, routes_config.as_ref(), transform_options)
+      })
+      .map_err(AnyhowError::from)?;
 
     let codegen_options = ast::CodegenOptions {
       target: Some(built.target),

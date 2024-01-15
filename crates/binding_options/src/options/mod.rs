@@ -1,25 +1,22 @@
 use napi_derive::napi;
+use rspack_binding_options::{
+  RawBuiltins, RawCacheOptions, RawDevServer, RawExperiments, RawMode, RawModuleOptions,
+  RawNodeOption, RawOutputOptions, RawResolveOptions, RawSnapshotOptions, RawStatsOptions,
+};
 use rspack_core::{
   CompilerOptions, Context, DevServerOptions, Devtool, Experiments, IncrementalRebuild,
-  IncrementalRebuildMakeState, ModuleOptions, Target, OutputOptions, TreeShaking, Optimization,
+  IncrementalRebuildMakeState, ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
 };
-
 use serde::Deserialize;
 
-use rspack_binding_options::{
-  RawBuiltins, RawCacheOptions, RawDevServer, RawExperiments,
-  RawMode, RawNodeOption, RawOutputOptions, RawResolveOptions,
-  RawSnapshotOptions, RawStatsOptions, RawModuleOptions,
-};
-
-mod raw_module;
-mod raw_features;
 mod js_loader;
+mod raw_features;
+mod raw_module;
 mod raw_optimization;
 
-pub use raw_module::*;
-pub use raw_features::*;
 pub use js_loader::*;
+pub use raw_features::*;
+pub use raw_module::*;
 pub use raw_optimization::*;
 
 #[derive(Deserialize, Debug)]
@@ -83,10 +80,9 @@ impl RSPackRawOptions {
       );
       optimization = split_chunk_strategy.apply(plugins, context.to_string())?;
     } else {
-      optimization = IS_ENABLE_NEW_SPLIT_CHUNKS
-        .set(&experiments.new_split_chunks, || {
-          self.optimization.try_into()
-        })?;
+      optimization = IS_ENABLE_NEW_SPLIT_CHUNKS.set(&experiments.new_split_chunks, || {
+        self.optimization.try_into()
+      })?;
     }
     let stats = self.stats.into();
     let snapshot = self.snapshot.into();

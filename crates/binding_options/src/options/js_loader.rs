@@ -2,13 +2,12 @@ use std::{
   path::{Path, PathBuf},
   str::FromStr,
 };
+
 use napi::bindgen_prelude::*;
-use rspack_core::{
-  rspack_sources::SourceMap,
-  LoaderContext, Content, ResourceData,
-};
-use rustc_hash::FxHashSet as HashSet;
 use rspack_binding_options::JsLoaderContext;
+use rspack_core::{rspack_sources::SourceMap, Content, LoaderContext, ResourceData};
+use rustc_hash::FxHashSet as HashSet;
+
 use crate::get_builtin_loader;
 
 pub async fn run_builtin_loader(

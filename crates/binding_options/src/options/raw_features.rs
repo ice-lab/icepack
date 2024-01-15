@@ -1,14 +1,18 @@
-use std::{sync::Arc, hash::Hasher};
+use std::{hash::Hasher, sync::Arc};
+
 use napi_derive::napi;
-use serde::Deserialize;
 use rspack_core::{
-  Optimization, PluginExt, SideEffectOption, UsedExportsOption, SourceType,
-  BoxPlugin, Module, ModuleType, MangleExportsOption, Filename,
+  BoxPlugin, Filename, MangleExportsOption, Module, ModuleType, Optimization, PluginExt,
+  SideEffectOption, SourceType, UsedExportsOption,
 };
-use crate::RspackRawOptimizationOptions;
-use rspack_plugin_split_chunks_new::{PluginOptions, CacheGroup, CacheGroupTest, CacheGroupTestFnCtx, ChunkNameGetter};
+use rspack_hash::{HashDigest, HashFunction, RspackHash};
+use rspack_plugin_split_chunks_new::{
+  CacheGroup, CacheGroupTest, CacheGroupTestFnCtx, ChunkNameGetter, PluginOptions,
+};
 use rspack_regex::RspackRegex;
-use rspack_hash::{RspackHash, HashFunction, HashDigest};
+use serde::Deserialize;
+
+use crate::RspackRawOptimizationOptions;
 
 pub struct SplitChunksStrategy {
   strategy: RawStrategyOptions,
@@ -28,7 +32,10 @@ fn get_modules_size(module: &dyn Module) -> f64 {
   size
 }
 
-fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_plugin_split_chunks_new::PluginOptions {
+fn get_plugin_options(
+  strategy: RawStrategyOptions,
+  context: String,
+) -> rspack_plugin_split_chunks_new::PluginOptions {
   use rspack_plugin_split_chunks_new::SplitChunkSizes;
   let default_size_types = [SourceType::JavaScript, SourceType::Unknown];
   let create_sizes = |size: Option<f64>| {
@@ -45,13 +52,12 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
       chunk_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
       priority: 40.0,
       test: CacheGroupTest::Fn(Arc::new(move |ctx: CacheGroupTestFnCtx| -> Option<bool> {
-        Some(
-          ctx.module
-            .name_for_condition()
-            .map_or(false, |name| {
-              strategy.top_level_frameworks.iter().any(|framework| name.starts_with(framework))
-            })
-        )
+        Some(ctx.module.name_for_condition().map_or(false, |name| {
+          strategy
+            .top_level_frameworks
+            .iter()
+            .any(|framework| name.starts_with(framework))
+        }))
       })),
       max_initial_requests: 25,
       max_async_requests: 25,
@@ -73,22 +79,23 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
         match ctx.module.module_type() {
           ModuleType::Css | ModuleType::CssModule | ModuleType::CssAuto => {
             ctx.module.update_hash(&mut hash);
-          },
+          }
           _ => {
             let options = rspack_core::LibIdentOptions { context: &context };
             let lib_ident = ctx.module.lib_ident(options);
             hash.write(lib_ident.unwrap().as_bytes());
-          },
+          }
         }
         Some(hash.digest(&HashDigest::Hex).rendered(8).to_string())
       })),
       chunk_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
       test: CacheGroupTest::Fn(Arc::new(move |ctx| {
         Some(
-          ctx.module
+          ctx
+            .module
             .name_for_condition()
-          .map_or(false, |name| re_node_modules.test(&name))
-          && get_modules_size(ctx.module) > 160000.0
+            .map_or(false, |name| re_node_modules.test(&name))
+            && get_modules_size(ctx.module) > 160000.0,
         )
       })),
       priority: 30.0,
@@ -119,10 +126,13 @@ fn get_plugin_options(strategy: RawStrategyOptions, context: String) -> rspack_p
   }
 }
 
-
 pub trait FeatureApply {
   type Options;
-  fn apply(self, plugins: &mut Vec<BoxPlugin>, context: String) -> Result<Self::Options, rspack_error::Error>;
+  fn apply(
+    self,
+    plugins: &mut Vec<BoxPlugin>,
+    context: String,
+  ) -> Result<Self::Options, rspack_error::Error>;
 }
 
 impl SplitChunksStrategy {
@@ -142,10 +152,15 @@ impl SplitChunksStrategy {
 impl FeatureApply for SplitChunksStrategy {
   type Options = Optimization;
 
-  fn apply(self, plugins: &mut Vec<Box<dyn rspack_core::Plugin>>, context: String) -> Result<Self::Options, rspack_error::Error> {
+  fn apply(
+    self,
+    plugins: &mut Vec<Box<dyn rspack_core::Plugin>>,
+    context: String,
+  ) -> Result<Self::Options, rspack_error::Error> {
     let split_chunks_plugin = rspack_plugin_split_chunks_new::SplitChunksPlugin::new(
       get_plugin_options(self.strategy, context),
-    ).boxed();
+    )
+    .boxed();
     plugins.push(split_chunks_plugin);
 
     Ok(Optimization {
