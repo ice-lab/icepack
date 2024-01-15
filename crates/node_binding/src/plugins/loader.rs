@@ -1,11 +1,11 @@
 use std::{fmt::Debug, path::Path, sync::Arc};
 
+use binding_options::get_builtin_loader;
 use rspack_binding_options::{JsLoaderAdapter, JsLoaderRunner};
 use rspack_core::{
   BoxLoader, CompilerOptions, NormalModule, Plugin, ResolveResult, Resolver, BUILTIN_LOADER_PREFIX,
 };
 use rspack_error::{internal_error, Result};
-use binding_options::get_builtin_loader;
 
 pub struct JsLoaderResolver {
   pub js_loader_runner: JsLoaderRunner,

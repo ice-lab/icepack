@@ -44,6 +44,7 @@ rspack_regex                            = { path = "../.rspack_crates/rspack_reg
 rspack_hash                             = { path = "../.rspack_crates/rspack_hash" }
 rspack_swc_visitors                     = { path = "../.rspack_crates/rspack_swc_visitors" }
 loader_compilation                      = { path = "../loader_compilation" }
+loader_barrel                           = { path = "../loader_barrel" }
 plugin_manifest                         = { path = "../plugin_manifest" }
 
 futures-util      = { workspace = true }

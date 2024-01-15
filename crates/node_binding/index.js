@@ -252,22 +252,8 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { __chunk_inner_is_only_initial, __chunk_inner_can_be_initial, __chunk_inner_has_runtime, __chunk_inner_get_all_async_chunks, __chunk_inner_get_all_initial_chunks, __chunk_inner_get_all_referenced_chunks, __chunk_graph_inner_get_chunk_modules, __chunk_graph_inner_get_chunk_entry_modules, __chunk_graph_inner_get_chunk_entry_dependent_chunks_iterable, __chunk_graph_inner_get_chunk_modules_iterable_by_source_type, __chunk_group_inner_get_chunk_group, JsCompilation, JsStats, BuiltinPluginName, runBuiltinLoader, Rspack, registerGlobalTrace, cleanupGlobalTrace } = nativeBinding
+const { runBuiltinLoader, Rspack, registerGlobalTrace, cleanupGlobalTrace } = nativeBinding
 
-module.exports.__chunk_inner_is_only_initial = __chunk_inner_is_only_initial
-module.exports.__chunk_inner_can_be_initial = __chunk_inner_can_be_initial
-module.exports.__chunk_inner_has_runtime = __chunk_inner_has_runtime
-module.exports.__chunk_inner_get_all_async_chunks = __chunk_inner_get_all_async_chunks
-module.exports.__chunk_inner_get_all_initial_chunks = __chunk_inner_get_all_initial_chunks
-module.exports.__chunk_inner_get_all_referenced_chunks = __chunk_inner_get_all_referenced_chunks
-module.exports.__chunk_graph_inner_get_chunk_modules = __chunk_graph_inner_get_chunk_modules
-module.exports.__chunk_graph_inner_get_chunk_entry_modules = __chunk_graph_inner_get_chunk_entry_modules
-module.exports.__chunk_graph_inner_get_chunk_entry_dependent_chunks_iterable = __chunk_graph_inner_get_chunk_entry_dependent_chunks_iterable
-module.exports.__chunk_graph_inner_get_chunk_modules_iterable_by_source_type = __chunk_graph_inner_get_chunk_modules_iterable_by_source_type
-module.exports.__chunk_group_inner_get_chunk_group = __chunk_group_inner_get_chunk_group
-module.exports.JsCompilation = JsCompilation
-module.exports.JsStats = JsStats
-module.exports.BuiltinPluginName = BuiltinPluginName
 module.exports.runBuiltinLoader = runBuiltinLoader
 module.exports.Rspack = Rspack
 module.exports.registerGlobalTrace = registerGlobalTrace

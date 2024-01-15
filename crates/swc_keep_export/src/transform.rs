@@ -1,15 +1,17 @@
 // transform code is modified based on swc plugin of keep_export:
 // https://github.com/ice-lab/swc-plugins/tree/main/packages/keep-export
-use fxhash::FxHashSet;
 use std::mem::take;
+
+use fxhash::FxHashSet;
 use swc_core::{
   common::{
-    DUMMY_SP, pass::{Repeat, Repeated}
+    pass::{Repeat, Repeated},
+    DUMMY_SP,
   },
   ecma::{
     ast::*,
-    visit::{Fold, FoldWith, noop_fold_type}
-  }
+    visit::{noop_fold_type, Fold, FoldWith},
+  },
 };
 /// State of the transforms. Shared by the analyzer and the transform.
 #[derive(Debug, Default)]
@@ -58,9 +60,9 @@ impl KeepExport {
     // Analyzer never change `in_kept_fn` to false, so all identifiers in `n` will
     // be marked as referenced from a data function.
     let mut v = Analyzer {
-        state: &mut self.state,
-        in_lhs_of_var: false,
-        in_kept_fn: false,
+      state: &mut self.state,
+      in_lhs_of_var: false,
+      in_kept_fn: false,
     };
 
     let n = n.fold_with(&mut v);
@@ -129,13 +131,15 @@ impl Fold for KeepExport {
 
     // If all exports are deleted, return the empty named export.
     if items.len() == 0 {
-      items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport{
-        span: DUMMY_SP,
-        specifiers:  Vec::new(),
-        src: None,
-        type_only: false,
-        with: Default::default(),
-      })));
+      items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
+        NamedExport {
+          span: DUMMY_SP,
+          specifiers: Vec::new(),
+          src: None,
+          type_only: false,
+          with: Default::default(),
+        },
+      )));
     }
 
     items
@@ -156,7 +160,7 @@ impl Fold for KeepExport {
 
     match &i {
       ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(e)) if e.specifiers.is_empty() => {
-          return ModuleItem::Stmt(Stmt::Empty(EmptyStmt { span: DUMMY_SP }))
+        return ModuleItem::Stmt(Stmt::Empty(EmptyStmt { span: DUMMY_SP }))
       }
       _ => {}
     }
@@ -170,33 +174,29 @@ impl Fold for KeepExport {
     n.specifiers.retain(|s| {
       let preserve = match s {
         ExportSpecifier::Namespace(ExportNamespaceSpecifier {
-            name: ModuleExportName::Ident(exported),
-            ..
+          name: ModuleExportName::Ident(exported),
+          ..
         })
         | ExportSpecifier::Default(ExportDefaultSpecifier { exported, .. })
         | ExportSpecifier::Named(ExportNamedSpecifier {
-            exported: Some(ModuleExportName::Ident(exported)),
-            ..
-        }) => self
-            .state
-            .should_keep_identifier(exported),
+          exported: Some(ModuleExportName::Ident(exported)),
+          ..
+        }) => self.state.should_keep_identifier(exported),
         ExportSpecifier::Named(ExportNamedSpecifier {
-            orig: ModuleExportName::Ident(orig),
-            ..
-        }) => self
-            .state
-            .should_keep_identifier(orig),
+          orig: ModuleExportName::Ident(orig),
+          ..
+        }) => self.state.should_keep_identifier(orig),
         _ => false,
       };
 
       match preserve {
         false => {
           if let ExportSpecifier::Named(ExportNamedSpecifier {
-              orig: ModuleExportName::Ident(_orig),
-              ..
+            orig: ModuleExportName::Ident(_orig),
+            ..
           }) = s
           {
-              self.state.should_run_again = true;
+            self.state.should_run_again = true;
           }
 
           false
@@ -266,9 +266,9 @@ impl Fold for KeepExport {
           }
         }
         Pat::Rest(rest) => {
-            if rest.arg.is_invalid() {
-                return Pat::Invalid(Invalid { span: DUMMY_SP });
-            }
+          if rest.arg.is_invalid() {
+            return Pat::Invalid(Invalid { span: DUMMY_SP });
+          }
         }
         _ => {}
       }
@@ -291,7 +291,7 @@ impl Fold for KeepExport {
       Stmt::Decl(Decl::Class(c)) => {
         if self.should_remove(c.ident.to_id()) {
           self.mark_as_candidate(c.class);
-          return  Stmt::Empty(EmptyStmt { span: DUMMY_SP });
+          return Stmt::Empty(EmptyStmt { span: DUMMY_SP });
         }
 
         s = Stmt::Decl(Decl::Class(c));
@@ -319,7 +319,7 @@ impl Fold for KeepExport {
 
     self.in_lhs_of_var = false;
     if name.is_invalid() {
-        d.init = self.mark_as_candidate(d.init);
+      d.init = self.mark_as_candidate(d.init);
     }
     let init = d.init.fold_with(self);
     self.in_lhs_of_var = old;
@@ -350,13 +350,13 @@ impl Analyzer<'_> {
     }
   }
 
-  fn check_default<T:FoldWith<Self>>(&mut self, e: T) -> T {
+  fn check_default<T: FoldWith<Self>>(&mut self, e: T) -> T {
     if self.state.should_keep_default() {
       let old_in_kept = self.in_kept_fn;
       self.in_kept_fn = true;
       let e = e.fold_children_with(self);
       self.in_kept_fn = old_in_kept;
-      return e
+      return e;
     }
 
     return e;
@@ -369,7 +369,7 @@ impl Fold for Analyzer<'_> {
 
   fn fold_binding_ident(&mut self, i: BindingIdent) -> BindingIdent {
     if !self.in_lhs_of_var || self.in_kept_fn {
-        self.add_ref(i.id.to_id());
+      self.add_ref(i.id.to_id());
     }
     i
   }
@@ -442,10 +442,10 @@ impl Fold for Analyzer<'_> {
 
     match &jsx.opening.name {
       JSXElementName::Ident(i) => {
-          self.add_ref(i.to_id());
+        self.add_ref(i.to_id());
       }
       JSXElementName::JSXMemberExpr(e) => {
-          self.add_ref(get_leftmost_id_member_expr(e));
+        self.add_ref(get_leftmost_id_member_expr(e));
       }
       _ => {}
     }
@@ -484,7 +484,7 @@ impl Fold for Analyzer<'_> {
 
       ModuleItem::Stmt(Stmt::Expr(_e)) => {
         // remove top expression
-        return ModuleItem::Stmt(Stmt::Empty(EmptyStmt { span: DUMMY_SP }))
+        return ModuleItem::Stmt(Stmt::Empty(EmptyStmt { span: DUMMY_SP }));
       }
 
       ModuleItem::Stmt(Stmt::If(_e)) => {
@@ -582,8 +582,8 @@ impl Fold for Analyzer<'_> {
 pub fn keep_export(exports: Vec<String>) -> impl Fold {
   Repeat::new(KeepExport {
     state: State {
-        keep_exports: exports,
-        ..Default::default()
+      keep_exports: exports,
+      ..Default::default()
     },
     in_lhs_of_var: false,
   })

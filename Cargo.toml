@@ -3,13 +3,16 @@ members  = [
   "crates/.rspack_crates/*",
   "crates/binding_options",
   "crates/node_binding",
+  "crates/swc_compiler",
   "crates/loader_compilation",
+  "crates/loader_barrel",
   "crates/plugin_manifest",
   "crates/swc_env_replacement",
   "crates/swc_keep_export",
   "crates/swc_remove_export",
+  "crates/swc_optimize_barrel",
   "crates/plugin_specilize_module_name",
-    "crates/swc_plugin_change_package_import",
+  "crates/swc_plugin_change_package_import",
 ]
 resolver = "2"
 
@@ -83,10 +86,12 @@ testing             = { version = "0.35.13" }
 codegen-units = 16   # debug build will cause runtime panic if codegen-unints is default
 debug         = 2
 incremental   = true
+panic         = "abort"
 
 [profile.release]
 codegen-units = 1
 debug         = false
-lto           = false # disabled by now, because it will significantly increase our compile time.
+lto           = false   # disabled by now, because it will significantly increase our compile time.
 opt-level     = 3
+panic         = "abort"
 strip         = true

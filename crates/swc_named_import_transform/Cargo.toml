@@ -1,0 +1,11 @@
+[package]
+name = "swc_named_import_transform"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+swc_core = { workspace = true, features = [
+  "base",
+  "ecma_ast",
+  "common"
+]}

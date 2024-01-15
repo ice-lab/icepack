@@ -1,0 +1,26 @@
+[package]
+name = "loader_barrel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lazy_static = "1.4.0"
+serde_json = "1.0.100"
+futures = { workspace = true }
+regex = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+swc_core = { workspace = true, features = [
+  "base",
+  "common"
+] }
+rspack_ast = { path = "../.rspack_crates/rspack_ast" }
+rspack_core = { path = "../.rspack_crates/rspack_core" }
+rspack_error = { path = "../.rspack_crates/rspack_error" }
+rspack_regex = { path = "../.rspack_crates/rspack_regex" }
+rspack_loader_runner = { path = "../.rspack_crates/rspack_loader_runner" }
+rspack_plugin_javascript = { path = "../.rspack_crates/rspack_plugin_javascript" }
+swc_compiler = { path = "../swc_compiler" }
+swc_optimize_barrel = { path = "../swc_optimize_barrel" }
