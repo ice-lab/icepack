@@ -1,6 +1,5 @@
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
 
 use plugin_specilize_module_name::SpecilizeModuleNamePlugin;
 use rspack_testing::{fixture, test_fixture_insta};
