@@ -60,14 +60,14 @@ impl BarrelLoader {
 }
 
 #[derive(Debug, Clone)]
-struct TransfromMapping {
+struct TransformMapping {
   pub export_list: Vec<Vec<String>>,
   pub wildcard_exports: Vec<String>,
   pub is_client_entry: bool,
 }
 
 lazy_static! {
-  static ref GLOBAL_TRANSFORM_MAPPING: Arc<Mutex<HashMap<String, TransfromMapping>>> =
+  static ref GLOBAL_TRANSFORM_MAPPING: Arc<Mutex<HashMap<String, TransformMapping>>> =
     Arc::new(Mutex::new(HashMap::new()));
 }
 
@@ -78,7 +78,7 @@ async fn get_barrel_map(
   cache_dir: Option<String>,
   is_wildcard: bool,
   source: Option<String>,
-) -> Result<Option<TransfromMapping>> {
+) -> Result<Option<TransformMapping>> {
   if visited.contains(&file) {
     return Ok(None);
   }
@@ -191,7 +191,7 @@ async fn get_barrel_map(
           let res =
             get_barrel_map_boxed(visited.clone(), resolver.clone(), resource.path, cache_dir.clone(), true, None)
               .await?;
-          if let Some(TransfromMapping {
+          if let Some(TransformMapping {
             export_list: sub_export_list,
             wildcard_exports: _,
             is_client_entry: _,
@@ -202,7 +202,7 @@ async fn get_barrel_map(
         }
       }
     }
-    let ret = TransfromMapping {
+    let ret = TransformMapping {
       export_list,
       wildcard_exports,
       is_client_entry,
@@ -220,7 +220,7 @@ fn get_barrel_map_boxed(
   cache_dir: Option<String>,
   is_wildcard: bool,
   source: Option<String>,
-) -> Pin<Box<dyn Future<Output = Result<Option<TransfromMapping>>> + Send>> {
+) -> Pin<Box<dyn Future<Output = Result<Option<TransformMapping>>> + Send>> {
   Box::pin(get_barrel_map(visited, resolver, file, cache_dir, is_wildcard, source))
 }
 
@@ -267,7 +267,7 @@ impl Loader<LoaderRunnerContext> for BarrelLoader {
       }
     };
     let mut export_map = HashMap::new();
-    if let Some(TransfromMapping {
+    if let Some(TransformMapping {
       export_list,
       wildcard_exports,
       is_client_entry,

@@ -5,21 +5,21 @@ use swc_core::{
   ecma::{ast::*, visit::Fold},
 };
 
-pub struct TransfromConfig {
+pub struct TransformConfig {
   pub packages: Vec<String>,
 }
 
-pub struct NamedImportTransfrom {
+pub struct NamedImportTransform {
   pub packages: Vec<String>,
 }
 
-pub fn named_import_transform(config: TransfromConfig) -> impl Fold {
-  NamedImportTransfrom {
+pub fn named_import_transform(config: TransformConfig) -> impl Fold {
+  NamedImportTransform {
     packages: config.packages,
   }
 }
 
-impl Fold for NamedImportTransfrom {
+impl Fold for NamedImportTransform {
   fn fold_import_decl(&mut self, decl: ImportDecl) -> ImportDecl {
     let src_value = decl.src.value.clone();
     if self.packages.iter().any(|p| src_value == *p) {
