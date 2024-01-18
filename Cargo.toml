@@ -10,9 +10,9 @@ members  = [
   "crates/swc_env_replacement",
   "crates/swc_keep_export",
   "crates/swc_remove_export",
-  "crates/swc_named_import_transform",
   "crates/swc_optimize_barrel",
-  "crates/plugin_specilize_module_name"
+  "crates/plugin_specilize_module_name",
+  "crates/swc_plugin_change_package_import",
 ]
 resolver = "2"
 
@@ -80,6 +80,7 @@ swc_html            = { version = "=0.134.29" }
 swc_html_minifier   = { version = "=0.131.29" }
 swc_node_comments   = { version = "=0.20.9" }
 tikv-jemallocator   = { version = "=0.5.4", features = ["disable_initial_exec_tls"] }
+testing             = { version = "0.35.13" }
 
 [profile.dev]
 codegen-units = 16   # debug build will cause runtime panic if codegen-unints is default
