@@ -1,10 +1,10 @@
 use napi_derive::napi;
 use rspack_binding_options::{
-  RawBuiltins, RawCacheOptions, RawDevServer, RawExperiments, RawMode, RawModuleOptions,
+  RawBuiltins, RawCacheOptions, RawExperiments, RawMode, RawModuleOptions,
   RawNodeOption, RawOutputOptions, RawResolveOptions, RawSnapshotOptions, RawStatsOptions,
 };
 use rspack_core::{
-  CompilerOptions, Context, DevServerOptions, Devtool, Experiments, IncrementalRebuild,
+  CompilerOptions, Context, Devtool, Experiments, IncrementalRebuild,
   IncrementalRebuildMakeState, ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
 };
 use serde::Deserialize;
@@ -34,7 +34,6 @@ pub struct RSPackRawOptions {
   pub devtool: String,
   pub optimization: RspackRawOptimizationOptions,
   pub stats: RawStatsOptions,
-  pub dev_server: RawDevServer,
   pub snapshot: RawSnapshotOptions,
   pub cache: RawCacheOptions,
   pub experiments: RawExperiments,
@@ -61,12 +60,8 @@ impl RSPackRawOptions {
     let cache = self.cache.into();
     let experiments = Experiments {
       incremental_rebuild: IncrementalRebuild {
-        make: self
-          .experiments
-          .incremental_rebuild
-          .make
-          .then(IncrementalRebuildMakeState::default),
-        emit_asset: self.experiments.incremental_rebuild.emit_asset,
+        make: Some(IncrementalRebuildMakeState::default()),
+        emit_asset: true,
       },
       new_split_chunks: self.experiments.new_split_chunks,
       top_level_await: self.experiments.top_level_await,
@@ -87,7 +82,6 @@ impl RSPackRawOptions {
     let stats = self.stats.into();
     let snapshot = self.snapshot.into();
     let node = self.node.map(|n| n.into());
-    let dev_server: DevServerOptions = self.dev_server.into();
 
     // Add custom plugins.
     plugins.push(Box::new(plugin_manifest::ManifestPlugin::new()));
@@ -111,7 +105,7 @@ impl RSPackRawOptions {
       snapshot,
       optimization,
       node,
-      dev_server,
+      dev_server: Default::default(),
       profile: self.profile,
       bail: self.bail,
       builtins,

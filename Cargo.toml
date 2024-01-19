@@ -12,7 +12,7 @@ members  = [
   "crates/swc_remove_export",
   "crates/swc_optimize_barrel",
   "crates/plugin_specilize_module_name",
-  "crates/swc_plugin_change_package_import",
+  # "crates/swc_plugin_change_package_import",
 ]
 resolver = "2"
 
@@ -33,7 +33,7 @@ futures            = { version = "0.3.28" }
 futures-util       = { version = "0.3.28" }
 glob               = { version = "0.3.1" }
 hashlink           = { version = "0.8.3" }
-indexmap           = { version = "1.9.3" }
+indexmap           = { version = "=1.9.3", features = ["serde-1"] }
 insta              = { version = "1.30.0" }
 itertools          = { version = "0.10.5" }
 json               = { version = "0.12.4" }
@@ -45,20 +45,23 @@ paste              = { version = "1.0" }
 path-clean         = { version = "1.0.1" }
 pathdiff           = { version = "0.2.1" }
 preset_env_base    = { version = "0.4.6" }
+proc-macro2        = { version = "1.0.76" }
+quote              = { version = "1.0.35" }
 rayon              = { version = "1.7.0" }
 regex              = { version = "1.9.1" }
 rkyv               = { version = "0.7.42" }
 rspack_sources     = { version = "0.2.7" }
 rustc-hash         = { version = "1.1.0" }
 schemars           = { version = "0.8.12" }
-serde              = { version = "1.0.171" }
+serde              = { version = "1.0.194" }
 serde_json         = { version = "1.0.100" }
 similar            = { version = "2.2.1" }
 sugar_path         = { version = "0.0.12" }
+syn                = { version = "2.0.48" }
 testing_macros     = { version = "0.2.11" }
 tokio              = { version = "1.29.1" }
-tracing            = { version = "0.1.37" }
-tracing-subscriber = { version = "0.3.17" }
+tracing            = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.18" }
 url                = { version = "2.4.0" }
 urlencoding        = { version = "2.1.2" }
 ustr               = { version = "0.9.0" }
@@ -69,21 +72,20 @@ napi                = { version = "=2.13.3" }
 napi-build          = { version = "=2.0.1" }
 napi-derive         = { version = "=2.13.0" }
 napi-sys            = { version = "=2.2.3" }
-styled_components   = { version = "0.90.0" }
-swc_config          = { version = "=0.1.7" }
-swc_core            = { version = "0.86.82", default-features = false }
-swc_css             = { version = "0.157.6" }
-swc_ecma_minifier   = { version = "0.189.73", default-features = false }
-swc_emotion         = { version = "=0.58.0" }
-swc_error_reporters = { version = "=0.17.9" }
-swc_html            = { version = "=0.134.29" }
-swc_html_minifier   = { version = "=0.131.29" }
-swc_node_comments   = { version = "=0.20.9" }
+styled_components   = { version = "0.91.0" }
+swc_config          = { version = "=0.1.9" }
+swc_core            = { version = "=0.87.21", default-features = false }
+swc_css             = { version = "=0.157.29" }
+swc_ecma_minifier   = { version = "=0.190.17", default-features = false }
+swc_emotion         = { version = "=0.67.0" }
+swc_error_reporters = { version = "=0.17.12" }
+swc_html            = { version = "=0.135.20" }
+swc_html_minifier   = { version = "=0.132.20" }
+swc_node_comments   = { version = "=0.20.12" }
 tikv-jemallocator   = { version = "=0.5.4", features = ["disable_initial_exec_tls"] }
-testing             = { version = "0.35.13" }
 
 [profile.dev]
-codegen-units = 16   # debug build will cause runtime panic if codegen-unints is default
+codegen-units = 16      # debug build will cause runtime panic if codegen-unints is default
 debug         = 2
 incremental   = true
 panic         = "abort"

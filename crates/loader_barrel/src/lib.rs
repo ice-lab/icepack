@@ -13,7 +13,7 @@ use rspack_core::{
   Resolver,
 };
 use serde::Deserialize;
-use rspack_error::{internal_error, AnyhowError, Result};
+use rspack_error::{error, AnyhowError, Result};
 use rspack_loader_runner::{Content, Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
@@ -86,7 +86,7 @@ async fn get_barrel_map(
   let content = if source.is_none() {
     let result = tokio::fs::read(file.clone())
       .await
-      .map_err(|e| internal_error!(e.to_string()))?;
+      .map_err(|e| error!(e.to_string()))?;
     Content::from(result).try_into_string()?
   } else {
     source.unwrap()
@@ -186,7 +186,7 @@ async fn get_barrel_map(
         let real_req = req.replace("__barrel_optimize__?names=__PLACEHOLDER__!=!", "");
         let wildcard_resolve = resolver
           .resolve(&file.parent().unwrap().to_path_buf(), &real_req)
-          .map_err(|err| internal_error!("Failed to resolve {err:?}"))?;
+          .map_err(|err| error!("Failed to resolve {err:?}"))?;
         if let ResolveResult::Resource(resource) = wildcard_resolve {
           let res =
             get_barrel_map_boxed(visited.clone(), resolver.clone(), resource.path, cache_dir.clone(), true, None)
@@ -238,9 +238,7 @@ impl Loader<LoaderRunnerContext> for BarrelLoader {
         dependency_category: DependencyCategory::Esm,
       });
 
-    let Some(content) = std::mem::take(&mut loader_context.content) else {
-      return Err(internal_error!("No content found"));
-    };
+    let content = std::mem::take(&mut loader_context.content).expect("content should be available");
     let source = content.try_into_string()?;
 
     let result = {

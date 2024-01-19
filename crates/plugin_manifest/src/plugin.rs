@@ -72,17 +72,16 @@ impl Plugin for ManifestPlugin {
         .chunks
         .iter()
         .for_each(|chunk| {
-          if let Some(chunk) = compilation.chunk_by_ukey.get(chunk) {
-            chunk.files.iter().for_each(|file| {
-              if let Some(asset) = assets.get(file) {
-                if !asset.info.hot_module_replacement && !asset.info.development {
-                  files.push(file.to_string());
-                }
-              } else {
+          let chunk = compilation.chunk_by_ukey.expect_get(chunk);
+          chunk.files.iter().for_each(|file| {
+            if let Some(asset) = assets.get(file) {
+              if !asset.info.hot_module_replacement && !asset.info.development {
                 files.push(file.to_string());
               }
-            });
-          };
+            } else {
+              files.push(file.to_string());
+            }
+          });
         });
       assets_mainfest.entries.insert(name.to_string(), files);
     });

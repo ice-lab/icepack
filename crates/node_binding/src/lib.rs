@@ -15,6 +15,7 @@ use once_cell::sync::Lazy;
 use rspack_binding_options::BuiltinPlugin;
 use rspack_binding_values::SingleThreadedHashMap;
 use rspack_core::PluginExt;
+use rspack_error::Diagnostic;
 use rspack_fs_node::{AsyncNodeWritableFileSystem, ThreadsafeNodeFS};
 
 mod hook;
@@ -130,10 +131,12 @@ impl Rspack {
         unsafe { std::mem::transmute::<&'_ mut _, &'static mut _>(compiler) };
 
       callbackify(env, f, async move {
-        compiler
-          .build()
-          .await
-          .map_err(|e| Error::new(napi::Status::GenericFailure, format!("{e}")))?;
+        compiler.build().await.map_err(|e| {
+          Error::new(
+            napi::Status::GenericFailure,
+            print_error_diagnostic(e, compiler.options.stats.colors),
+          )
+        })?;
         tracing::info!("build ok");
         Ok(())
       })
@@ -171,7 +174,12 @@ impl Rspack {
             HashSet::from_iter(removed_files.into_iter()),
           )
           .await
-          .map_err(|e| Error::new(napi::Status::GenericFailure, format!("{e:?}")))?;
+          .map_err(|e| {
+            Error::new(
+              napi::Status::GenericFailure,
+              print_error_diagnostic(e, compiler.options.stats.colors),
+            )
+          })?;
         tracing::info!("rebuild ok");
         Ok(())
       })
@@ -238,6 +246,12 @@ enum TraceState {
 #[ctor]
 fn init() {
   panic::install_panic_handler();
+}
+
+fn print_error_diagnostic(e: rspack_error::Error, colored: bool) -> String {
+  Diagnostic::from(e)
+    .render_report(colored)
+    .expect("should print diagnostics")
 }
 
 static GLOBAL_TRACE_STATE: Mutex<TraceState> = Mutex::new(TraceState::Off);
