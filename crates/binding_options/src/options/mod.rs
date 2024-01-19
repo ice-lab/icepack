@@ -1,11 +1,11 @@
 use napi_derive::napi;
 use rspack_binding_options::{
-  RawBuiltins, RawCacheOptions, RawExperiments, RawMode, RawModuleOptions,
-  RawNodeOption, RawOutputOptions, RawResolveOptions, RawSnapshotOptions, RawStatsOptions,
+  RawBuiltins, RawCacheOptions, RawExperiments, RawMode, RawModuleOptions, RawNodeOption,
+  RawOutputOptions, RawResolveOptions, RawSnapshotOptions, RawStatsOptions,
 };
 use rspack_core::{
-  CompilerOptions, Context, Devtool, Experiments, IncrementalRebuild,
-  IncrementalRebuildMakeState, ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
+  CompilerOptions, Context, Devtool, Experiments, IncrementalRebuild, IncrementalRebuildMakeState,
+  ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
 };
 use serde::Deserialize;
 

@@ -1,0 +1,15 @@
+[package]
+name = "swc_change_package_import"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+swc_core = { workspace = true, features = [
+    "base",
+    "ecma_ast",
+    "common"
+] }
+
+[dev-dependencies]
+testing = { workspace = true }
