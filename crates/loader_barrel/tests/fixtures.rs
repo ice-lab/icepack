@@ -2,13 +2,13 @@ use std::{
   env, fs,
   path::{Path, PathBuf},
   str::FromStr,
-  sync::Arc,
+  sync::Arc, vec,
 };
 
 use loader_barrel::{BarrelLoader, LoaderOptions};
 use rspack_core::{
   run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData,
-  SideEffectOption,
+  SideEffectOption, ResolverFactory,
 };
 use swc_core::base::config::Config;
 use swc_core::ecma::ast::EsVersion;
@@ -96,7 +96,12 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
         },
         profile: false,
       }),
-      resolver_factory: Default::default(),
+      resolver_factory: Arc::new(
+        ResolverFactory::new(
+          rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
+          ..Default::default()
+        }
+      )),
     },
   )
   .await

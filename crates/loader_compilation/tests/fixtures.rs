@@ -9,7 +9,7 @@ use loader_compilation::{CompilationLoader, LoaderOptions};
 use rspack_ast::RspackAst;
 use rspack_core::{
   run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData,
-  SideEffectOption,
+  SideEffectOption, ResolverFactory,
 };
 use rspack_plugin_javascript::ast;
 use swc_core::base::config::Config;
@@ -99,7 +99,12 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
         },
         profile: false,
       }),
-      resolver_factory: Default::default(),
+      resolver_factory: Arc::new(
+        ResolverFactory::new(
+          rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
+          ..Default::default()
+        }
+      )),
     },
   )
   .await

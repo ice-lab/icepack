@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path, sync::Mutex};
 use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
 use rspack_core::{rspack_sources::SourceMap, LoaderRunnerContext, Mode};
-use rspack_error::{internal_error, AnyhowError, Diagnostic, Result};
+use rspack_error::{error, AnyhowError, Diagnostic, Result};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
@@ -99,9 +99,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       }
     }
 
-    let Some(content) = std::mem::take(&mut loader_context.content) else {
-      return Err(internal_error!("No content found"));
-    };
+    let content = std::mem::take(&mut loader_context.content).expect("content should be available");
 
     let swc_options = {
       let mut swc_options = self.loader_options.swc_options.clone();
@@ -219,7 +217,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       loader_context.source_map = map
         .map(|m| SourceMap::from_json(&m))
         .transpose()
-        .map_err(|e| internal_error!(e.to_string()))?;
+        .map_err(|e| error!(e.to_string()))?;
     }
 
     Ok(())

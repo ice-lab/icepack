@@ -1,22 +1,23 @@
 [package]
-name = "swc_plugin_change_package_import"
+name = "swc_change_package_import"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[profile.release]
-lto = true
-
 [dependencies]
 serde = { workspace = true }
 swc_core = { workspace = true, features = [
-    "ecma_plugin_transform",
+    "base",
     "ecma_ast",
-    "common",
     "ecma_utils",
+    "ecma_visit",
+    "common",
 ] }
 
 [dev-dependencies]
-testing = "0.35.11"
+swc_core = { workspace = true, features = [
+    "testing_transform",
+] }
+testing = { workspace = true }
