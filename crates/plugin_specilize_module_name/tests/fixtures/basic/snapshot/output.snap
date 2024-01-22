@@ -21,7 +21,7 @@ const { add_3 } = __webpack_require__(/*! ./util_1 */"./util_1.js");
     return add_3(0);
 }
 }),
-"./index.js": (function (__unused_webpack_module, exports, __webpack_require__) {
+"./index.js": (function (__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
 console.log("Hello World!");
 const { cal } = __webpack_require__(/*! ./function */"./function.js");
 const { add } = __webpack_require__(/*! ./utils */"./utils.js?id=1");
