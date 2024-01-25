@@ -4,7 +4,7 @@ use rspack_binding_options::{
   RawOutputOptions, RawResolveOptions, RawSnapshotOptions, RawStatsOptions,
 };
 use rspack_core::{
-  CompilerOptions, Context, Devtool, Experiments, IncrementalRebuild, IncrementalRebuildMakeState,
+  CompilerOptions, Context, Experiments, IncrementalRebuild, IncrementalRebuildMakeState,
   ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
 };
 use serde::Deserialize;
@@ -53,7 +53,6 @@ impl RSPackRawOptions {
     let output: OutputOptions = self.output.try_into()?;
     let resolve = self.resolve.try_into()?;
     let resolve_loader = self.resolve_loader.try_into()?;
-    let devtool: Devtool = self.devtool.into();
     let mode = self.mode.unwrap_or_default().into();
     let module: ModuleOptions = self.module.try_into()?;
     let target = Target::new(&self.target)?;
@@ -98,7 +97,6 @@ impl RSPackRawOptions {
       output,
       resolve,
       resolve_loader,
-      devtool,
       experiments,
       stats,
       cache,

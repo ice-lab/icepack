@@ -1515,6 +1515,7 @@ dependencies = [
  "rspack_plugin_javascript",
  "rspack_regex",
  "rspack_testing",
+ "rspack_util",
  "serde",
  "serde_json",
  "swc_compiler",
@@ -2676,6 +2677,7 @@ dependencies = [
  "futures",
  "glob-match",
  "hashlink",
+ "hex",
  "indexmap 1.9.3",
  "itertools",
  "json",
@@ -2689,6 +2691,7 @@ dependencies = [
  "regex",
  "rkyv",
  "rspack_ast",
+ "rspack_core_macros",
  "rspack_database",
  "rspack_error",
  "rspack_fs",
@@ -2713,6 +2716,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rspack_core_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
 name = "rspack_database"
 version = "0.1.0"
 dependencies = [
@@ -2730,10 +2742,13 @@ dependencies = [
  "futures",
  "miette 5.10.0",
  "once_cell",
+ "owo-colors",
  "rspack_identifier",
  "swc_core",
  "termcolor",
+ "textwrap 0.15.2",
  "thiserror",
+ "unicode-width",
 ]
 
 [[package]]
@@ -2846,10 +2861,12 @@ dependencies = [
  "rspack_plugin_javascript",
  "rspack_swc_visitors",
  "rspack_testing",
+ "rspack_util",
  "serde",
  "serde_json",
  "swc_config",
  "swc_core",
+ "tokio",
  "xxhash-rust",
 ]
 
@@ -2961,6 +2978,7 @@ dependencies = [
  "rspack_identifier",
  "rspack_plugin_runtime",
  "rspack_testing",
+ "rspack_util",
  "rustc-hash",
  "serde_json",
  "sugar_path",
@@ -2973,8 +2991,11 @@ dependencies = [
 name = "rspack_plugin_devtool"
 version = "0.1.0"
 dependencies = [
+ "async-recursion",
  "async-trait",
  "dashmap",
+ "derivative",
+ "futures",
  "once_cell",
  "pathdiff",
  "rayon",
@@ -2982,6 +3003,8 @@ dependencies = [
  "rspack_base64",
  "rspack_core",
  "rspack_error",
+ "rspack_hash",
+ "rspack_regex",
  "rspack_util",
  "rustc-hash",
  "serde_json",
@@ -3024,6 +3047,7 @@ dependencies = [
  "rspack_error",
  "rspack_hash",
  "rspack_identifier",
+ "rspack_util",
  "rustc-hash",
  "serde_json",
 ]
@@ -3060,6 +3084,7 @@ dependencies = [
  "async-trait",
  "bitflags 1.3.2",
  "either",
+ "hex",
  "indexmap 1.9.3",
  "itertools",
  "linked_hash_set",
@@ -3142,6 +3167,7 @@ dependencies = [
  "rspack_hash",
  "rspack_identifier",
  "rspack_loader_runner",
+ "rspack_util",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -3154,6 +3180,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "indicatif",
+ "linked-hash-map",
  "rspack_core",
  "rspack_error",
 ]
@@ -3196,6 +3223,7 @@ dependencies = [
  "rspack_hash",
  "rspack_identifier",
  "rspack_plugin_javascript",
+ "rspack_util",
  "rustc-hash",
  "serde_json",
 ]
@@ -3283,6 +3311,7 @@ dependencies = [
  "rspack_error",
  "rspack_identifier",
  "rspack_testing",
+ "rspack_util",
  "serde_json",
  "swc_core",
  "wasmparser",
@@ -3399,8 +3428,10 @@ name = "rspack_util"
 version = "0.1.0"
 dependencies = [
  "concat-string",
+ "dashmap",
  "once_cell",
  "regex",
+ "rustc-hash",
  "sugar_path",
  "swc_core",
 ]
