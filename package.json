@@ -1,6 +1,6 @@
 {
   "name": "@ice/css-modules-hash",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -39,6 +39,6 @@
     "version": "napi version"
   },
   "repository": {
-    "url": "https://github.com/ice-lab/awesome-ice"
+    "url": "https://github.com/ice-lab/icepack"
   }
 }
