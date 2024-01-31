@@ -22,6 +22,7 @@ pub struct SplitChunksStrategy {
   remove_available_modules: bool,
   inner_graph: bool,
   mangle_exports: String,
+  concatenate_modules: bool,
 }
 
 fn get_modules_size(module: &dyn Module) -> f64 {
@@ -145,6 +146,7 @@ impl SplitChunksStrategy {
       provided_exports: option.provided_exports,
       inner_graph: option.inner_graph,
       mangle_exports: option.mangle_exports,
+      concatenate_modules: option.concatenate_modules,
     }
   }
 }
@@ -170,6 +172,7 @@ impl FeatureApply for SplitChunksStrategy {
       used_exports: UsedExportsOption::from(self.used_exports.as_str()),
       inner_graph: self.inner_graph,
       mangle_exports: MangleExportsOption::from(self.mangle_exports.as_str()),
+      concatenate_modules: self.concatenate_modules,
     })
   }
 }

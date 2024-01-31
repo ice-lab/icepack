@@ -13,11 +13,11 @@ __webpack_require__.d(__webpack_exports__, {
 });
 const { add } = __webpack_require__(/*! ./utils */"./utils.js?id=2");
 const { add_3 } = __webpack_require__(/*! ./util_1 */"./util_1.js");
- function cal() {
+function cal() {
     const result = add(2 + 2);
     console.log("2 + 2 is %s, it is a %s number", result, isNumber(result));
 }
- function cal2() {
+function cal2() {
     return add_3(0);
 }
 }),
@@ -35,7 +35,7 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.d(__webpack_exports__, {
   add_3: function() { return add_3; }
 });
- function add_3(a) {
+function add_3(a) {
     return a + 3;
 }
 }),
@@ -47,10 +47,10 @@ __webpack_require__.d(__webpack_exports__, {
   add_3_plus_1: function() { return add_3_plus_1; }
 });
 const { add_3 } = __webpack_require__(/*! ./util_1 */"./util_1.js");
- function add(x, y) {
+function add(x, y) {
     return x + y;
 }
- function add_3_plus_1(x) {
+function add_3_plus_1(x) {
     return add_3(x) + 1;
 }
 }),
@@ -62,10 +62,10 @@ __webpack_require__.d(__webpack_exports__, {
   add_3_plus_1: function() { return add_3_plus_1; }
 });
 const { add_3 } = __webpack_require__(/*! ./util_1 */"./util_1.js");
- function add(x, y) {
+function add(x, y) {
     return x + y;
 }
- function add_3_plus_1(x) {
+function add_3_plus_1(x) {
     return add_3(x) + 1;
 }
 }),
