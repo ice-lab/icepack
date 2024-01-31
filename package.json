@@ -32,7 +32,7 @@
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
+    "build:debug": "napi build --platform --target aarch64-apple-darwin",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "universal": "napi universal",

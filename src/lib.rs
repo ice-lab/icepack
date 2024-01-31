@@ -17,5 +17,5 @@ pub fn get_css_modules_local_ident(filepath: String, local: String, template: St
   let filename = Path::new(&filepath);
   let local_ident_name = LocalIdentName::from(template);
   let str = CSSModulesLocalIdent::new(filename, &local_ident_name);
-  str.get_new_name(JsWord::from(local))
+  str.get_new_name(&JsWord::from(local))
 }

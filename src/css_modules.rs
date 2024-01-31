@@ -19,7 +19,7 @@ impl<'a> CSSModulesLocalIdent<'a> {
     }
   }
 
-  pub fn get_new_name(&self, local: JsWord) -> String {
+  pub fn get_new_name(&self, local: &JsWord) -> String {
     let hash = {
       let mut hasher = CSSHash::with_salt(&HashFunction::MD4, &HashSalt::None);
       self.filename.hash(&mut hasher);
@@ -38,7 +38,7 @@ impl<'a> CSSModulesLocalIdent<'a> {
         path_data: PathData::default()
           .filename(&self.filename.to_string_lossy())
           .hash(&hash),
-        local: &local,
+        local,
       })
       .into()
   }
