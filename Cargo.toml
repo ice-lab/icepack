@@ -10,13 +10,13 @@ crate-type = ["cdylib"]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
 napi = { version = "2.12.2", default-features = false, features = ["napi4"] }
 napi-derive = "2.12.2"
-data-encoding = { version = "2.4.0" }
+data-encoding = { version = "2.5.0" }
 md4           = "0.10.2"
 smol_str      = { version = "*" }
-xxhash-rust   = { version = "0.8.6", features = ["xxh3"] }
-once_cell     = { version = "1.18.0" }
-regex         = { version = "1.9.1" }
-swc_atoms     = { version = "0.5.8" }
+xxhash-rust   = { version = "0.8.8", features = ["xxh3"] }
+once_cell     = { version = "1.19.0" }
+regex         = { version = "1.10.3" }
+swc_atoms     = { version = "0.6.5" }
 
 [build-dependencies]
 napi-build = "2.0.1"
