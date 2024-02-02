@@ -190,4 +190,5 @@ pub struct RawStrategyOptions {
 #[napi(object)]
 pub struct RawFeatures {
   pub split_chunks_strategy: Option<RawStrategyOptions>,
+  pub assets_manifest: Option<bool>,
 }
