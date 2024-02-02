@@ -1,10 +1,10 @@
 use swc_core::{
-  common::{util::take::Take, DUMMY_SP},
+  common::DUMMY_SP,
   ecma::{
     ast::*,
     atoms::JsWord,
     utils::{quote_str, swc_ecma_ast::ImportSpecifier},
-    visit::{VisitMut, VisitMutWith},
+    visit::{noop_fold_type, Fold, FoldWith},
   },
 };
 
@@ -13,142 +13,127 @@ use crate::config::{Config, ImportType};
 pub struct ModuleImportVisitor {
   // 用户配置
   pub options: Vec<Config>,
-  // 全新生成的导入声明
-  new_stmts: Vec<ModuleItem>,
 }
 
 impl ModuleImportVisitor {
   pub fn new(options: Vec<Config>) -> Self {
-    Self {
-      options,
-      new_stmts: vec![],
-    }
+    Self { options }
   }
 }
 
-impl VisitMut for ModuleImportVisitor {
-  fn visit_mut_import_decl(&mut self, import_decl: &mut ImportDecl) {
-    import_decl.visit_mut_children_with(self);
+impl Fold for ModuleImportVisitor {
+  noop_fold_type!();
 
-    for option in &self.options {
-      match option {
-        Config::LiteralConfig(src) => {
-          if is_hit_rule(import_decl, option) {
-            for specifier in &import_decl.specifiers {
-              match specifier {
-                ImportSpecifier::Named(named_import_spec) => {
-                  let mut import_new_src = src.clone();
-                  import_new_src.push_str("/");
-                  import_new_src.push_str(&get_import_module_name(named_import_spec));
+  fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {
+    let mut new_items: Vec<ModuleItem> = vec![];
 
-                  self.new_stmts.push(create_default_import_decl(
-                    import_new_src,
-                    named_import_spec.local.clone(),
-                  ));
+    for item in items {
+      let item = item.fold_children_with(self);
+      let mut hit_rule = false;
+      if let ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl)) = &item {
+        for option in &self.options {
+          match option {
+            Config::LiteralConfig(src) => {
+              if is_hit_rule(import_decl, option) {
+                hit_rule = true;
+                for specifier in &import_decl.specifiers {
+                  match specifier {
+                    ImportSpecifier::Named(named_import_spec) => {
+                      let mut import_new_src = src.clone();
+                      import_new_src.push_str("/");
+                      import_new_src.push_str(&get_import_module_name(named_import_spec));
+
+                      new_items.push(create_default_import_decl(
+                        import_new_src,
+                        named_import_spec.local.clone(),
+                      ));
+                    }
+                    _ => (),
+                  }
                 }
-                _ => (),
+                break;
               }
             }
-            // 清空当前导入声明，否则会被作为有效的声明添加至 new_stmts 中
-            import_decl.take();
-            break;
-          }
-        }
-        Config::SpecificConfig(config) => {
-          if is_hit_rule(import_decl, option) {
-            let target_fields: Vec<&String> = config.map.keys().clone().collect();
-            let mut named_import_spec_copy = import_decl.clone();
+            Config::SpecificConfig(config) => {
+              if is_hit_rule(import_decl, option) {
+                hit_rule = true;
+                let target_fields: Vec<&String> = config.map.keys().clone().collect();
+                let mut named_import_spec_copy = import_decl.clone();
 
-            // 获取未命中规则的导入声明
-            named_import_spec_copy.specifiers = named_import_spec_copy
-              .specifiers
-              .into_iter()
-              .filter(|specifier| match specifier {
-                ImportSpecifier::Named(named_import_spec) => {
-                  let import_object_name = get_import_module_name(named_import_spec);
-                  !target_fields.contains(&&import_object_name)
+                named_import_spec_copy.specifiers = named_import_spec_copy
+                  .specifiers
+                  .into_iter()
+                  .filter(|specifier| match specifier {
+                    ImportSpecifier::Named(named_import_spec) => {
+                      let import_object_name = get_import_module_name(named_import_spec);
+                      !target_fields.contains(&&import_object_name)
+                    }
+                    _ => true,
+                  })
+                  .collect::<Vec<_>>();
+
+                if named_import_spec_copy.specifiers.len() != 0 {
+                  // It no need to redirect import source, if some specifiers are not configured.
+                  new_items.push(item.clone());
+                  break;
                 }
-                _ => true,
-              })
-              .collect::<Vec<_>>();
+                for specifier in &import_decl.specifiers {
+                  for (target, rules) in config.map.iter() {
+                    match specifier {
+                      ImportSpecifier::Named(named_import_spec) => {
+                        let import_object_name = get_import_module_name(named_import_spec);
+                        if target == &import_object_name {
+                          let new_import_decl: ModuleItem;
+                          if rules.import_type.is_none()
+                            || match rules.import_type.as_ref().unwrap() {
+                              ImportType::Default => true,
+                              _ => false,
+                            }
+                          {
+                            // Default import mode
+                            new_import_decl = create_default_import_decl(
+                              rules.to.to_string(),
+                              named_import_spec.local.clone(),
+                            );
+                          } else {
+                            // Named import mode
+                            let mut named_import_spec_copy = named_import_spec.clone();
 
-            if named_import_spec_copy.specifiers.len() != 0 {
-              self
-                .new_stmts
-                .push(ModuleItem::ModuleDecl(ModuleDecl::Import(
-                  named_import_spec_copy,
-                )));
-            }
+                            if rules.name.is_some() {
+                              named_import_spec_copy.imported = Some(ModuleExportName::Str(Str {
+                                span: named_import_spec.span,
+                                value: rules.name.clone().unwrap().into(),
+                                raw: Some(rules.name.clone().unwrap().clone().into()),
+                              }))
+                            }
 
-            for (target, rules) in config.map.iter() {
-              for specifier in &import_decl.specifiers {
-                match specifier {
-                  ImportSpecifier::Named(named_import_spec) => {
-                    let import_object_name = get_import_module_name(named_import_spec);
-                    if target == &import_object_name {
-                      let new_import_decl: ModuleItem;
-                      if rules.import_type.is_none()
-                        || match rules.import_type.as_ref().unwrap() {
-                          ImportType::Default => true,
-                          _ => false,
+                            new_import_decl = create_named_import_decl(
+                              rules.to.to_string(),
+                              vec![ImportSpecifier::Named(named_import_spec_copy)],
+                            );
+                          }
+
+                          new_items.push(new_import_decl);
                         }
-                      {
-                        // Default import mode
-                        new_import_decl = create_default_import_decl(
-                          rules.to.to_string(),
-                          named_import_spec.local.clone(),
-                        );
-                      } else {
-                        // Named import mode
-                        let mut named_import_spec_copy = named_import_spec.clone();
-
-                        if rules.name.is_some() {
-                          named_import_spec_copy.imported = Some(ModuleExportName::Str(Str {
-                            span: named_import_spec.span,
-                            value: rules.name.clone().unwrap().into(),
-                            raw: Some(rules.name.clone().unwrap().clone().into()),
-                          }))
-                        }
-
-                        new_import_decl = create_named_import_decl(
-                          rules.to.to_string(),
-                          vec![ImportSpecifier::Named(named_import_spec_copy)],
-                        );
                       }
-
-                      self.new_stmts.push(new_import_decl);
+                      _ => (),
                     }
                   }
-                  _ => (),
                 }
+                break;
               }
             }
-            import_decl.take();
-            break;
           }
         }
+
+        if !hit_rule {
+          new_items.push(item);
+        }
+      } else {
+        new_items.push(item);
       }
     }
-
-    if !is_empty_decl(import_decl) {
-      self
-        .new_stmts
-        .push(wrap_with_moudle_item(import_decl.clone()));
-    }
-  }
-
-  fn visit_mut_module_item(&mut self, n: &mut ModuleItem) {
-    n.visit_mut_children_with(self);
-
-    if !n.is_module_decl() {
-      self.new_stmts.push(n.clone());
-    }
-  }
-
-  fn visit_mut_module_items(&mut self, stmts: &mut Vec<ModuleItem>) {
-    stmts.visit_mut_children_with(self);
-
-    *stmts = self.new_stmts.clone();
+    new_items
   }
 }
 
@@ -167,10 +152,6 @@ fn is_hit_rule(cur_import: &ImportDecl, rule: &Config) -> bool {
       false
     }
   }
-}
-
-fn is_empty_decl(decl: &ImportDecl) -> bool {
-  decl.specifiers.len() == 0 && decl.src.value == JsWord::from("".to_string())
 }
 
 fn get_import_module_name(named_import_spec: &ImportNamedSpecifier) -> String {

@@ -1,24 +1,17 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use swc_core::ecma::{
-  transforms::testing::{test_fixture, FixtureTestConfig},
-  visit::as_folder,
-};
 use swc_change_package_import::{
   Config, ImportType, MapProperty, ModuleImportVisitor, SpecificConfigs,
 };
+use swc_core::ecma::transforms::testing::{test_fixture, FixtureTestConfig};
 
 #[testing::fixture("tests/fixture/single_literal_transform/input.js")]
 fn test_single_literal_transform(input: PathBuf) {
   let output = input.with_file_name("output.js");
   test_fixture(
     Default::default(),
-    &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::LiteralConfig(
-        String::from("y"),
-      )]))
-    },
+    &|_t| ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("y"))]),
     &input,
     &output,
     FixtureTestConfig {
@@ -33,10 +26,10 @@ fn test_multi_literal_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![
+      ModuleImportVisitor::new(vec![
         Config::LiteralConfig(String::from("z")),
         Config::LiteralConfig(String::from("o")),
-      ]))
+      ])
     },
     &input,
     &output,
@@ -53,19 +46,17 @@ fn test_single_specific_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("y"),
-          map: HashMap::from([(
-            "x".to_string(),
-            MapProperty {
-              to: String::from("m/n"),
-              import_type: Some(ImportType::Named),
-              name: Some(String::from("a")),
-            },
-          )]),
-        },
-      )]))
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("y"),
+        map: HashMap::from([(
+          "x".to_string(),
+          MapProperty {
+            to: String::from("m/n"),
+            import_type: Some(ImportType::Named),
+            name: Some(String::from("a")),
+          },
+        )]),
+      })])
     },
     &input,
     &output,
@@ -81,19 +72,17 @@ fn test_single_specific_transform_2(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("y"),
-          map: HashMap::from([(
-            "x".to_string(),
-            MapProperty {
-              to: String::from("m/n"),
-              import_type: Some(ImportType::Named),
-              name: Some(String::from("a")),
-            },
-          )]),
-        },
-      )]))
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("y"),
+        map: HashMap::from([(
+          "x".to_string(),
+          MapProperty {
+            to: String::from("m/n"),
+            import_type: Some(ImportType::Named),
+            name: Some(String::from("a")),
+          },
+        )]),
+      })])
     },
     &input,
     &output,
@@ -109,7 +98,7 @@ fn test_mix_specific_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![
+      ModuleImportVisitor::new(vec![
         Config::LiteralConfig(String::from("antd")),
         Config::SpecificConfig(SpecificConfigs {
           name: String::from("ice"),
@@ -122,7 +111,56 @@ fn test_mix_specific_transform(input: PathBuf) {
             },
           )]),
         }),
-      ]))
+      ])
+    },
+    &input,
+    &output,
+    FixtureTestConfig {
+      ..Default::default()
+    },
+  );
+}
+
+#[testing::fixture("tests/fixture/multi_specific_transform/input.js")]
+fn test_multi_specific_transform(input: PathBuf) {
+  let output = input.with_file_name("output.js");
+  test_fixture(
+    Default::default(),
+    &|_t| {
+      ModuleImportVisitor::new(vec![
+        Config::SpecificConfig(SpecificConfigs {
+          name: String::from("e"),
+          map: HashMap::from([
+            (
+              "a".to_string(),
+              MapProperty {
+                to: String::from("@e/x"),
+                import_type: Some(ImportType::Default),
+                name: None,
+              },
+            ),
+            (
+              "b".to_string(),
+              MapProperty {
+                to: String::from("e"),
+                import_type: Some(ImportType::Named),
+                name: None,
+              },
+            ),
+          ]),
+        }),
+        Config::SpecificConfig(SpecificConfigs {
+          name: String::from("k"),
+          map: HashMap::from([(
+            "j".to_string(),
+            MapProperty {
+              to: String::from("@e/k"),
+              import_type: Some(ImportType::Named),
+              name: Some(String::from("jj")),
+            },
+          )]),
+        }),
+      ])
     },
     &input,
     &output,
@@ -138,19 +176,17 @@ fn test_ice_basic_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("ice"),
-          map: HashMap::from([(
-            "runApp".to_string(),
-            MapProperty {
-              to: String::from("@ice/runtime"),
-              import_type: Some(ImportType::Named),
-              name: None,
-            },
-          )]),
-        },
-      )]))
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([(
+          "runApp".to_string(),
+          MapProperty {
+            to: String::from("@ice/runtime"),
+            import_type: Some(ImportType::Named),
+            name: None,
+          },
+        )]),
+      })])
     },
     &input,
     &output,
@@ -166,19 +202,17 @@ fn test_ice_as_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("ice"),
-          map: HashMap::from([(
-            "runApp".to_string(),
-            MapProperty {
-              to: String::from("@ice/runtime"),
-              import_type: Some(ImportType::Named),
-              name: None,
-            },
-          )]),
-        },
-      )]))
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([(
+          "runApp".to_string(),
+          MapProperty {
+            to: String::from("@ice/runtime"),
+            import_type: Some(ImportType::Named),
+            name: None,
+          },
+        )]),
+      })])
     },
     &input,
     &output,
@@ -194,19 +228,17 @@ fn test_ice_alias_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("ice"),
-          map: HashMap::from([(
-            "Head".to_string(),
-            MapProperty {
-              to: String::from("react-helmet"),
-              import_type: Some(ImportType::Default),
-              name: Some("Helmet".to_string()),
-            },
-          )]),
-        },
-      )]))
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([(
+          "Head".to_string(),
+          MapProperty {
+            to: String::from("react-helmet"),
+            import_type: Some(ImportType::Default),
+            name: Some("Helmet".to_string()),
+          },
+        )]),
+      })])
     },
     &input,
     &output,
@@ -222,19 +254,61 @@ fn test_ice_alias_with_as_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("ice"),
-          map: HashMap::from([(
-            "Head".to_string(),
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([(
+          "Head".to_string(),
+          MapProperty {
+            to: String::from("react-helmet"),
+            import_type: Some(ImportType::Default),
+            name: None,
+          },
+        )]),
+      })])
+    },
+    &input,
+    &output,
+    FixtureTestConfig {
+      ..Default::default()
+    },
+  );
+}
+
+#[testing::fixture("tests/fixture/ice_multiple_transform/input.js")]
+fn test_ice_multiple_transform(input: PathBuf) {
+  let output = input.with_file_name("output.js");
+  test_fixture(
+    Default::default(),
+    &|_t| {
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([
+          (
+            "request".to_string(),
             MapProperty {
-              to: String::from("react-helmet"),
+              to: String::from("axios"),
+              import_type: Some(ImportType::Named),
+              name: None,
+            },
+          ),
+          (
+            "test".to_string(),
+            MapProperty {
+              to: String::from("axios"),
+              import_type: Some(ImportType::Named),
+              name: None,
+            },
+          ),
+          (
+            "store".to_string(),
+            MapProperty {
+              to: String::from("@ice/store"),
               import_type: Some(ImportType::Default),
               name: None,
             },
-          )]),
-        },
-      )]))
+          ),
+        ]),
+      })])
     },
     &input,
     &output,
@@ -250,19 +324,27 @@ fn test_ice_matched_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("ice"),
-          map: HashMap::from([(
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([
+          (
             "runApp".to_string(),
             MapProperty {
               to: String::from("@ice/runtime"),
               import_type: Some(ImportType::Named),
               name: None,
             },
-          )]),
-        },
-      )]))
+          ),
+          (
+            "defineDataLoader".to_string(),
+            MapProperty {
+              to: String::from("@ice/runtime"),
+              import_type: Some(ImportType::Named),
+              name: None,
+            },
+          ),
+        ]),
+      })])
     },
     &input,
     &output,
@@ -278,19 +360,17 @@ fn test_ice_miss_match_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      as_folder(ModuleImportVisitor::new(vec![Config::SpecificConfig(
-        SpecificConfigs {
-          name: String::from("ice"),
-          map: HashMap::from([(
-            "runApp".to_string(),
-            MapProperty {
-              to: String::from("@ice/runtime"),
-              import_type: Some(ImportType::Named),
-              name: None,
-            },
-          )]),
-        },
-      )]))
+      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+        name: String::from("ice"),
+        map: HashMap::from([(
+          "runApp".to_string(),
+          MapProperty {
+            to: String::from("@ice/runtime"),
+            import_type: Some(ImportType::Named),
+            name: None,
+          },
+        )]),
+      })])
     },
     &input,
     &output,
