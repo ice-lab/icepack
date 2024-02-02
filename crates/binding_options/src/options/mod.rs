@@ -83,7 +83,10 @@ impl RSPackRawOptions {
     let node = self.node.map(|n| n.into());
 
     // Add custom plugins.
-    plugins.push(Box::new(plugin_manifest::ManifestPlugin::new()));
+    if self.features.assets_manifest.unwrap_or_default() {
+      plugins.push(Box::new(plugin_manifest::ManifestPlugin::new()));
+    }
+    
     let mut builtins = self.builtins.apply(plugins)?;
     if experiments.rspack_future.new_treeshaking {
       builtins.tree_shaking = TreeShaking::False;
