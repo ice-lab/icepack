@@ -20,7 +20,7 @@ rspack_regex = { path = "../.rspack_crates/rspack_regex" }
 rspack_util = { path = "../.rspack_crates/rspack_util" }
 regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = "1.0.100"
+serde_json = { workspace = true }
 swc_config = { workspace = true }
 swc_core = { workspace = true, features = [
   "base",
@@ -34,6 +34,7 @@ swc_env_replacement = { path = "../swc_env_replacement" }
 swc_keep_export = { path = "../swc_keep_export" }
 swc_remove_export = { path = "../swc_remove_export" }
 swc_named_import_transform = { path = "../swc_named_import_transform" }
+swc_change_package_import = { path = "../swc_change_package_import" }
 
 [dev-dependencies]
 indexmap       = { workspace = true }

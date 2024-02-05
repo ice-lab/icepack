@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum Config {
   /// 配置：
   /// ```rs
@@ -42,20 +43,20 @@ pub enum Config {
   SpecificConfig(SpecificConfigs),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone ,Serialize, Deserialize)]
 pub struct SpecificConfigs {
   pub name: String,
   pub map: HashMap<String, MapProperty>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapProperty {
   pub to: String,
   pub import_type: Option<ImportType>,
   pub name: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ImportType {
   Named,
   Default,
