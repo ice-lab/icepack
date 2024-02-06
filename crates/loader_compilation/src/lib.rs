@@ -9,8 +9,8 @@ use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
   TransformOutput,
 };
-use rspack_util::source_map::SourceMapKind;
 use rspack_regex::RspackRegex;
+use rspack_util::source_map::SourceMapKind;
 use serde::Deserialize;
 use swc_config::{config_types::MergingOption, merge::Merge};
 use swc_core::{

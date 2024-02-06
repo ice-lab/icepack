@@ -12,9 +12,7 @@ use anyhow::{Context, Error};
 use dashmap::DashMap;
 use rspack_ast::javascript::{Ast as JsAst, Context as JsAstContext, Program as JsProgram};
 use swc_config::config_types::BoolOr;
-use swc_core::base::config::{
-  BuiltInput, Config, IsModule, JsMinifyCommentOption,
-};
+use swc_core::base::config::{BuiltInput, Config, IsModule, JsMinifyCommentOption};
 use swc_core::base::SwcComments;
 use swc_core::common::comments::{Comment, CommentKind, Comments};
 use swc_core::common::errors::{Handler, HANDLER};
@@ -121,7 +119,7 @@ impl SwcCompiler {
 
     res
   }
-  
+
   pub fn new(resource_path: PathBuf, source: String, mut options: Options) -> Result<Self, Error> {
     let cm = Arc::new(SourceMap::new(FilePathMapping::empty()));
     let globals = Globals::default();

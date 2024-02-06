@@ -2,13 +2,14 @@ use std::{
   env, fs,
   path::{Path, PathBuf},
   str::FromStr,
-  sync::Arc, vec,
+  sync::Arc,
+  vec,
 };
 
 use loader_barrel::{BarrelLoader, LoaderOptions};
 use rspack_core::{
-  run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData,
-  SideEffectOption, ResolverFactory, PluginDriver,
+  run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, PluginDriver,
+  ResolverFactory, ResourceData, SideEffectOption,
 };
 use rspack_util::source_map::SourceMapKind;
 use swc_core::base::config::Config;
@@ -88,13 +89,15 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     profile: false,
   };
 
-  let (plugin_driver, compiler_options) =
-    PluginDriver::new(compiler_options, vec![], Arc::new(
-      ResolverFactory::new(
-        rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
-        ..Default::default()
-      }
-    )), &mut Default::default());
+  let (plugin_driver, compiler_options) = PluginDriver::new(
+    compiler_options,
+    vec![],
+    Arc::new(ResolverFactory::new(rspack_core::Resolve {
+      extensions: Some(vec![".js".to_string()]),
+      ..Default::default()
+    })),
+    &mut Default::default(),
+  );
 
   let (result, _) = run_loaders(
     &[Arc::new(BarrelLoader::new(LoaderOptions {
@@ -105,12 +108,10 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     &[],
     CompilerContext {
       options: Arc::clone(&compiler_options),
-      resolver_factory: Arc::new(
-        ResolverFactory::new(
-          rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
-          ..Default::default()
-        }
-      )),
+      resolver_factory: Arc::new(ResolverFactory::new(rspack_core::Resolve {
+        extensions: Some(vec![".js".to_string()]),
+        ..Default::default()
+      })),
       module: "".into(),
       module_context: None,
       module_source_map_kind: SourceMapKind::SourceMap,
