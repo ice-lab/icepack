@@ -43,7 +43,7 @@ rspack_plugin_real_content_hash       = { path = "../.rspack_crates/rspack_plugi
 rspack_plugin_remove_empty_chunks     = { path = "../.rspack_crates/rspack_plugin_remove_empty_chunks" }
 rspack_plugin_runtime                 = { path = "../.rspack_crates/rspack_plugin_runtime" }
 rspack_plugin_schemes                 = { path = "../.rspack_crates/rspack_plugin_schemes" }
-rspack_plugin_split_chunks_new        = { path = "../.rspack_crates/rspack_plugin_split_chunks_new" }
+rspack_plugin_split_chunks            = { path = "../.rspack_crates/rspack_plugin_split_chunks" }
 rspack_plugin_swc_css_minimizer       = { path = "../.rspack_crates/rspack_plugin_swc_css_minimizer" }
 rspack_plugin_swc_js_minimizer        = { path = "../.rspack_crates/rspack_plugin_swc_js_minimizer" }
 rspack_plugin_warn_sensitive_module   = { path = "../.rspack_crates/rspack_plugin_warn_sensitive_module" }
@@ -52,9 +52,9 @@ rspack_plugin_web_worker_template     = { path = "../.rspack_crates/rspack_plugi
 rspack_plugin_worker                  = { path = "../.rspack_crates/rspack_plugin_worker" }
 rspack_regex                          = { path = "../.rspack_crates/rspack_regex" }
 rspack_swc_visitors                   = { path = "../.rspack_crates/rspack_swc_visitors" }
-loader_compilation                      = { path = "../loader_compilation" }
-loader_barrel                           = { path = "../loader_barrel" }
-plugin_manifest                         = { path = "../plugin_manifest" }
+loader_compilation                    = { path = "../loader_compilation" }
+loader_barrel                         = { path = "../loader_barrel" }
+plugin_manifest                       = { path = "../plugin_manifest" }
 rustc-hash                            = { workspace = true }
 serde                                 = { workspace = true, features = ["derive"] }
 serde_json                            = { workspace = true }

@@ -12,7 +12,9 @@ use anyhow::{Context, Error};
 use dashmap::DashMap;
 use rspack_ast::javascript::{Ast as JsAst, Context as JsAstContext, Program as JsProgram};
 use swc_config::config_types::BoolOr;
-use swc_core::base::config::{BuiltInput, IsModule, JsMinifyCommentOption};
+use swc_core::base::config::{
+  BuiltInput, Config, IsModule, JsMinifyCommentOption,
+};
 use swc_core::base::SwcComments;
 use swc_core::common::comments::{Comment, CommentKind, Comments};
 use swc_core::common::errors::{Handler, HANDLER};
@@ -73,40 +75,10 @@ pub struct SwcCompiler {
   options: Options,
   globals: Globals,
   helpers: Helpers,
+  config: Config,
 }
 
 impl SwcCompiler {
-  pub fn new(resource_path: PathBuf, source: String, mut options: Options) -> Result<Self, Error> {
-    let cm = Arc::new(SourceMap::new(FilePathMapping::empty()));
-    let globals = Globals::default();
-    GLOBALS.set(&globals, || {
-      let top_level_mark = Mark::new();
-      let unresolved_mark = Mark::new();
-      options.top_level_mark = Some(top_level_mark);
-      options.unresolved_mark = Some(unresolved_mark);
-    });
-
-    let fm = cm.new_source_file(FileName::Real(resource_path), source);
-    let comments = SingleThreadedComments::default();
-    let helpers = GLOBALS.set(&globals, || {
-      let external_helpers = options.config.jsc.external_helpers;
-      Helpers::new(external_helpers.into())
-    });
-
-    Ok(Self {
-      cm,
-      fm,
-      comments,
-      options,
-      globals,
-      helpers,
-    })
-  }
-
-  pub fn run<R>(&self, op: impl FnOnce() -> R) -> R {
-    GLOBALS.set(&self.globals, op)
-  }
-
   fn parse_js(
     &self,
     fm: Arc<SourceFile>,
@@ -149,6 +121,40 @@ impl SwcCompiler {
 
     res
   }
+  
+  pub fn new(resource_path: PathBuf, source: String, mut options: Options) -> Result<Self, Error> {
+    let cm = Arc::new(SourceMap::new(FilePathMapping::empty()));
+    let globals = Globals::default();
+    GLOBALS.set(&globals, || {
+      let top_level_mark = Mark::new();
+      let unresolved_mark = Mark::new();
+      options.top_level_mark = Some(top_level_mark);
+      options.unresolved_mark = Some(unresolved_mark);
+    });
+
+    let fm = cm.new_source_file(FileName::Real(resource_path), source);
+    let comments = SingleThreadedComments::default();
+    let config = options.config.clone();
+
+    let helpers = GLOBALS.set(&globals, || {
+      let external_helpers = options.config.jsc.external_helpers;
+      Helpers::new(external_helpers.into())
+    });
+
+    Ok(Self {
+      cm,
+      fm,
+      comments,
+      options,
+      globals,
+      helpers,
+      config,
+    })
+  }
+
+  pub fn run<R>(&self, op: impl FnOnce() -> R) -> R {
+    GLOBALS.set(&self.globals, op)
+  }
 
   pub fn parse<'a, P>(
     &'a self,
@@ -175,10 +181,10 @@ impl SwcCompiler {
             ),
           },
           self.options.output_path.as_deref(),
+          self.options.source_root.clone(),
           self.options.source_file_name.clone(),
           handler,
-          // TODO: support config file.
-          Some(self.options.config.clone()),
+          Some(self.config.clone()),
           Some(&self.comments),
           before_pass,
         )?;
@@ -214,6 +220,18 @@ impl SwcCompiler {
     };
 
     program
+  }
+
+  pub fn comments(&self) -> &SingleThreadedComments {
+    &self.comments
+  }
+
+  pub fn options(&self) -> &Options {
+    &self.options
+  }
+
+  pub fn cm(&self) -> &Arc<SourceMap> {
+    &self.cm
   }
 }
 

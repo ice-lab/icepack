@@ -96,7 +96,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
         rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
         ..Default::default()
       }
-    )));
+    )), &mut Default::default());
   let (result, _) = run_loaders(
     &[Arc::new(CompilationLoader::new(LoaderOptions {
       swc_options: options,
