@@ -1593,6 +1593,7 @@ dependencies = [
  "rspack_util",
  "serde",
  "serde_json",
+ "swc_change_package_import",
  "swc_compiler",
  "swc_config",
  "swc_core",
@@ -4040,6 +4041,7 @@ name = "swc_change_package_import"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "swc_core",
  "testing",
 ]
