@@ -1,5 +1,4 @@
 use std::path::Path;
-
 use anyhow::{Context, Error};
 use either::Either;
 use serde::Deserialize;
@@ -9,6 +8,7 @@ use swc_env_replacement::env_replacement;
 use swc_keep_export::keep_export;
 use swc_named_import_transform::{named_import_transform, TransformConfig};
 use swc_remove_export::remove_export;
+use swc_change_package_import::{change_package_import, Config as ImportConfig, SpecificConfigs};
 
 macro_rules! either {
   ($config:expr, $f:expr) => {
@@ -85,6 +85,7 @@ pub struct TransformFeatureOptions {
   pub keep_export: Option<Vec<String>>,
   pub remove_export: Option<Vec<String>>,
   pub optimize_import: Option<Vec<String>>,
+  pub import_config: Option<Vec<SpecificConfigs>>,
 }
 
 pub(crate) fn transform<'a>(
@@ -98,6 +99,13 @@ pub(crate) fn transform<'a>(
         packages: options.clone(),
       })
     }),
+    either!(
+      feature_options.import_config,
+      |options: &Vec<SpecificConfigs>| {
+        let import_config = options.to_vec();
+        change_package_import(import_config.into_iter().map(ImportConfig::SpecificConfig).collect())
+      }
+    ),
     either!(
       Some(&vec!["@uni/env".to_string(), "universal-env".to_string()]),
       |options: &Vec<String>| { env_replacement(options.clone()) }

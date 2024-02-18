@@ -15,6 +15,10 @@ pub struct ModuleImportVisitor {
   pub options: Vec<Config>,
 }
 
+pub fn change_package_import(options: Vec<Config>) -> impl Fold {
+  ModuleImportVisitor::new(options)
+}
+
 impl ModuleImportVisitor {
   pub fn new(options: Vec<Config>) -> Self {
     Self { options }
