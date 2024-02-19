@@ -171,6 +171,7 @@ fn get_import_module_name(named_import_spec: &ImportNamedSpecifier) -> String {
 
 fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
   wrap_with_moudle_item(ImportDecl {
+    phase: Default::default(),
     src: Box::new(quote_str!(src)),
     specifiers: vec![ImportSpecifier::Default(ImportDefaultSpecifier {
       span: DUMMY_SP,
@@ -184,6 +185,7 @@ fn create_default_import_decl(src: String, local: Ident) -> ModuleItem {
 
 fn create_named_import_decl(src: String, specifiers: Vec<ImportSpecifier>) -> ModuleItem {
   wrap_with_moudle_item(ImportDecl {
+    phase: Default::default(),
     src: Box::new(quote_str!(src)),
     specifiers,
     span: DUMMY_SP,

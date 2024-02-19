@@ -8,11 +8,11 @@ use std::{
 use loader_compilation::{CompilationLoader, LoaderOptions};
 use rspack_ast::RspackAst;
 use rspack_core::{
-  run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, ResourceData,
-  SideEffectOption, ResolverFactory, PluginDriver,
+  run_loaders, CompilerContext, CompilerOptions, Loader, LoaderRunnerContext, PluginDriver,
+  ResolverFactory, ResourceData, SideEffectOption,
 };
-use rspack_util::source_map::SourceMapKind;
 use rspack_plugin_javascript::ast;
+use rspack_util::source_map::SourceMapKind;
 use swc_core::base::config::Config;
 use swc_core::ecma::ast::EsVersion;
 
@@ -90,13 +90,15 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     profile: false,
   };
 
-  let (plugin_driver, compiler_options) =
-    PluginDriver::new(compiler_options, vec![], Arc::new(
-      ResolverFactory::new(
-        rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
-        ..Default::default()
-      }
-    )));
+  let (plugin_driver, compiler_options) = PluginDriver::new(
+    compiler_options,
+    vec![],
+    Arc::new(ResolverFactory::new(rspack_core::Resolve {
+      extensions: Some(vec![".js".to_string()]),
+      ..Default::default()
+    })),
+    &mut Default::default(),
+  );
   let (result, _) = run_loaders(
     &[Arc::new(CompilationLoader::new(LoaderOptions {
       swc_options: options,
@@ -107,12 +109,10 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
     &[],
     CompilerContext {
       options: Arc::clone(&compiler_options),
-      resolver_factory: Arc::new(
-        ResolverFactory::new(
-          rspack_core::Resolve { extensions: Some(vec![".js".to_string()]),
-          ..Default::default()
-        }
-      )),
+      resolver_factory: Arc::new(ResolverFactory::new(rspack_core::Resolve {
+        extensions: Some(vec![".js".to_string()]),
+        ..Default::default()
+      })),
       module: "".into(),
       module_context: None,
       module_source_map_kind: SourceMapKind::SourceMap,

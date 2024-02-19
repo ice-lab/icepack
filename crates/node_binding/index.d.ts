@@ -136,7 +136,6 @@ export interface JsHooks {
   processAssetsStageAnalyse: (...args: any[]) => any
   processAssetsStageReport: (...args: any[]) => any
   afterProcessAssets: (...args: any[]) => any
-  compilation: (...args: any[]) => any
   thisCompilation: (...args: any[]) => any
   emit: (...args: any[]) => any
   assetEmitted: (...args: any[]) => any
@@ -162,6 +161,13 @@ export interface JsHooks {
   stillValidModule: (...args: any[]) => any
   executeModule: (...args: any[]) => any
   runtimeModule: (...args: any[]) => any
+}
+export const enum JsHookType {
+  CompilerCompilation = 'CompilerCompilation'
+}
+export interface JsHook {
+  type: JsHookType
+  function: (...args: any[]) => any
 }
 export interface JsModule {
   context?: string
@@ -585,10 +591,12 @@ export const enum BuiltinPluginName {
   AssetModulesPlugin = 'AssetModulesPlugin',
   SourceMapDevToolPlugin = 'SourceMapDevToolPlugin',
   EvalSourceMapDevToolPlugin = 'EvalSourceMapDevToolPlugin',
+  EvalDevToolModulePlugin = 'EvalDevToolModulePlugin',
   SideEffectsFlagPlugin = 'SideEffectsFlagPlugin',
   FlagDependencyExportsPlugin = 'FlagDependencyExportsPlugin',
   FlagDependencyUsagePlugin = 'FlagDependencyUsagePlugin',
   MangleExportsPlugin = 'MangleExportsPlugin',
+  ModuleConcatenationPlugin = 'ModuleConcatenationPlugin',
   HttpExternalsRspackPlugin = 'HttpExternalsRspackPlugin',
   CopyRspackPlugin = 'CopyRspackPlugin',
   HtmlRspackPlugin = 'HtmlRspackPlugin',
@@ -628,16 +636,21 @@ export interface RawModuleFilenameTemplateFnCtx {
 export interface RawSourceMapDevToolPluginOptions {
   append?: (false | null) | string | Function
   columns?: boolean
-  fallbackModuleFilenameTemplate?: string | Function
+  fallbackModuleFilenameTemplate?: string | ((info: RawModuleFilenameTemplateFnCtx) => string)
   fileContext?: string
   filename?: (false | null) | string
   module?: boolean
-  moduleFilenameTemplate?: string | Function
+  moduleFilenameTemplate?: string | ((info: RawModuleFilenameTemplateFnCtx) => string)
   namespace?: string
   noSources?: boolean
   publicPath?: string
   sourceRoot?: string
   test?: (text: string) => boolean
+}
+export interface RawEvalDevToolModulePluginOptions {
+  namespace?: string
+  moduleFilenameTemplate?: string | ((info: RawModuleFilenameTemplateFnCtx) => string)
+  sourceUrlComment?: string
 }
 export interface RawEntryPluginOptions {
   context: string
@@ -1146,7 +1159,7 @@ export class JsStats {
   getHash(): string | null
 }
 export class Rspack {
-  constructor(options: RSPackRawOptions, builtinPlugins: Array<BuiltinPlugin>, jsHooks: JsHooks | undefined | null, outputFilesystem: ThreadsafeNodeFS, jsLoaderRunner: (...args: any[]) => any)
+  constructor(options: RSPackRawOptions, builtinPlugins: Array<BuiltinPlugin>, jsHooks: JsHooks, compilerHooks: Array<JsHook>, outputFilesystem: ThreadsafeNodeFS, jsLoaderRunner: (...args: any[]) => any)
   unsafe_set_disabled_hooks(hooks: Array<string>): void
   /**
    * Build with the given option passed to the constructor

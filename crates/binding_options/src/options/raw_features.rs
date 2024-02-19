@@ -6,7 +6,7 @@ use rspack_core::{
   SideEffectOption, SourceType, UsedExportsOption,
 };
 use rspack_hash::{HashDigest, HashFunction, RspackHash};
-use rspack_plugin_split_chunks_new::{
+use rspack_plugin_split_chunks::{
   CacheGroup, CacheGroupTest, CacheGroupTestFnCtx, ChunkNameGetter, PluginOptions,
 };
 use rspack_regex::RspackRegex;
@@ -36,8 +36,8 @@ fn get_modules_size(module: &dyn Module) -> f64 {
 fn get_plugin_options(
   strategy: RawStrategyOptions,
   context: String,
-) -> rspack_plugin_split_chunks_new::PluginOptions {
-  use rspack_plugin_split_chunks_new::SplitChunkSizes;
+) -> rspack_plugin_split_chunks::PluginOptions {
+  use rspack_plugin_split_chunks::SplitChunkSizes;
   let default_size_types = [SourceType::JavaScript, SourceType::Unknown];
   let create_sizes = |size: Option<f64>| {
     size
@@ -50,7 +50,7 @@ fn get_plugin_options(
     CacheGroup {
       key: String::from("framework"),
       name: ChunkNameGetter::String("framework".to_string()),
-      chunk_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
+      chunk_filter: rspack_plugin_split_chunks::create_all_chunk_filter(),
       priority: 40.0,
       test: CacheGroupTest::Fn(Arc::new(move |ctx: CacheGroupTestFnCtx| -> Option<bool> {
         Some(ctx.module.name_for_condition().map_or(false, |name| {
@@ -69,7 +69,7 @@ fn get_plugin_options(
       max_async_size: SplitChunkSizes::empty(),
       max_initial_size: SplitChunkSizes::empty(),
       id_hint: String::from("framework"),
-      r#type: rspack_plugin_split_chunks_new::create_default_module_type_filter(),
+      r#type: rspack_plugin_split_chunks::create_default_module_type_filter(),
       automatic_name_delimiter: String::from("-"),
       filename: Some(Filename::from(String::from("framework.js"))),
     },
@@ -89,7 +89,7 @@ fn get_plugin_options(
         }
         Some(hash.digest(&HashDigest::Hex).rendered(8).to_string())
       })),
-      chunk_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
+      chunk_filter: rspack_plugin_split_chunks::create_all_chunk_filter(),
       test: CacheGroupTest::Fn(Arc::new(move |ctx| {
         Some(
           ctx
@@ -108,7 +108,7 @@ fn get_plugin_options(
       max_async_size: SplitChunkSizes::default(),
       max_initial_size: SplitChunkSizes::default(),
       id_hint: String::from("lib"),
-      r#type: rspack_plugin_split_chunks_new::create_default_module_type_filter(),
+      r#type: rspack_plugin_split_chunks::create_default_module_type_filter(),
       automatic_name_delimiter: String::from("-"),
       filename: Some(Filename::from(String::from("lib-[name].js"))),
     },
@@ -116,8 +116,8 @@ fn get_plugin_options(
 
   PluginOptions {
     cache_groups,
-    fallback_cache_group: rspack_plugin_split_chunks_new::FallbackCacheGroup {
-      chunks_filter: rspack_plugin_split_chunks_new::create_all_chunk_filter(),
+    fallback_cache_group: rspack_plugin_split_chunks::FallbackCacheGroup {
+      chunks_filter: rspack_plugin_split_chunks::create_all_chunk_filter(),
       min_size: SplitChunkSizes::default(),
       max_async_size: SplitChunkSizes::default(),
       max_initial_size: SplitChunkSizes::default(),
@@ -159,7 +159,7 @@ impl FeatureApply for SplitChunksStrategy {
     plugins: &mut Vec<Box<dyn rspack_core::Plugin>>,
     context: String,
   ) -> Result<Self::Options, rspack_error::Error> {
-    let split_chunks_plugin = rspack_plugin_split_chunks_new::SplitChunksPlugin::new(
+    let split_chunks_plugin = rspack_plugin_split_chunks::SplitChunksPlugin::new(
       get_plugin_options(self.strategy, context),
     )
     .boxed();
