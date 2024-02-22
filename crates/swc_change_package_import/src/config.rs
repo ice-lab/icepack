@@ -50,6 +50,7 @@ pub struct SpecificConfigs {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MapProperty {
   pub to: String,
   pub import_type: Option<ImportType>,
