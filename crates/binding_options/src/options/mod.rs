@@ -4,8 +4,8 @@ use rspack_binding_options::{
   RawOutputOptions, RawResolveOptions, RawSnapshotOptions, RawStatsOptions,
 };
 use rspack_core::{
-  CompilerOptions, Context, Experiments, IncrementalRebuild, IncrementalRebuildMakeState,
-  ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
+  CacheOptions, CompilerOptions, Context, Experiments, IncrementalRebuild,
+  IncrementalRebuildMakeState, ModuleOptions, Optimization, OutputOptions, Target, TreeShaking,
 };
 use serde::Deserialize;
 
@@ -59,7 +59,13 @@ impl RSPackRawOptions {
     let cache = self.cache.into();
     let experiments = Experiments {
       incremental_rebuild: IncrementalRebuild {
-        make: Some(IncrementalRebuildMakeState::default()),
+        make: if matches!(cache, CacheOptions::Disabled)
+          || self.experiments.rspack_future.new_treeshaking
+        {
+          None
+        } else {
+          Some(IncrementalRebuildMakeState::default())
+        },
         emit_asset: true,
       },
       new_split_chunks: self.experiments.new_split_chunks,
