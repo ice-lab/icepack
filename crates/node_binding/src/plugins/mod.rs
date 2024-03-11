@@ -1,21 +1,24 @@
+mod interceptor;
 mod loader;
-use std::fmt::Debug;
+use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+pub use interceptor::RegisterJsTaps;
 use napi::{Env, Result};
 use rspack_binding_macros::js_fn_into_threadsafe_fn;
 use rspack_binding_values::{
-  AfterResolveData, JsChunk, JsChunkAssetArgs, JsHook, JsHookType, JsModule, JsRuntimeModule,
-  JsRuntimeModuleArg, ToJsCompatSource,
+  AfterResolveData, JsChunk, JsChunkAssetArgs, JsModule, JsRuntimeModule, JsRuntimeModuleArg,
+  ToJsCompatSource,
 };
 use rspack_binding_values::{BeforeResolveData, JsAssetEmittedArgs, ToJsModule};
 use rspack_binding_values::{CreateModuleData, JsBuildTimeExecutionOption, JsExecuteModuleArg};
 use rspack_binding_values::{JsResolveForSchemeInput, JsResolveForSchemeResult};
+use rspack_core::rspack_sources::Source;
 use rspack_core::{
-  ApplyContext, BuildTimeExecutionOption, Chunk, ChunkAssetArgs, Compilation, CompilationParams,
-  CompilerOptions, ModuleIdentifier, NormalModuleAfterResolveArgs, PluginContext, RuntimeModule,
+  ApplyContext, BuildTimeExecutionOption, Chunk, ChunkAssetArgs, CompilerOptions, ModuleIdentifier,
+  NormalModuleAfterResolveArgs, PluginContext, RuntimeModule,
 };
 use rspack_core::{NormalModuleBeforeResolveArgs, PluginNormalModuleFactoryAfterResolveOutput};
 use rspack_core::{
@@ -23,17 +26,15 @@ use rspack_core::{
   PluginNormalModuleFactoryCreateModuleHookOutput, ResourceData,
 };
 use rspack_core::{PluginNormalModuleFactoryResolveForSchemeOutput, PluginShouldEmitHookOutput};
-use rspack_hook::AsyncSeries2;
 use rspack_napi_shared::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use rspack_napi_shared::NapiResultExt;
 
+use self::interceptor::ThreadsafeRegisterJsTaps;
 pub use self::loader::JsLoaderResolver;
 use crate::{DisabledHooks, Hook, JsCompilation, JsHooks};
 
 pub struct JsHooksAdapterInner {
   pub disabled_hooks: DisabledHooks,
-  pub make_tsfn: ThreadsafeFunction<(), ()>,
-  compiler_compilation_hooks: Vec<CompilerCompilationHookFn>,
   pub this_compilation_tsfn: ThreadsafeFunction<JsCompilation, ()>,
   pub process_assets_stage_additional_tsfn: ThreadsafeFunction<(), ()>,
   pub process_assets_stage_pre_process_tsfn: ThreadsafeFunction<(), ()>,
@@ -69,6 +70,7 @@ pub struct JsHooksAdapterInner {
   pub before_resolve: ThreadsafeFunction<BeforeResolveData, (Option<bool>, BeforeResolveData)>,
   pub after_resolve: ThreadsafeFunction<AfterResolveData, Option<bool>>,
   pub context_module_factory_before_resolve: ThreadsafeFunction<BeforeResolveData, Option<bool>>,
+  pub context_module_factory_after_resolve: ThreadsafeFunction<AfterResolveData, Option<bool>>,
   pub normal_module_factory_create_module: ThreadsafeFunction<CreateModuleData, ()>,
   pub normal_module_factory_resolve_for_scheme:
     ThreadsafeFunction<JsResolveForSchemeInput, JsResolveForSchemeResult>,
@@ -81,10 +83,11 @@ pub struct JsHooksAdapterInner {
 #[derive(Clone)]
 pub struct JsHooksAdapterPlugin {
   inner: Arc<JsHooksAdapterInner>,
+  interceptor: Box<ThreadsafeRegisterJsTaps>,
 }
 
-impl Debug for JsHooksAdapterPlugin {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for JsHooksAdapterPlugin {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "rspack_plugin_js_hooks_adapter")
   }
 }
@@ -98,55 +101,28 @@ impl std::ops::Deref for JsHooksAdapterPlugin {
   }
 }
 
-#[derive(Clone)]
-struct CompilerCompilationHookFn(Arc<ThreadsafeFunction<JsCompilation, ()>>);
-
-impl CompilerCompilationHookFn {
-  pub fn new(function: Arc<ThreadsafeFunction<JsCompilation, ()>>) -> Self {
-    Self(function)
-  }
-}
-
-#[async_trait]
-impl AsyncSeries2<Compilation, CompilationParams> for CompilerCompilationHookFn {
-  async fn run(
-    &self,
-    compilation: &mut Compilation,
-    _: &mut CompilationParams,
-  ) -> rspack_error::Result<()> {
-    let compilation = JsCompilation::from_compilation(unsafe {
-      std::mem::transmute::<&'_ mut rspack_core::Compilation, &'static mut rspack_core::Compilation>(
-        compilation,
-      )
-    });
-
-    self
-      .0
-      .call(compilation, ThreadsafeFunctionCallMode::NonBlocking)
-      .into_rspack_result()?
-      .await
-      .unwrap_or_else(|err| panic!("Failed to call compilation: {err}"))
-  }
-}
-
 #[async_trait]
 impl rspack_core::Plugin for JsHooksAdapterPlugin {
   fn name(&self) -> &'static str {
     "rspack.JsHooksAdapterPlugin"
   }
 
+  #[tracing::instrument(name = "js_hooks_adapter::apply", skip_all)]
   fn apply(
     &self,
     ctx: PluginContext<&mut ApplyContext>,
     _options: &mut CompilerOptions,
   ) -> rspack_error::Result<()> {
-    self.compiler_compilation_hooks.iter().for_each(|f| {
-      ctx
-        .context
-        .compiler_hooks
-        .compilation
-        .tap(Box::new(f.clone()));
-    });
+    ctx
+      .context
+      .compiler_hooks
+      .compilation
+      .intercept(self.interceptor.clone());
+    ctx
+      .context
+      .compiler_hooks
+      .make
+      .intercept(self.interceptor.clone());
     Ok(())
   }
 
@@ -187,26 +163,6 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
       .into_rspack_result()?
       .await
       .unwrap_or_else(|err| panic!("Failed to chunk asset: {err}"))
-  }
-
-  #[tracing::instrument(name = "js_hooks_adapter::make", skip_all)]
-  async fn make(
-    &self,
-    _ctx: rspack_core::PluginContext,
-    _compilation: &mut rspack_core::Compilation,
-    _params: &mut Vec<rspack_core::MakeParam>,
-  ) -> rspack_core::PluginMakeHookOutput {
-    if self.is_hook_disabled(&Hook::Make) {
-      return Ok(());
-    }
-
-    // We don't need to expose `compilation` to Node as it's already been exposed via `compilation` hook
-    self
-      .make_tsfn
-      .call((), ThreadsafeFunctionCallMode::NonBlocking)
-      .into_rspack_result()?
-      .await
-      .unwrap_or_else(|err| panic!("Failed to call make: {err}"))
   }
 
   async fn before_resolve(
@@ -260,6 +216,22 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
     self
       .context_module_factory_before_resolve
       .call(args.clone().into(), ThreadsafeFunctionCallMode::NonBlocking)
+      .into_rspack_result()?
+      .await
+      .unwrap_or_else(|err| panic!("Failed to call this_compilation: {err}"))
+  }
+
+  async fn context_module_after_resolve(
+    &self,
+    _ctx: rspack_core::PluginContext,
+    args: &mut NormalModuleAfterResolveArgs<'_>,
+  ) -> PluginNormalModuleFactoryBeforeResolveOutput {
+    if self.is_hook_disabled(&Hook::ContextModuleFactoryAfterResolve) {
+      return Ok(None);
+    }
+    self
+      .context_module_factory_after_resolve
+      .call((&*args).into(), ThreadsafeFunctionCallMode::NonBlocking)
       .into_rspack_result()?
       .await
       .unwrap_or_else(|err| panic!("Failed to call this_compilation: {err}"))
@@ -909,8 +881,8 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
   async fn runtime_module(
     &self,
     module: &mut dyn RuntimeModule,
+    source: Arc<dyn Source>,
     chunk: &Chunk,
-    compilation: &Compilation,
   ) -> rspack_error::Result<Option<String>> {
     if self.is_hook_disabled(&Hook::RuntimeModule) {
       return Ok(None);
@@ -922,8 +894,7 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
         JsRuntimeModuleArg {
           module: JsRuntimeModule {
             source: Some(
-              module
-                .generate(compilation)
+              source
                 .to_js_compat_source()
                 .unwrap_or_else(|err| panic!("Failed to generate runtime module source: {err}")),
             ),
@@ -956,10 +927,9 @@ impl JsHooksAdapterPlugin {
     env: Env,
     js_hooks: JsHooks,
     disabled_hooks: DisabledHooks,
-    compiler_hooks: Vec<JsHook>,
+    interceptor: RegisterJsTaps,
   ) -> Result<Self> {
     let JsHooks {
-      make,
       process_assets_stage_additional,
       process_assets_stage_pre_process,
       process_assets_stage_derived,
@@ -989,6 +959,7 @@ impl JsHooksAdapterPlugin {
       before_resolve,
       after_resolve,
       context_module_factory_before_resolve,
+      context_module_factory_after_resolve,
       normal_module_factory_create_module,
       normal_module_factory_resolve_for_scheme,
       before_compile,
@@ -1045,7 +1016,6 @@ impl JsHooksAdapterPlugin {
     let after_emit_tsfn: ThreadsafeFunction<(), ()> = js_fn_into_threadsafe_fn!(after_emit, env);
     let this_compilation_tsfn: ThreadsafeFunction<JsCompilation, ()> =
       js_fn_into_threadsafe_fn!(this_compilation, env);
-    let make_tsfn: ThreadsafeFunction<(), ()> = js_fn_into_threadsafe_fn!(make, env);
     let optimize_modules_tsfn: ThreadsafeFunction<JsCompilation, ()> =
       js_fn_into_threadsafe_fn!(optimize_modules, env);
     let after_optimize_modules_tsfn: ThreadsafeFunction<JsCompilation, ()> =
@@ -1066,6 +1036,8 @@ impl JsHooksAdapterPlugin {
       js_fn_into_threadsafe_fn!(finish_modules, env);
     let context_module_factory_before_resolve: ThreadsafeFunction<BeforeResolveData, Option<bool>> =
       js_fn_into_threadsafe_fn!(context_module_factory_before_resolve, env);
+    let context_module_factory_after_resolve: ThreadsafeFunction<AfterResolveData, Option<bool>> =
+      js_fn_into_threadsafe_fn!(context_module_factory_after_resolve, env);
     let before_resolve: ThreadsafeFunction<BeforeResolveData, (Option<bool>, BeforeResolveData)> =
       js_fn_into_threadsafe_fn!(before_resolve, env);
     let after_resolve: ThreadsafeFunction<AfterResolveData, Option<bool>> =
@@ -1087,19 +1059,10 @@ impl JsHooksAdapterPlugin {
     let runtime_module_tsfn: ThreadsafeFunction<JsRuntimeModuleArg, Option<JsRuntimeModule>> =
       js_fn_into_threadsafe_fn!(runtime_module, env);
 
-    let mut compiler_compilation_hooks = Vec::new();
-    for hook in compiler_hooks {
-      match hook.r#type {
-        JsHookType::CompilerCompilation => compiler_compilation_hooks.push(
-          CompilerCompilationHookFn::new(Arc::new(js_fn_into_threadsafe_fn!(hook.function, env))),
-        ),
-      }
-    }
-
     Ok(JsHooksAdapterPlugin {
+      interceptor: Box::new(ThreadsafeRegisterJsTaps::from_js_taps(interceptor, env)?),
       inner: Arc::new(JsHooksAdapterInner {
         disabled_hooks,
-        make_tsfn,
         process_assets_stage_additional_tsfn,
         process_assets_stage_pre_process_tsfn,
         process_assets_stage_derived_tsfn,
@@ -1117,7 +1080,6 @@ impl JsHooksAdapterPlugin {
         process_assets_stage_analyse_tsfn,
         process_assets_stage_report_tsfn,
         after_process_assets_tsfn,
-        compiler_compilation_hooks,
         this_compilation_tsfn,
         should_emit_tsfn,
         emit_tsfn,
@@ -1131,6 +1093,7 @@ impl JsHooksAdapterPlugin {
         after_compile_tsfn,
         before_resolve,
         context_module_factory_before_resolve,
+        context_module_factory_after_resolve,
         normal_module_factory_create_module,
         normal_module_factory_resolve_for_scheme,
         finish_modules_tsfn,

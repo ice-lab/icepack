@@ -3,7 +3,6 @@ use std::sync::RwLock;
 /// rust support hooks
 #[derive(PartialEq)]
 pub enum Hook {
-  Make,
   FinishMake,
   BuildModule,
   ThisCompilation,
@@ -38,6 +37,7 @@ pub enum Hook {
   /// webpack `compilation.hooks.chunkAsset`
   ChunkAsset,
   ContextModuleFactoryBeforeResolve,
+  ContextModuleFactoryAfterResolve,
   NormalModuleFactoryResolveForScheme,
   NormalModuleFactoryCreateModule,
   AfterResolve,
@@ -51,7 +51,6 @@ pub enum Hook {
 impl From<String> for Hook {
   fn from(s: String) -> Self {
     match s.as_str() {
-      "make" => Hook::Make,
       "finishMake" => Hook::FinishMake,
       "buildModule" => Hook::BuildModule,
       "thisCompilation" => Hook::ThisCompilation,
@@ -85,6 +84,7 @@ impl From<String> for Hook {
       "optimizeTree" => Hook::OptimizeTree,
       "chunkAsset" => Hook::ChunkAsset,
       "contextModuleFactoryBeforeResolve" => Hook::ContextModuleFactoryBeforeResolve,
+      "contextModuleFactoryAfterResolve" => Hook::ContextModuleFactoryAfterResolve,
       "normalModuleFactoryCreateModule" => Hook::NormalModuleFactoryCreateModule,
       "normalModuleFactoryResolveForScheme" => Hook::NormalModuleFactoryResolveForScheme,
       "afterResolve" => Hook::AfterResolve,

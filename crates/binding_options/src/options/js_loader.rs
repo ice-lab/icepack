@@ -32,6 +32,7 @@ pub async fn run_builtin_loader(
   };
 
   let mut cx = LoaderContext {
+    hot: loader_context.hot,
     content: loader_context
       .content
       .map(|c| Content::from(c.as_ref().to_owned())),
