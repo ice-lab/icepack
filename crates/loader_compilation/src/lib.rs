@@ -2,7 +2,9 @@ use std::{collections::HashMap, path::Path, sync::Mutex};
 
 use lazy_static::lazy_static;
 use rspack_ast::RspackAst;
-use rspack_core::{rspack_sources::SourceMap, LoaderRunnerContext, Mode};
+use rspack_core::{
+  rspack_sources::SourceMap, LoaderRunnerContext, LoadersShouldAlwaysGiveContent, Mode,
+};
 use rspack_error::{error, AnyhowError, Diagnostic, Result};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
@@ -106,8 +108,7 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
       let mut swc_options = self.loader_options.swc_options.clone();
       if swc_options.config.jsc.transform.as_ref().is_some() {
         let mut transform = TransformConfig::default();
-        let default_development = matches!(loader_context.context.options.mode, Mode::Development);
-        transform.react.development = Some(default_development);
+        transform.react.development = Some(Mode::is_development(&loader_context.context.options.mode));
         swc_options
           .config
           .jsc
@@ -129,13 +130,6 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         if let Ok(source_map) = pre_source_map.to_json() {
           swc_options.config.input_source_map = Some(InputSourceMap::Str(source_map))
         }
-      }
-
-      if swc_options.config.jsc.experimental.plugins.is_some() {
-        loader_context.emit_diagnostic(Diagnostic::warn(
-          COMPILATION_LOADER_IDENTIFIER.to_string(),
-          "Experimental plugins are not currently supported.".to_string(),
-        ));
       }
 
       if swc_options.config.jsc.target.is_some() && swc_options.config.env.is_some() {
@@ -206,6 +200,9 @@ impl Loader<LoaderRunnerContext> for CompilationLoader {
         .composed_index_by_identifier(&self.identifier)
         .map(|idx| idx == 0)
         .unwrap_or(true))
+      && !loader_context
+        .additional_data
+        .contains::<&LoadersShouldAlwaysGiveContent>()
     {
       loader_context
         .additional_data

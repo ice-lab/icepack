@@ -98,6 +98,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
       ..Default::default()
     })),
     &mut Default::default(),
+    &mut Default::default(),
   );
   let (result, _) = run_loaders(
     &[Arc::new(CompilationLoader::new(LoaderOptions {
@@ -124,6 +125,7 @@ async fn loader_test(actual: impl AsRef<Path>, expected: impl AsRef<Path>) {
       plugin_driver,
       cache: Arc::new(rspack_core::cache::Cache::new(compiler_options)),
     },
+    Default::default(),
   )
   .await
   .expect("TODO:")

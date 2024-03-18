@@ -33,9 +33,10 @@ pub async fn run_builtin_loader(
 
   let mut cx = LoaderContext {
     hot: loader_context.hot,
-    content: loader_context
-      .content
-      .map(|c| Content::from(c.as_ref().to_owned())),
+    content: match loader_context.content {
+      Either::A(_) => None,
+      Either::B(c) => Some(Content::from(c.as_ref().to_owned())),
+    },
     resource: &loader_context.resource,
     resource_path: Path::new(&loader_context.resource_path),
     resource_query: loader_context.resource_query.as_deref(),

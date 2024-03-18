@@ -2,11 +2,12 @@ use std::{collections::HashMap, path::Path};
 
 use rspack_core::{
   rspack_sources::{RawSource, SourceExt},
-  CompilationAsset, Plugin, PluginContext, PluginProcessAssetsOutput, ProcessAssetsArgs,
-  PublicPath,
+  CompilationAsset, Plugin,
+  PublicPath, Compilation,
 };
+use rspack_error::Result;
+use rspack_hook::AsyncSeries;
 use serde::{Deserialize, Serialize};
-// use rspack_error::Result;
 
 #[derive(Debug)]
 pub struct ManifestPlugin;
@@ -29,18 +30,11 @@ impl ManifestPlugin {
   }
 }
 
-#[async_trait::async_trait]
-impl Plugin for ManifestPlugin {
-  fn name(&self) -> &'static str {
-    "ManifestPlugin"
-  }
+struct MainfestPluginProcessAssetsHook;
 
-  async fn process_assets_stage_additional(
-    &self,
-    _ctx: PluginContext,
-    args: ProcessAssetsArgs<'_>,
-  ) -> PluginProcessAssetsOutput {
-    let compilation = args.compilation;
+#[async_trait::async_trait]
+impl AsyncSeries<Compilation> for MainfestPluginProcessAssetsHook {
+  async fn run(&self, compilation: &mut Compilation) -> Result<()> {
     let public_path = match &compilation.options.output.public_path {
       PublicPath::String(p) => p,
       PublicPath::Auto => AUTO_PUBLIC_PATH_PLACEHOLDER,
@@ -117,6 +111,30 @@ impl Plugin for ManifestPlugin {
       "assets-manifest.json".to_string(),
       CompilationAsset::from(RawSource::from(json_string).boxed()),
     );
+    Ok(())
+  }
+
+  fn stage(&self) -> i32 {
+    Compilation::PROCESS_ASSETS_STAGE_ADDITIONS
+  }
+}
+
+
+impl Plugin for ManifestPlugin {
+  fn name(&self) -> &'static str {
+    "ManifestPlugin"
+  }
+
+  fn apply(
+    &self,
+    ctx: rspack_core::PluginContext<&mut rspack_core::ApplyContext>,
+    _options: &mut rspack_core::CompilerOptions,
+  ) -> Result<()> {
+    ctx
+      .context
+      .compilation_hooks
+      .process_assets
+      .tap(Box::new(MainfestPluginProcessAssetsHook));
     Ok(())
   }
 }
