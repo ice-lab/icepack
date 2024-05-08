@@ -1,0 +1,21 @@
+{
+  "name": "@ice/pack-binding-win32-ia32-msvc",
+  "version": "0.0.1",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "i686"
+  ],
+  "main": "pack-binding.win32-ia32-msvc.node",
+  "files": [
+    "pack-binding.win32-ia32-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
+  }
+}
