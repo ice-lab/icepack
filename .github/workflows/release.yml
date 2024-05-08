@@ -29,12 +29,33 @@ jobs:
             target: x86_64-apple-darwin
             build: |
               cd crates/node_binding
-              pnpm build
+              pnpm build --target x86_64-apple-darwin
+              strip -x *.node
+          - host: macos-latest
+            name: darwin-arm64
+            target: aarch64-apple-darwin
+            build: |
+              cd crates/node_binding
+              pnpm build --target aarch64-apple-darwin
               strip -x *.node
           - host: windows-latest
-            build: cd crates/node_binding && pnpm build
             name: win32-x64-msvc
             target: x86_64-pc-windows-msvc
+            build: |
+              cd crates/node_binding
+              pnpm build --target x86_64-pc-windows-msvc
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+            name:  win32-arm64-msvc
+            build: |
+              cd crates/node_binding
+              pnpm build --target aarch64-pc-windows-msvc
+          - host: windows-latest
+            target: i686-pc-windows-msvc
+            name:  win32-i686-msvc
+            build: |
+              cd crates/node_binding
+              pnpm build --target i686-pc-windows-msvc 
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             name: linux-x64-gnu
@@ -50,17 +71,26 @@ jobs:
             target: x86_64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
             build: cd crates/node_binding && set -e && pnpm build && strip *.node
-          - host: macos-latest
-            name: darwin-arm64
-            target: aarch64-apple-darwin
-            build: |
-              cd crates/node_binding
-              pnpm build --target aarch64-apple-darwin
-              strip -x *.node
-          - host: windows-latest
-            target: aarch64-pc-windows-msvc
-            name: win32-arm64-msvc
-            build: cd crates/node_binding && pnpm build --target aarch64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            name: linux-arm64-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
+            build: |-
+              set -e &&
+              cd crates/node_binding &&
+              export JEMALLOC_SYS_WITH_LG_PAGE=16 && export CC_aarch64_unknown_linux_gnu=/usr/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc &&
+              pnpm build --target aarch64-unknown-linux-gnu &&
+              strip *.node
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            name: linux-arm64-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+            build: |-
+              set -e &&
+              cd crates/node_binding &&
+              export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc &&
+              pnpm build --target aarch64-unknown-linux-musl &&
+              strip *.node
     name: stable - ${{ matrix.settings.target }} - node@18
     runs-on: ${{ matrix.settings.host }}
     steps:
