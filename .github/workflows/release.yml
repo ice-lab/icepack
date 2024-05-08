@@ -52,7 +52,7 @@ jobs:
               pnpm build --target aarch64-pc-windows-msvc
           - host: windows-latest
             target: i686-pc-windows-msvc
-            name:  win32-i686-msvc
+            name:  win32-ia32-msvc
             build: |
               cd crates/node_binding
               pnpm build --target i686-pc-windows-msvc 
@@ -64,7 +64,7 @@ jobs:
               set -e &&
               cd crates/node_binding &&
               unset CC_x86_64_unknown_linux_gnu && unset CC &&
-              npm run build -- --target x86_64-unknown-linux-gnu &&
+              pnpm build --target x86_64-unknown-linux-gnu &&
               strip *.node
           - host: ubuntu-latest
             name: linux-x64-musl
@@ -79,6 +79,7 @@ jobs:
               set -e &&
               cd crates/node_binding &&
               export JEMALLOC_SYS_WITH_LG_PAGE=16 && export CC_aarch64_unknown_linux_gnu=/usr/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc &&
+              rustup target add aarch64-unknown-linux-gnu &&
               pnpm build --target aarch64-unknown-linux-gnu &&
               strip *.node
           - host: ubuntu-latest
@@ -89,6 +90,7 @@ jobs:
               set -e &&
               cd crates/node_binding &&
               export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc &&
+              rustup target add aarch64-unknown-linux-musl &&
               pnpm build --target aarch64-unknown-linux-musl &&
               strip *.node
     name: stable - ${{ matrix.settings.target }} - node@18
