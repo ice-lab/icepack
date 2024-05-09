@@ -50,11 +50,3 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 [target.x86_64-apple-darwin]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
-
-[target.aarch64-unknown-linux-musl]
-linker = "aarch64-linux-musl-gcc"
-rustflags = ["-C", "target-feature=-crt-static"]
-
-[target.aarch64-unknown-linux-gnu]
-linker = "/usr/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc"
-rustflags = ["-C", "target-feature=-crt-static"]
