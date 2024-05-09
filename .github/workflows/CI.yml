@@ -133,7 +133,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}.${{ matrix.settings.name }}.node
+          name: bindings-${{ matrix.settings.target }}
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   test-macOS-windows-binding:
@@ -167,7 +167,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}.${{ matrix.settings.name }}.node
+          name: bindings-${{ matrix.settings.target }}
           path: .
       - name: List packages
         run: ls -R .
@@ -329,25 +329,19 @@ jobs:
       - name: Download macOS x64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}.darwin-x64.node
+          name: bindings-x86_64-apple-darwin
           path: artifacts
-      - name: List packages
-        run: ls artifacts/
-        shell: bash
-      # - name: Download macOS arm64 artifact
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: ${{ env.APP_NAME }}.darwin-arm64.node
-      #     path: artifacts
-      # - name: List packages
-      #   run: ls artifacts/
-      #   shell: bash
+      - name: Download macOS arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-aarch64-apple-darwin
+          path: artifacts
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}.darwin-universal.node
+          name: bindings-universal-apple-darwin
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   publish:
