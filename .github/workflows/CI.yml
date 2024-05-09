@@ -330,18 +330,18 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: css-modules-hash.darwin-x64.node
-          path: artifacts
+          path: .
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
           name: css-modules-hash.darwin-arm64.node
-          path: artifacts
+          path: .
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: bindings-universal-apple-darwin
+          name: ${{ env.APP_NAME }}.darwin-universal.node
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   publish:
