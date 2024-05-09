@@ -330,12 +330,15 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: css-modules-hash.darwin-x64.node
-          path: .
+          path: artifacts
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
           name: css-modules-hash.darwin-arm64.node
-          path: .
+          path: artifacts
+      - name: List packages
+        run: ls -R .
+        shell: bash
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
