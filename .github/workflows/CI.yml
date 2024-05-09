@@ -329,15 +329,18 @@ jobs:
       - name: Download macOS x64 artifact
         uses: actions/download-artifact@v3
         with:
-          name: css-modules-hash.darwin-x64.node
+          name: ${{ env.APP_NAME }}.darwin-x64.node
           path: artifacts
+      - name: List packages
+        run: ls artifacts/
+        shell: bash
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
-          name: css-modules-hash.darwin-arm64.node
+          name: ${{ env.APP_NAME }}.darwin-arm64.node
           path: artifacts
       - name: List packages
-        run: ls -R .
+        run: ls artifacts/
         shell: bash
       - name: Combine binaries
         run: yarn universal
