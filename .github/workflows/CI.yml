@@ -29,7 +29,7 @@ jobs:
             name: darwin-x64
             target: x86_64-apple-darwin
             build: |
-              yarn build --target darwin-x64
+              yarn build
               strip -x *.node
           - host: windows-latest
             name: win32-x64-msvc
@@ -97,7 +97,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}
         with:
-          toolchain: stable
+          toolchain: nightly-2023-12-28
           targets: ${{ matrix.settings.target }}
       - name: Cache cargo
         uses: actions/cache@v3
