@@ -343,6 +343,8 @@ jobs:
       - test-macOS-windows-binding
       - test-linux-x64-gnu-binding
       - test-linux-x64-musl-binding
+      - test-linux-aarch64-musl-binding
+      - test-linux-aarch64-gnu-binding
       - universal-macOS
     steps:
       - uses: actions/checkout@v3
