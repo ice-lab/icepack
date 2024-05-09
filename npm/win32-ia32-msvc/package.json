@@ -1,0 +1,21 @@
+{
+  "name": "@ice/css-modules-hash-win32-ia32-msvc",
+  "version": "0.0.6",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "i686"
+  ],
+  "main": "css-modules-hash.win32-ia32-msvc.node",
+  "files": [
+    "css-modules-hash.win32-ia32-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
+  }
+}

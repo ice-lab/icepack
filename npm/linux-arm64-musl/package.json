@@ -1,0 +1,24 @@
+{
+  "name": "@ice/css-modules-hash-linux-arm64-musl",
+  "version": "0.0.6",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "css-modules-hash.linux-arm64-musl.node",
+  "files": [
+    "css-modules-hash.linux-arm64-musl.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "libc": [
+    "musl"
+  ],
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
+  }
+}
