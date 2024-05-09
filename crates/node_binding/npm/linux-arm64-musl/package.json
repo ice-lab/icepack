@@ -1,0 +1,24 @@
+{
+  "name": "@ice/pack-binding-linux-arm64-musl",
+  "version": "0.0.1",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "pack-binding.linux-arm64-musl.node",
+  "files": [
+    "pack-binding.linux-arm64-musl.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "libc": [
+    "musl"
+  ],
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
+  }
+}
