@@ -321,12 +321,12 @@ jobs:
       - name: Download macOS x64 artifact
         uses: actions/download-artifact@v3
         with:
-          name: bindings-x86_64-apple-darwin
+          name: css-modules-hash.darwin-x64.node
           path: artifacts
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v3
         with:
-          name: bindings-aarch64-apple-darwin
+          name: css-modules-hash.darwin-arm64.node
           path: artifacts
       - name: Combine binaries
         run: yarn universal
