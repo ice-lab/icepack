@@ -26,11 +26,13 @@ jobs:
       matrix:
         settings:
           - host: macos-latest
+            name: darwin-x64
             target: x86_64-apple-darwin
             build: |
               yarn build
               strip -x *.node
           - host: windows-latest
+            name: win32-x64-msvc
             build: yarn build
             target: x86_64-pc-windows-msvc
           - host: windows-latest
@@ -38,6 +40,7 @@ jobs:
             name:  win32-ia32-msvc
             build: yarn build --target i686-pc-windows-msvc 
           - host: ubuntu-latest
+            name: linux-x64-gnu
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: |-
@@ -45,6 +48,7 @@ jobs:
               yarn build --target x86_64-unknown-linux-gnu &&
               strip *.node
           - host: ubuntu-latest
+            name: linux-x64-musl
             target: x86_64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
             build: set -e && yarn build && strip *.node
@@ -70,10 +74,12 @@ jobs:
               /aarch64-linux-musl-cross/bin/aarch64-linux-musl-strip *.node
           - host: macos-latest
             target: aarch64-apple-darwin
+            name: darwin-arm64
             build: |
               yarn build --target aarch64-apple-darwin
               strip -x *.node
           - host: windows-latest
+            name:  win32-arm64-msvc
             target: aarch64-pc-windows-msvc
             build: yarn build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@18
@@ -140,8 +146,10 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
+            name: darwin-x64
           - host: windows-latest
             target: x86_64-pc-windows-msvc
+            name: win32-x64-msvc
         node:
           - '16'
           - '18'
@@ -159,7 +167,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
-          name: bindings-${{ matrix.settings.target }}
+          name: ${{ env.APP_NAME }}.${{ matrix.settings.name }}.node
           path: .
       - name: List packages
         run: ls -R .
