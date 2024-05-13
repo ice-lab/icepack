@@ -1,0 +1,24 @@
+{
+  "name": "@ice/pack-binding-linux-arm64-gnu",
+  "version": "0.0.1",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "pack-binding.linux-arm64-gnu.node",
+  "files": [
+    "pack-binding.linux-arm64-gnu.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "libc": [
+    "glibc"
+  ],
+  "repository": {
+    "url": "https://github.com/ice-lab/icepack"
+  }
+}
