@@ -2424,6 +2424,7 @@ dependencies = [
  "napi-derive",
  "napi-h",
  "once_cell",
+ "plugin_manifest",
  "rspack_allocator",
  "rspack_binding_values",
  "rspack_collections",

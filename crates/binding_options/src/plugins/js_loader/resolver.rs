@@ -43,6 +43,7 @@ pub fn serde_error_to_miette(
 pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoader> {
   let options: Arc<str> = options.unwrap_or("{}").into();
   if builtin.starts_with(SWC_LOADER_IDENTIFIER) {
+    println!("swc loader:");
     return Ok(Arc::new(
       rspack_loader_swc::SwcLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
         serde_error_to_miette(e, options, "failed to parse builtin:swc-loader options")
@@ -52,9 +53,9 @@ pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoa
   }
 
   if builtin.starts_with(COMPILATION_LOADER_IDENTIFIER) {
-    return  Ok(Arc::new(
-      loader_compilation::CompilationLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
-        serde_error_to_miette(e, options, "failed to parse builtin:compilation-loader options")
+    return Ok(Arc::new(
+      rspack_loader_swc::SwcLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
+        serde_error_to_miette(e, options, "failed to parse builtin:swc-loader options")
       })?)
       .with_identifier(builtin.into()),
     ));
@@ -117,6 +118,7 @@ pub(crate) async fn resolve_loader(
 
   // FIXME: not belong to napi
   if loader_request.starts_with(BUILTIN_LOADER_PREFIX) {
+    println!("builtin loader: {loader_request}");
     return get_builtin_loader(loader_request, loader_options).map(Some);
   }
 

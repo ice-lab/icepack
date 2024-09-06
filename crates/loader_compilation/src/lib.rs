@@ -45,6 +45,7 @@ pub struct CompilationOptions {
   transform_features: TransformFeatureOptions,
   compile_rules: CompileRules,
 }
+
 pub struct CompilationLoader {
   identifier: Identifier,
   loader_options: CompilationOptions,

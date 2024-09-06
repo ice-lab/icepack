@@ -25,6 +25,7 @@ rspack_napi              = { version = "0.1.0", path = "../.rspack_crates/rspack
 rspack_paths             = { version = "0.1.0", path = "../.rspack_crates/rspack_paths" }
 rspack_plugin_html       = { version = "0.1.0", path = "../.rspack_crates/rspack_plugin_html" }
 rspack_plugin_javascript = { version = "0.1.0", path = "../.rspack_crates/rspack_plugin_javascript" }
+plugin_manifest = { version = "0.1.0", path = "../plugin_manifest" }
 
 rspack_tracing = { version = "0.1.0", path = "../.rspack_crates/rspack_tracing" }
 tokio          = { workspace = true, features = ["rt", "rt-multi-thread"] }

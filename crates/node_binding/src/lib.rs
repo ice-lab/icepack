@@ -25,6 +25,7 @@ use resolver_factory::*;
 use binding_options::*;
 use rspack_binding_values::*;
 use rspack_tracing::chrome::FlushGuard;
+use plugin_manifest::ManifestPlugin;
 
 #[napi]
 pub struct Rspack {
@@ -64,6 +65,10 @@ impl Rspack {
       (*resolver_factory_reference).get_resolver_factory(compiler_options.resolve.clone());
     let loader_resolver_factory = (*resolver_factory_reference)
       .get_loader_resolver_factory(compiler_options.resolve_loader.clone());
+
+    // Add default plugins to the compiler.
+    plugins.push(ManifestPlugin::new().boxed());
+
     let rspack = rspack_core::Compiler::new(
       compiler_options,
       plugins,
