@@ -300,6 +300,7 @@ impl RemoveExport {
         body: Some(BlockStmt {
           span: DUMMY_SP,
           stmts: vec![],
+          ctxt: Default::default(),
         }),
         span: DUMMY_SP,
         is_generator: false,
@@ -307,6 +308,7 @@ impl RemoveExport {
         decorators: vec![],
         return_type: None,
         type_params: None,
+        ctxt: Default::default(),
       }),
     };
   }

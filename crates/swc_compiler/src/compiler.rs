@@ -6,14 +6,18 @@
  * Copyright (c)
  */
 use std::env;
+use std::fs::File;
 use std::{path::PathBuf, sync::Arc};
 
-use anyhow::{Context, Error};
+use anyhow::{bail, Context, Error};
+use base64::prelude::*;
 use dashmap::DashMap;
 use rspack_ast::javascript::{Ast as JsAst, Context as JsAstContext, Program as JsProgram};
 use swc_config::config_types::BoolOr;
-use swc_core::base::config::{BuiltInput, Config, IsModule, JsMinifyCommentOption};
-use swc_core::base::SwcComments;
+use swc_core::base::config::{
+  BuiltInput, Config, InputSourceMap, IsModule, JsMinifyCommentOption,
+};
+use swc_core::base::{sourcemap, SwcComments};
 use swc_core::common::comments::{Comment, CommentKind, Comments};
 use swc_core::common::errors::{Handler, HANDLER};
 use swc_core::common::{
@@ -30,6 +34,7 @@ use swc_core::{
   base::{config::Options, try_with_handler},
   common::Globals,
 };
+use url::Url;
 
 fn minify_file_comments(
   comments: &SingleThreadedComments,
@@ -119,7 +124,9 @@ impl SwcCompiler {
 
     res
   }
+}
 
+impl SwcCompiler {
   pub fn new(resource_path: PathBuf, source: String, mut options: Options) -> Result<Self, Error> {
     let cm = Arc::new(SourceMap::new(FilePathMapping::empty()));
     let globals = Globals::default();
@@ -130,7 +137,7 @@ impl SwcCompiler {
       options.unresolved_mark = Some(unresolved_mark);
     });
 
-    let fm = cm.new_source_file(FileName::Real(resource_path), source);
+    let fm = cm.new_source_file(Arc::new(FileName::Real(resource_path)), source);
     let comments = SingleThreadedComments::default();
     let config = options.config.clone();
 
@@ -220,16 +227,153 @@ impl SwcCompiler {
     program
   }
 
-  pub fn comments(&self) -> &SingleThreadedComments {
-    &self.comments
-  }
+  pub fn input_source_map(
+    &self,
+    input_src_map: &InputSourceMap,
+  ) -> Result<Option<sourcemap::SourceMap>, Error> {
+    let fm = &self.fm;
+    let name = &self.fm.name;
 
-  pub fn options(&self) -> &Options {
-    &self.options
-  }
+    let read_inline_sourcemap =
+      |data_url: Option<&str>| -> Result<Option<sourcemap::SourceMap>, Error> {
+        match data_url {
+          Some(data_url) => {
+            let url = Url::parse(data_url)
+              .with_context(|| format!("failed to parse inline source map url\n{}", data_url))?;
 
-  pub fn cm(&self) -> &Arc<SourceMap> {
-    &self.cm
+            let idx = match url.path().find("base64,") {
+              Some(v) => v,
+              None => {
+                bail!("failed to parse inline source map: not base64: {:?}", url)
+              }
+            };
+
+            let content = url.path()[idx + "base64,".len()..].trim();
+
+            let res = BASE64_STANDARD
+              .decode(content.as_bytes())
+              .context("failed to decode base64-encoded source map")?;
+
+            Ok(Some(sourcemap::SourceMap::from_slice(&res).context(
+              "failed to read input source map from inlined base64 encoded \
+                                 string",
+            )?))
+          }
+          None => {
+            bail!("failed to parse inline source map: `sourceMappingURL` not found")
+          }
+        }
+      };
+
+    let read_file_sourcemap =
+      |data_url: Option<&str>| -> Result<Option<sourcemap::SourceMap>, Error> {
+        match name.as_ref() {
+          FileName::Real(filename) => {
+            let dir = match filename.parent() {
+              Some(v) => v,
+              None => {
+                bail!("unexpected: root directory is given as a input file")
+              }
+            };
+
+            let map_path = match data_url {
+              Some(data_url) => {
+                let mut map_path = dir.join(data_url);
+                if !map_path.exists() {
+                  // Old behavior. This check would prevent
+                  // regressions.
+                  // Perhaps it shouldn't be supported. Sometimes
+                  // developers don't want to expose their source
+                  // code.
+                  // Map files are for internal troubleshooting
+                  // convenience.
+                  map_path = PathBuf::from(format!("{}.map", filename.display()));
+                  if !map_path.exists() {
+                    bail!(
+                      "failed to find input source map file {:?} in \
+                                                 {:?} file",
+                      map_path.display(),
+                      filename.display()
+                    )
+                  }
+                }
+
+                Some(map_path)
+              }
+              None => {
+                // Old behavior.
+                let map_path = PathBuf::from(format!("{}.map", filename.display()));
+                if map_path.exists() {
+                  Some(map_path)
+                } else {
+                  None
+                }
+              }
+            };
+
+            match map_path {
+              Some(map_path) => {
+                let path = map_path.display().to_string();
+                let file = File::open(&path);
+
+                // Old behavior.
+                let file = file?;
+
+                Ok(Some(sourcemap::SourceMap::from_reader(file).with_context(
+                  || {
+                    format!(
+                      "failed to read input source map
+                                from file at {}",
+                      path
+                    )
+                  },
+                )?))
+              }
+              None => Ok(None),
+            }
+          }
+          _ => Ok(None),
+        }
+      };
+
+    let read_sourcemap = || -> Option<sourcemap::SourceMap> {
+      let s = "sourceMappingURL=";
+      let idx = fm.src.rfind(s);
+
+      let data_url = idx.map(|idx| {
+        let data_idx = idx + s.len();
+        if let Some(end) = fm.src[data_idx..].find('\n').map(|i| i + data_idx + 1) {
+          &fm.src[data_idx..end]
+        } else {
+          &fm.src[data_idx..]
+        }
+      });
+
+      match read_inline_sourcemap(data_url) {
+        Ok(r) => r,
+        Err(_err) => {
+          // Load original source map if possible
+          read_file_sourcemap(data_url).unwrap_or(None)
+        }
+      }
+    };
+
+    // Load original source map
+    match input_src_map {
+      InputSourceMap::Bool(false) => Ok(None),
+      InputSourceMap::Bool(true) => Ok(read_sourcemap()),
+      InputSourceMap::Str(ref s) => {
+        if s == "inline" {
+          Ok(read_sourcemap())
+        } else {
+          // Load source map passed by user
+          Ok(Some(
+            sourcemap::SourceMap::from_slice(s.as_bytes())
+              .context("failed to read input source map from user-provided sourcemap")?,
+          ))
+        }
+      }
+    }
   }
 }
 
@@ -246,7 +390,7 @@ impl IntoJsAst for SwcCompiler {
       ))
       .with_context(JsAstContext {
         globals: self.globals,
-        helpers: self.helpers,
+        helpers: self.helpers.data(),
         source_map: self.cm,
         top_level_mark: self
           .options

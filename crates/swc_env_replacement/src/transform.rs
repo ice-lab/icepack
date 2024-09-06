@@ -1,5 +1,5 @@
 use swc_core::{
-  common::DUMMY_SP,
+  common::{SyntaxContext, DUMMY_SP},
   ecma::{
     ast::*,
     visit::{Fold, FoldWith},
@@ -19,7 +19,7 @@ fn create_check_expr(meta_value: &str, renderer: &str) -> Expr {
         span: DUMMY_SP,
         kind: MetaPropKind::ImportMeta,
       })),
-      prop: Ident::new(meta_value.into(), DUMMY_SP).into(),
+      prop: MemberProp::Ident(Ident::new(meta_value.into(), DUMMY_SP, SyntaxContext::empty()).into()),
     })),
     right: Box::new(Expr::Lit(Lit::Str(Str {
       value: renderer.into(),
@@ -75,7 +75,7 @@ fn build_regex_test_expression() -> Expr {
   // Create the typeof expression for `navigator`
   let typeof_navigator = Expr::Unary(UnaryExpr {
     op: UnaryOp::TypeOf,
-    arg: Box::new(Expr::Ident(Ident::new("navigator".into(), DUMMY_SP))),
+    arg: Box::new(Expr::Ident(Ident::new("navigator".into(), DUMMY_SP, SyntaxContext::empty()))),
     span: DUMMY_SP,
   });
 
@@ -84,14 +84,14 @@ fn build_regex_test_expression() -> Expr {
     test: Box::new(typeof_navigator),
     cons: Box::new(Expr::Bin(BinExpr {
       left: Box::new(Expr::Member(MemberExpr {
-        obj: Box::new(Expr::Ident(Ident::new("navigator".into(), DUMMY_SP))),
-        prop: MemberProp::Ident(Ident::new("userAgent".into(), DUMMY_SP)),
+        obj: Box::new(Expr::Ident(Ident::new("navigator".into(), DUMMY_SP, SyntaxContext::empty()))),
+        prop: MemberProp::Ident(Ident::new("userAgent".into(), DUMMY_SP, SyntaxContext::empty()).into()),
         span: DUMMY_SP,
       })),
       op: BinaryOp::LogicalOr,
       right: Box::new(Expr::Member(MemberExpr {
-        obj: Box::new(Expr::Ident(Ident::new("navigator".into(), DUMMY_SP))),
-        prop: MemberProp::Ident(Ident::new("swuserAgent".into(), DUMMY_SP)),
+        obj: Box::new(Expr::Ident(Ident::new("navigator".into(), DUMMY_SP, SyntaxContext::empty()))),
+        prop: MemberProp::Ident(Ident::new("swuserAgent".into(), DUMMY_SP, SyntaxContext::empty()).into()),
         span: DUMMY_SP,
       })),
       span: DUMMY_SP,
@@ -108,7 +108,7 @@ fn build_regex_test_expression() -> Expr {
   let test_call = Expr::Call(CallExpr {
     callee: Callee::Expr(Box::new(Expr::Member(MemberExpr {
       obj: Box::new(regex_pattern),
-      prop: MemberProp::Ident(Ident::new("test".into(), DUMMY_SP)),
+      prop: MemberProp::Ident(Ident::new("test".into(), DUMMY_SP, SyntaxContext::empty()).into()),
       span: DUMMY_SP,
     }))),
     args: vec![ExprOrSpread {
@@ -117,6 +117,7 @@ fn build_regex_test_expression() -> Expr {
     }],
     span: DUMMY_SP,
     type_args: None,
+    ctxt: Default::default(),
   });
 
   test_call
@@ -153,7 +154,7 @@ fn get_env_expr(specifier: &Ident) -> Expr {
         create_check_expr("renderer", "client"),
         create_check_expr("target", "web"),
         create_typeof_check(
-          Expr::Ident(Ident::new("pha".into(), DUMMY_SP)),
+          Expr::Ident(Ident::new("pha".into(), DUMMY_SP, SyntaxContext::empty())),
           "object",
           BinaryOp::EqEqEq,
         ),
@@ -165,15 +166,15 @@ fn get_env_expr(specifier: &Ident) -> Expr {
         create_check_expr("renderer", "client"),
         build_regex_test_expression(),
         create_typeof_check(
-          Expr::Ident(Ident::new("WindVane".into(), DUMMY_SP)),
+          Expr::Ident(Ident::new("WindVane".into(), DUMMY_SP, SyntaxContext::empty())),
           "undefined",
           BinaryOp::NotEqEq,
         ),
         create_typeof_check(
           Expr::Member(MemberExpr {
             span: DUMMY_SP,
-            obj: Box::new(Expr::Ident(Ident::new("WindVane".into(), DUMMY_SP))),
-            prop: Ident::new("call".into(), DUMMY_SP).into(),
+            obj: Box::new(Expr::Ident(Ident::new("WindVane".into(), DUMMY_SP, SyntaxContext::empty()))),
+            prop: MemberProp::Ident(Ident::new("call".into(), DUMMY_SP, SyntaxContext::empty()).into()),
           }),
           "undefined",
           BinaryOp::NotEqEq,
@@ -198,6 +199,7 @@ fn create_env_declare(specifier: &Ident, imported: &Ident) -> Stmt {
     span: DUMMY_SP,
     kind: VarDeclKind::Var,
     declare: false,
+    ctxt: Default::default(),
     decls: vec![VarDeclarator {
       span: DUMMY_SP,
       name: Pat::Ident(BindingIdent {
@@ -212,6 +214,7 @@ fn create_env_declare(specifier: &Ident, imported: &Ident) -> Stmt {
 
 fn create_env_default_export(export_name: Ident) -> Stmt {
   Stmt::Decl(Decl::Var(Box::new(VarDecl {
+    ctxt: Default::default(),
     span: DUMMY_SP,
     kind: VarDeclKind::Const,
     declare: false,
@@ -242,8 +245,8 @@ fn create_env_default_export(export_name: Ident) -> Stmt {
         .into_iter()
         .map(|target| {
           PropOrSpread::Prop(Box::new(Prop::KeyValue(KeyValueProp {
-            key: PropName::Ident(Ident::new(target.into(), DUMMY_SP)),
-            value: Box::new(get_env_expr(&Ident::new(target.into(), DUMMY_SP))),
+            key: PropName::Ident(Ident::new(target.into(), DUMMY_SP, SyntaxContext::empty()).into()),
+            value: Box::new(get_env_expr(&Ident::new(target.into(), DUMMY_SP, SyntaxContext::empty()).into())),
           })))
         })
         .collect(),
@@ -289,7 +292,7 @@ fn get_env_stmt(sources: &Vec<String>, decls: Vec<VarDeclarator>) -> Vec<Stmt> {
                     ObjectPatProp::KeyValue(KeyValuePatProp { key, value, .. }) => {
                       if let box Pat::Ident(BindingIdent { id, .. }) = &value {
                         if let PropName::Ident(i) = key {
-                          stmts.push(create_env_declare(i, &id));
+                          stmts.push(create_env_declare(&Ident::from(i.as_ref()), &id));
                         }
                       }
                     }

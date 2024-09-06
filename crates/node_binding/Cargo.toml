@@ -6,17 +6,28 @@ version = "0.0.0"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+plugin  = ["binding_options/plugin"]
+
 [dependencies]
-rspack_binding_macros  = { path = "../.rspack_crates/rspack_binding_macros" }
-rspack_binding_options = { path = "../.rspack_crates/rspack_binding_options" }
-binding_options        = { path = "../binding_options" }
-rspack_binding_values  = { path = "../.rspack_crates/rspack_binding_values" }
-rspack_core            = { path = "../.rspack_crates/rspack_core" }
-rspack_error           = { path = "../.rspack_crates/rspack_error" }
-rspack_fs_node         = { path = "../.rspack_crates/rspack_fs_node" }
-rspack_hook            = { path = "../.rspack_crates/rspack_hook" }
-rspack_napi_shared     = { path = "../.rspack_crates/rspack_napi_shared" }
-rspack_tracing         = { path = "../.rspack_crates/rspack_tracing" }
+binding_options   = { version = "0.1.0", path = "../binding_options" }
+rspack_allocator         = { version = "0.1.0", path = "../.rspack_crates/rspack_allocator" }
+# rspack_binding_options   = { version = "0.1.0", path = "../.rspack_crates/rspack_binding_options" }
+rspack_binding_values    = { version = "0.1.0", path = "../.rspack_crates/rspack_binding_values" }
+rspack_collections       = { version = "0.1.0", path = "../.rspack_crates/rspack_collections" }
+rspack_core              = { version = "0.1.0", path = "../.rspack_crates/rspack_core" }
+rspack_error             = { version = "0.1.0", path = "../.rspack_crates/rspack_error" }
+rspack_fs_node           = { version = "0.1.0", path = "../.rspack_crates/rspack_fs_node" }
+rspack_hash              = { version = "0.1.0", path = "../.rspack_crates/rspack_hash" }
+rspack_hook              = { version = "0.1.0", path = "../.rspack_crates/rspack_hook" }
+rspack_napi              = { version = "0.1.0", path = "../.rspack_crates/rspack_napi" }
+rspack_paths             = { version = "0.1.0", path = "../.rspack_crates/rspack_paths" }
+rspack_plugin_html       = { version = "0.1.0", path = "../.rspack_crates/rspack_plugin_html" }
+rspack_plugin_javascript = { version = "0.1.0", path = "../.rspack_crates/rspack_plugin_javascript" }
+
+rspack_tracing = { version = "0.1.0", path = "../.rspack_crates/rspack_tracing" }
+tokio          = { workspace = true, features = ["rt", "rt-multi-thread"] }
 
 async-trait = { workspace = true }
 once_cell   = { workspace = true }
@@ -27,14 +38,6 @@ napi-derive = { workspace = true }
 
 color-backtrace = "0.6"
 
-[target.'cfg(not(target_os = "linux"))'.dependencies]
-mimalloc-rust = { workspace = true }
-
-[target.'cfg(all(target_os = "linux", target_env = "gnu", any(target_arch = "x86_64", target_arch = "aarch64")))'.dependencies]
-tikv-jemallocator = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
-
-[dev-dependencies]
-testing_macros = { workspace = true }

@@ -28,7 +28,7 @@ pub struct SplitChunksStrategy {
 fn get_modules_size(module: &dyn Module) -> f64 {
   let mut size = 0f64;
   for source_type in module.source_types() {
-    size += module.size(source_type);
+    size += module.size(&source_type);
   }
   size
 }
@@ -87,17 +87,15 @@ fn get_plugin_options(
             hash.write(lib_ident.unwrap().as_bytes());
           }
         }
-        Some(hash.digest(&HashDigest::Hex).rendered(8).to_string())
+        hash.digest(&HashDigest::Hex).rendered(8).to_string()
       })),
       chunk_filter: rspack_plugin_split_chunks::create_all_chunk_filter(),
       test: CacheGroupTest::Fn(Arc::new(move |ctx| {
-        Some(
-          ctx
-            .module
-            .name_for_condition()
-            .map_or(false, |name| re_node_modules.test(&name))
-            && get_modules_size(ctx.module) > 160000.0,
-        )
+        ctx
+          .module
+          .name_for_condition()
+          .map_or(false, |name| re_node_modules.test(&name))
+          && get_modules_size(ctx.module) > 160000.0
       })),
       priority: 30.0,
       min_chunks: 1,

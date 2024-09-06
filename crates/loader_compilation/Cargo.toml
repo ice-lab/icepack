@@ -19,6 +19,7 @@ rspack_plugin_javascript = { path = "../.rspack_crates/rspack_plugin_javascript"
 rspack_regex = { path = "../.rspack_crates/rspack_regex" }
 rspack_util = { path = "../.rspack_crates/rspack_util" }
 regex = { workspace = true }
+stacker = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 swc_config = { workspace = true }
@@ -27,7 +28,6 @@ swc_core = { workspace = true, features = [
   "ecma_ast",
   "common"
 ] }
-swc_emotion = { workspace = true }
 xxhash-rust = { workspace = true, features = ["xxh32"] }
 swc_compiler = { path = "../swc_compiler" }
 swc_env_replacement = { path = "../swc_env_replacement" }
@@ -35,8 +35,8 @@ swc_keep_export = { path = "../swc_keep_export" }
 swc_remove_export = { path = "../swc_remove_export" }
 swc_named_import_transform = { path = "../swc_named_import_transform" }
 swc_change_package_import = { path = "../swc_change_package_import" }
+tokio = { workspace = true }
 
 [dev-dependencies]
 indexmap       = { workspace = true }
 tokio          = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "test-util", "parking_lot"] }
-rspack_testing = { path = "../.rspack_crates/rspack_testing" }
