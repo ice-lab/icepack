@@ -217,6 +217,7 @@ impl Fold for OptimizeBarrel {
           span: DUMMY_SP,
           kind: VarDeclKind::Const,
           declare: false,
+          ctxt: Default::default(),
           decls: vec![VarDeclarator {
             span: DUMMY_SP,
             name: Pat::Ident(BindingIdent {
@@ -255,6 +256,7 @@ impl Fold for OptimizeBarrel {
             span: DUMMY_SP,
             kind: VarDeclKind::Const,
             declare: false,
+            ctxt: Default::default(),
             decls: vec![VarDeclarator {
               span: DUMMY_SP,
               name: Pat::Ident(BindingIdent {

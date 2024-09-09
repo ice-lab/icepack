@@ -64,7 +64,9 @@ rspack_plugin_wasm                    = { version = "0.1.0", path = "../.rspack_
 rspack_plugin_web_worker_template     = { version = "0.1.0", path = "../.rspack_crates/rspack_plugin_web_worker_template" }
 rspack_plugin_worker                  = { version = "0.1.0", path = "../.rspack_crates/rspack_plugin_worker" }
 rspack_regex                          = { version = "0.1.0", path = "../.rspack_crates/rspack_regex" }
+rspack_hash                           = { version = "0.1.0", path = "../.rspack_crates/rspack_hash" }
 loader_compilation                    = { path = "../loader_compilation" }
+loader_barrel                         = { path = "../loader_barrel" }
 rustc-hash                            = { workspace = true }
 serde                                 = { workspace = true, features = ["derive"] }
 serde_json                            = { workspace = true }

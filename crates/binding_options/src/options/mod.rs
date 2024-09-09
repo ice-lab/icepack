@@ -18,6 +18,7 @@ mod raw_output;
 mod raw_snapshot;
 mod raw_split_chunks;
 mod raw_stats;
+mod raw_features;
 
 pub use raw_builtins::*;
 pub use raw_cache::*;
@@ -33,6 +34,7 @@ pub use raw_output::*;
 pub use raw_snapshot::*;
 pub use raw_split_chunks::*;
 pub use raw_stats::*;
+pub use raw_features::*;
 pub use rspack_binding_values::raw_resolve::*;
 
 #[derive(Debug)]
@@ -55,6 +57,7 @@ pub struct RawOptions {
   pub node: Option<RawNodeOption>,
   pub profile: bool,
   pub bail: bool,
+  pub features: RawFeatures,
   #[napi(js_name = "__references", ts_type = "Record<string, any>")]
   pub __references: References,
 }

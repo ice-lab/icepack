@@ -92,7 +92,6 @@ impl CompilationLoader {
     };
 
     if self.loader_options.compile_rules.exclude.is_some() {
-      println!("exclude: {:?}", self.loader_options.compile_rules.exclude);
       let exclude = self.loader_options.compile_rules.exclude.as_ref().unwrap();
       for pattern in exclude {
         let pattern = RspackRegex::new(pattern).unwrap();
