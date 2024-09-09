@@ -54,8 +54,8 @@ pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoa
 
   if builtin.starts_with(COMPILATION_LOADER_IDENTIFIER) {
     return Ok(Arc::new(
-      rspack_loader_swc::SwcLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
-        serde_error_to_miette(e, options, "failed to parse builtin:swc-loader options")
+      loader_compilation::CompilationLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
+        serde_error_to_miette(e, options, "failed to parse builtin:compilation-loader options")
       })?)
       .with_identifier(builtin.into()),
     ));

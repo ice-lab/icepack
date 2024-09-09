@@ -1,18 +1,17 @@
-use std::{collections::HashMap, path::Path, sync::Mutex};
+#![feature(let_chains)]
 
+use std::default::Default;
+use std::{collections::HashMap, path::Path, sync::Mutex};
 use lazy_static::lazy_static;
-use rspack_core::{
-  rspack_sources::SourceMap, Mode, RunnerContext,
-};
+use serde::Deserialize;
+use swc_compiler::{IntoJsAst, SwcCompiler};
+use rspack_core::{rspack_sources::SourceMap, Mode, RunnerContext};
 use rspack_error::{error, AnyhowError, Diagnostic, Result};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
-use rspack_plugin_javascript::{
-  ast::{self, SourceMapConfig},
-  TransformOutput,
-};
 use rspack_regex::RspackRegex;
+use rspack_plugin_javascript::ast::{self, SourceMapConfig};
+use rspack_plugin_javascript::TransformOutput;
 use rspack_util::source_map::SourceMapKind;
-use serde::Deserialize;
 use swc_config::{config_types::MergingOption, merge::Merge};
 use swc_core::{
   base::config::{Config, InputSourceMap, Options, OutputCharset, TransformConfig, SourceMapsConfig},
@@ -21,8 +20,6 @@ use swc_core::{
 use swc_core::ecma::visit::VisitWith;
 
 mod transform;
-
-use swc_compiler::{IntoJsAst, SwcCompiler};
 use transform::*;
 
 #[derive(Debug, Default, Deserialize)]
@@ -50,8 +47,6 @@ pub struct CompilationLoader {
   identifier: Identifier,
   loader_options: CompilationOptions,
 }
-
-pub const COMPILATION_LOADER_IDENTIFIER: &str = "builtin:compilation-loader";
 
 impl From<LoaderOptions> for CompilationOptions {
   fn from(value: LoaderOptions) -> Self {
@@ -97,10 +92,12 @@ impl CompilationLoader {
     };
 
     if self.loader_options.compile_rules.exclude.is_some() {
+      println!("exclude: {:?}", self.loader_options.compile_rules.exclude);
       let exclude = self.loader_options.compile_rules.exclude.as_ref().unwrap();
       for pattern in exclude {
         let pattern = RspackRegex::new(pattern).unwrap();
         if pattern.test(&resource_path.as_str()) {
+          loader_context.content = Some(content);
           return Ok(());
         }
       }
@@ -218,8 +215,8 @@ impl CompilationLoader {
     }
     let ast = c.into_js_ast(program);
     let TransformOutput { code, map } = ast::stringify(&ast, codegen_options)?;
-
     loader_context.content = Some(code.into());
+    
     let map = map
       .map(|m| SourceMap::from_json(&m))
       .transpose()
@@ -229,6 +226,8 @@ impl CompilationLoader {
     Ok(())
   }
 }
+
+pub const COMPILATION_LOADER_IDENTIFIER: &str = "builtin:compilation-loader";
 
 #[async_trait::async_trait]
 impl Loader<RunnerContext> for CompilationLoader {
