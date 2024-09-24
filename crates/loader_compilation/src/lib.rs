@@ -1,8 +1,7 @@
 #![feature(let_chains)]
 
 use std::default::Default;
-use std::{collections::HashMap, path::Path, sync::Mutex};
-use lazy_static::lazy_static;
+use std::path::Path;
 use serde::Deserialize;
 use swc_compiler::{IntoJsAst, SwcCompiler};
 use rspack_core::{rspack_sources::SourceMap, Mode, RunnerContext};
@@ -61,11 +60,6 @@ impl From<LoaderOptions> for CompilationOptions {
       compile_rules,
     }
   }
-}
-
-lazy_static! {
-  static ref GLOBAL_FILE_ACCESS: Mutex<HashMap<String, bool>> = Mutex::new(HashMap::new());
-  static ref GLOBAL_ROUTES_CONFIG: Mutex<Option<Vec<String>>> = Mutex::new(None);
 }
 
 impl CompilationLoader {
@@ -155,25 +149,14 @@ impl CompilationLoader {
     )
     .map_err(AnyhowError::from)?;
 
+    let mut routes_config: Option<Vec<String>> = None;
     let compiler_context: &str = loader_context.context.options.context.as_ref();
-    let mut file_access = GLOBAL_FILE_ACCESS.lock().unwrap();
-    let mut routes_config = GLOBAL_ROUTES_CONFIG.lock().unwrap();
-    let file_accessed = file_access.contains_key(&resource_str);
-
-    if routes_config.is_none() || file_accessed {
-      // Load routes config for transform.
-      let routes_config_path: std::path::PathBuf =
-        Path::new(compiler_context).join(".ice/route-manifest.json");
-      let routes_content = load_routes_config(&routes_config_path);
-      if routes_content.is_ok() {
-        *routes_config = Some(routes_content.map_err(AnyhowError::from)?);
-      }
-      if file_accessed {
-        // If file accessed, then we need to clear the map for the current compilation.
-        file_access.clear();
-      }
+    let routes_config_path: std::path::PathBuf =
+      Path::new(compiler_context).join(".ice/route-manifest.json");
+    let routes_content = load_routes_config(&routes_config_path);
+    if routes_content.is_ok() {
+      routes_config = Some(routes_content.map_err(AnyhowError::from)?);
     }
-    file_access.insert(resource_str, true);
 
     let transform_options = &self.loader_options.transform_features;
     let built = c

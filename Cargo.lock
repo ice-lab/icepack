@@ -2049,7 +2049,6 @@ dependencies = [
  "async-trait",
  "either",
  "indexmap 2.2.6",
- "lazy_static",
  "once_cell",
  "regex",
  "rspack_ast",

@@ -9,7 +9,6 @@ edition = "2021"
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 either = "1"
-lazy_static = "1.4.0"
 once_cell = { workspace = true }
 rspack_ast = { path = "../.rspack_crates/rspack_ast" }
 rspack_core = { path = "../.rspack_crates/rspack_core" }
