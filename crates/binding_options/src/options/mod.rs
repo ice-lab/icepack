@@ -1,7 +1,7 @@
 use napi_derive::napi;
 use rspack_core::{
-  CacheOptions, CompilerOptions, Context, Experiments, IncrementalRebuild,
-  IncrementalRebuildMakeState, ModuleOptions, OutputOptions, References, Target,
+  incremental::IncrementalPasses, CacheOptions, CompilerOptions, Context, Experiments,
+  ModuleOptions, OutputOptions, References,
 };
 
 mod raw_builtins;
@@ -18,7 +18,6 @@ mod raw_output;
 mod raw_snapshot;
 mod raw_split_chunks;
 mod raw_stats;
-// mod raw_features;
 
 pub use raw_builtins::*;
 pub use raw_cache::*;
@@ -34,7 +33,6 @@ pub use raw_output::*;
 pub use raw_snapshot::*;
 pub use raw_split_chunks::*;
 pub use raw_stats::*;
-// pub use raw_features::*;
 pub use rspack_binding_values::raw_resolve::*;
 
 #[derive(Debug)]
@@ -56,8 +54,8 @@ pub struct RawOptions {
   pub experiments: RawExperiments,
   pub node: Option<RawNodeOption>,
   pub profile: bool,
+  pub amd: Option<String>,
   pub bail: bool,
-//  pub features: RawFeatures,
   #[napi(js_name = "__references", ts_type = "Record<string, any>")]
   pub __references: References,
 }
@@ -72,21 +70,11 @@ impl TryFrom<RawOptions> for CompilerOptions {
     let resolve_loader = value.resolve_loader.try_into()?;
     let mode = value.mode.unwrap_or_default().into();
     let module: ModuleOptions = value.module.try_into()?;
-    let target = Target::new(&value.target)?;
     let cache = value.cache.into();
-    let experiments = Experiments {
-      incremental_rebuild: IncrementalRebuild {
-        make: if matches!(cache, CacheOptions::Disabled) {
-          None
-        } else {
-          Some(IncrementalRebuildMakeState::default())
-        },
-        emit_asset: true,
-      },
-      layers: value.experiments.layers,
-      top_level_await: value.experiments.top_level_await,
-      rspack_future: value.experiments.rspack_future.into(),
-    };
+    let mut experiments: Experiments = value.experiments.into();
+    if let CacheOptions::Disabled = cache {
+      experiments.incremental = IncrementalPasses::empty();
+    }
     let optimization = value.optimization.try_into()?;
     let stats = value.stats.into();
     let snapshot = value.snapshot.into();
@@ -96,7 +84,6 @@ impl TryFrom<RawOptions> for CompilerOptions {
       context,
       mode,
       module,
-      target,
       output,
       resolve,
       resolve_loader,
@@ -106,8 +93,8 @@ impl TryFrom<RawOptions> for CompilerOptions {
       snapshot,
       optimization,
       node,
-      dev_server: Default::default(),
       profile: value.profile,
+      amd: value.amd,
       bail: value.bail,
       __references: value.__references,
     })

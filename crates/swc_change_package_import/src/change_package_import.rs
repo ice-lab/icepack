@@ -4,7 +4,7 @@ use swc_core::{
     ast::*,
     atoms::JsWord,
     utils::{quote_str, swc_ecma_ast::ImportSpecifier},
-    visit::{noop_fold_type, Fold, FoldWith},
+    visit::{noop_fold_type, Fold, FoldWith, fold_pass},
   },
 };
 
@@ -15,8 +15,8 @@ pub struct ModuleImportVisitor {
   pub options: Vec<Config>,
 }
 
-pub fn change_package_import(options: Vec<Config>) -> impl Fold {
-  ModuleImportVisitor::new(options)
+pub fn change_package_import(options: Vec<Config>) -> impl Pass {
+  fold_pass(ModuleImportVisitor::new(options))
 }
 
 impl ModuleImportVisitor {

@@ -1,5 +1,3 @@
-cargo-features = ["trim-paths"]
-
 [workspace]
 members  = [
   "crates/.rspack_crates/*",
@@ -13,86 +11,192 @@ members  = [
   "crates/swc_keep_export",
   "crates/swc_remove_export",
   "crates/swc_optimize_barrel",
-  "crates/plugin_specilize_module_name",
   "crates/swc_change_package_import",
 ]
 resolver = "2"
 
 [workspace.package]
+authors       = ["Rspack Teams"]
 categories    = ["bundler", "development-tools", "web-programming"]
-documentation = ""
-homepage      = ""
+documentation = "https://rspack.dev/"
+homepage      = "https://rspack.dev/"
 license       = "MIT"
-repository    = "https://github.com/ice-lab/icepack"
+repository    = "https://github.com/web-infra-dev/rspack"
 
+[workspace.metadata.cargo-shear]
+ignored = [
+  "swc",
+  "rspack_plugin_dynamic",
+  "rspack_builtin",
+  "rspack_loader",
+  "rspack_identifier",
+  "rspack_testing",
+  "rspack_plugin_emit",
+  "rspack_collection",
+  "rspack_deps_graph",
+  "rspack_plugin_mini_css_extract",
+  "rspack_binding",
+  "rspack_plugin_merge",
+]
 [workspace.dependencies]
-anyhow             = { version = "1.0.81", features = ["backtrace"] }
+anyhow             = { version = "1.0.94", features = ["backtrace"] }
 anymap             = { version = "=1.0.0-beta.2" }
-async-recursion    = { version = "1.1.0" }
+async-recursion    = { version = "1.1.1" }
 async-scoped       = { version = "0.9.0" }
-async-trait        = { version = "0.1.79" }
-bitflags           = { version = "2.5.0" }
-camino             = { version = "1.1.8" }
+async-trait        = { version = "0.1.83" }
+bitflags           = { version = "2.6.0" }
+camino             = { version = "1.1.9" }
 concat-string      = { version = "1.0.1" }
-css-module-lexer   = { version = "0.0.14" }
-dashmap            = { version = "5.5.3" }
+cow-utils          = { version = "0.1.3" }
+css-module-lexer   = { version = "0.0.15" }
+dashmap            = { version = "6.1.0" }
 derivative         = { version = "2.2.0" }
-futures            = { version = "0.3.30" }
+either             = { version = "1.13.0" }
+futures            = { version = "0.3.31" }
 glob               = { version = "0.3.1" }
-hashlink           = { version = "0.9.0" }
+hashlink           = { version = "0.9.1" }
 heck               = { version = "0.5.0" }
 hex                = { version = "0.4.3" }
-indexmap           = { version = "2.2.6" }
+indexmap           = { version = "2.7.0" }
 indoc              = { version = "2.0.5" }
 itertools          = { version = "0.13.0" }
 json               = { version = "0.12.4" }
-lightningcss       = { version = "1.0.0-alpha.58" }
+lightningcss       = { version = "1.0.0-alpha.61" }
 linked_hash_set    = { version = "0.1.4" }
 mimalloc           = { version = "0.1.43" }
-mime_guess         = { version = "2.0.4" }
-once_cell          = { version = "1.19.0" }
+mime_guess         = { version = "2.0.5" }
+once_cell          = { version = "1.20.2" }
 parcel_sourcemap   = { version = "2.1.1" }
-paste              = { version = "1.0" }
+paste              = { version = "1.0.15" }
 path-clean         = { version = "1.0.1" }
-pathdiff           = { version = "0.2.1" }
-proc-macro2        = { version = "1.0.79" }
-quote              = { version = "1.0.35" }
+pathdiff           = { version = "0.2.3" }
+pollster           = { version = "0.4.0" }
+proc-macro2        = { version = "1.0.92" }
+quote              = { version = "1.0.37" }
 rayon              = { version = "1.10.0" }
-regex              = { version = "1.10.4" }
-rspack_sources     = { version = "=0.3.2" }
-rustc-hash         = { version = "1.1.0" }
-serde              = { version = "1.0.197" }
-serde_json         = { version = "1.0.115" }
+regex              = { version = "1.11.1" }
+ropey              = "1.6.1"
+rspack_resolver    = { version = "0.3.5", features = ["package_json_raw_json_api"] }
+rspack_sources     = { version = "=0.3.6" }
+rustc-hash         = { version = "2.1.0" }
+serde              = { version = "1.0.215" }
+serde_json         = { version = "1.0.133" }
 simd-json          = { version = "0.14.0-rc.2" }
-stacker            = { version = "0.1.15" }
+smol_str           = { version = "0.3.0" }
+stacker            = { version = "0.1.17" }
 sugar_path         = { version = "1.2.0", features = ["cached_current_dir"] }
-syn                = { version = "2.0.58" }
-tokio              = { version = "1.37.0" }
-tracing            = { version = "0.1.40" }
-tracing-subscriber = { version = "0.3.18" }
-unicase            = { version = "2.7.0" }
-url                = { version = "2.5.0" }
+syn                = { version = "2.0.90" }
+tokio              = { version = "1.42.0" }
+tracing            = { version = "0.1.41" }
+tracing-subscriber = { version = "0.3.19" }
+unicase            = { version = "2.8.0" }
+url                = { version = "2.5.4" }
 urlencoding        = { version = "2.1.3" }
 ustr               = { package = "ustr-fxhash", version = "1.0.0" }
-xxhash-rust        = { version = "0.8.10" }
+xxhash-rust        = { version = "0.8.12" }
 
 # Pinned
-napi        = { package = "napi-h", version = "=2.16.1" }
-napi-build  = { version = "2" }
-napi-derive = { version = "2" }
+napi        = { version = "3.0.0-alpha.22" }
+napi-build  = { version = "2.1.3" }
+napi-derive = { version = "3.0.0-alpha.21" }
+
+# Serialize and Deserialize
+inventory = { version = "=0.1" }
+rkyv      = { version = "=0.8.8" }
 
 # Must be pinned with the same swc versions
-#rkyv                = { version = "=0.7.44" }                           # synced with swc wasm plugin
-swc_config          = { version = "=0.1.15" }
-swc_core            = { version = "=0.101.4", default-features = false }
-swc_ecma_minifier   = { version = "=0.203.1", default-features = false }
-swc_error_reporters = { version = "=0.21.0" }
-swc_html            = { version = "=0.148.0" }
-swc_html_minifier   = { version = "=0.145.0", default-features = false }
-swc_node_comments   = { version = "=0.24.0" }
+swc                 = { version = "5.0.0" }
+swc_config          = { version = "=1.0.0" }
+swc_core            = { version = "=5.0.1", default-features = false }
+swc_ecma_minifier   = { version = "=5.0.0", default-features = false }
+swc_error_reporters = { version = "=5.0.0" }
+swc_html            = { version = "=5.0.0" }
+swc_html_minifier   = { version = "=5.0.0", default-features = false }
+swc_node_comments   = { version = "=4.0.0" }
 testing             = { version = "^0.35.16" }
 
+
 rspack_dojang = { version = "0.1.9" }
+
+# all rspack workspace dependencies
+rspack_allocator                       = { version = "0.2.0", path = "crates/.rspack_crates/rspack_allocator" }
+rspack_ast                             = { version = "0.2.0", path = "crates/.rspack_crates/rspack_ast" }
+rspack_base64                          = { version = "0.2.0", path = "crates/.rspack_crates/rspack_base64" }
+rspack_binding                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_binding" }
+rspack_binding_options                 = { version = "0.2.0", path = "crates/.rspack_crates/rspack_binding_options" }
+rspack_binding_values                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_binding_values" }
+rspack_builtin                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_builtin" }
+rspack_cacheable                       = { version = "0.2.0", path = "crates/.rspack_crates/rspack_cacheable" }
+rspack_collection                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_collection" }
+rspack_collections                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_collections" }
+rspack_core                            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_core" }
+rspack_deps_graph                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_deps_graph" }
+rspack_error                           = { version = "0.2.0", path = "crates/.rspack_crates/rspack_error" }
+rspack_fs                              = { version = "0.2.0", path = "crates/.rspack_crates/rspack_fs" }
+rspack_fs_node                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_fs_node" }
+rspack_futures                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_futures" }
+rspack_hash                            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_hash" }
+rspack_hook                            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_hook" }
+rspack_identifier                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_identifier" }
+rspack_ids                             = { version = "0.2.0", path = "crates/.rspack_crates/rspack_ids" }
+rspack_loader                          = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader" }
+rspack_loader_lightningcss             = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader_lightningcss" }
+rspack_loader_preact_refresh           = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader_preact_refresh" }
+rspack_loader_react_refresh            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader_react_refresh" }
+rspack_loader_runner                   = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader_runner" }
+rspack_loader_swc                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader_swc" }
+rspack_loader_testing                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_loader_testing" }
+rspack_macros                          = { version = "0.2.0", path = "crates/.rspack_crates/rspack_macros" }
+rspack_napi                            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_napi" }
+rspack_napi_macros                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_napi_macros" }
+rspack_paths                           = { version = "0.2.0", path = "crates/.rspack_crates/rspack_paths" }
+rspack_plugin_asset                    = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_asset" }
+rspack_plugin_banner                   = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_banner" }
+rspack_plugin_context_replacement      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_context_replacement" }
+rspack_plugin_copy                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_copy" }
+rspack_plugin_css                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_css" }
+rspack_plugin_devtool                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_devtool" }
+rspack_plugin_dll                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_dll" }
+rspack_plugin_dynamic                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_dynamic" }
+rspack_plugin_dynamic_entry            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_dynamic_entry" }
+rspack_plugin_emit                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_emit" }
+rspack_plugin_ensure_chunk_conditions  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_ensure_chunk_conditions" }
+rspack_plugin_entry                    = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_entry" }
+rspack_plugin_externals                = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_externals" }
+rspack_plugin_extract_css              = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_extract_css" }
+rspack_plugin_hmr                      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_hmr" }
+rspack_plugin_html                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_html" }
+rspack_plugin_ignore                   = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_ignore" }
+rspack_plugin_javascript               = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_javascript" }
+rspack_plugin_json                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_json" }
+rspack_plugin_lazy_compilation         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_lazy_compilation" }
+rspack_plugin_library                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_library" }
+rspack_plugin_lightning_css_minimizer  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_lightning_css_minimizer" }
+rspack_plugin_limit_chunk_count        = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_limit_chunk_count" }
+rspack_plugin_merge                    = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_merge" }
+rspack_plugin_merge_duplicate_chunks   = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_merge_duplicate_chunks" }
+rspack_plugin_mf                       = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_mf" }
+rspack_plugin_mini_css_extract         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_mini_css_extract" }
+rspack_plugin_no_emit_on_errors        = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_no_emit_on_errors" }
+rspack_plugin_progress                 = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_progress" }
+rspack_plugin_real_content_hash        = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_real_content_hash" }
+rspack_plugin_remove_duplicate_modules = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_remove_duplicate_modules" }
+rspack_plugin_remove_empty_chunks      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_remove_empty_chunks" }
+rspack_plugin_runtime                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_runtime" }
+rspack_plugin_runtime_chunk            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_runtime_chunk" }
+rspack_plugin_schemes                  = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_schemes" }
+rspack_plugin_size_limits              = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_size_limits" }
+rspack_plugin_split_chunks             = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_split_chunks" }
+rspack_plugin_swc_js_minimizer         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_swc_js_minimizer" }
+rspack_plugin_warn_sensitive_module    = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_warn_sensitive_module" }
+rspack_plugin_wasm                     = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_wasm" }
+rspack_plugin_web_worker_template      = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_web_worker_template" }
+rspack_plugin_worker                   = { version = "0.2.0", path = "crates/.rspack_crates/rspack_plugin_worker" }
+rspack_regex                           = { version = "0.2.0", path = "crates/.rspack_crates/rspack_regex" }
+rspack_swc_plugin_import               = { version = "0.2.0", path = "crates/.rspack_crates/swc_plugin_import" }
+rspack_testing                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_testing" }
+rspack_tracing                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_tracing" }
+rspack_util                            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_util" }
 [workspace.metadata.release]
 rate-limit = { existing-packages = 70, new-packages = 70 }
 [profile.dev]

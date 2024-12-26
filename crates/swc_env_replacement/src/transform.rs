@@ -2,7 +2,7 @@ use swc_core::{
   common::{SyntaxContext, DUMMY_SP},
   ecma::{
     ast::*,
-    visit::{Fold, FoldWith},
+    visit::{Fold, FoldWith, fold_pass},
   },
 };
 struct EnvReplacement {
@@ -405,6 +405,6 @@ impl Fold for EnvReplacement {
   }
 }
 
-pub fn env_replacement(sources: Vec<String>) -> impl Fold {
-  EnvReplacement { sources }
+pub fn env_replacement(sources: Vec<String>) -> impl Pass {
+  fold_pass(EnvReplacement { sources })
 }

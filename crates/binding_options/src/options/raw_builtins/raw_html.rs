@@ -4,6 +4,7 @@ use std::str::FromStr;
 use napi::bindgen_prelude::Either3;
 use napi_derive::napi;
 use rspack_napi::threadsafe_function::ThreadsafeFunction;
+use rspack_plugin_html::config::HtmlChunkSortMode;
 use rspack_plugin_html::config::HtmlInject;
 use rspack_plugin_html::config::HtmlRspackPluginBaseOptions;
 use rspack_plugin_html::config::HtmlRspackPluginOptions;
@@ -16,7 +17,8 @@ use rspack_plugin_html::sri::HtmlSriHashFunction;
 pub type RawHtmlScriptLoading = String;
 pub type RawHtmlInject = String;
 pub type RawHtmlSriHashFunction = String;
-pub type RawHtmlFilename = String;
+pub type RawHtmlFilename = Vec<String>;
+type RawChunkSortMode = String;
 
 type RawTemplateRenderFn = ThreadsafeFunction<String, String>;
 
@@ -27,7 +29,7 @@ type RawTemplateParameter =
 #[napi(object, object_to_js = false)]
 pub struct RawHtmlRspackPluginOptions {
   /// emitted file name in output path
-  #[napi(ts_type = "string")]
+  #[napi(ts_type = "string[]")]
   pub filename: Option<RawHtmlFilename>,
   /// template html file
   pub template: Option<String>,
@@ -48,6 +50,9 @@ pub struct RawHtmlRspackPluginOptions {
   /// entry_chunk_name (only entry chunks are supported)
   pub chunks: Option<Vec<String>>,
   pub exclude_chunks: Option<Vec<String>>,
+  #[napi(ts_type = "\"auto\" | \"manual\"")]
+  pub chunks_sort_mode: RawChunkSortMode,
+
   #[napi(ts_type = "\"sha256\" | \"sha384\" | \"sha512\"")]
   pub sri: Option<RawHtmlSriHashFunction>,
   pub minify: Option<bool>,
@@ -65,12 +70,17 @@ impl From<RawHtmlRspackPluginOptions> for HtmlRspackPluginOptions {
     let script_loading =
       HtmlScriptLoading::from_str(&value.script_loading).expect("Invalid script_loading value");
 
+    let chunks_sort_mode =
+      HtmlChunkSortMode::from_str(&value.chunks_sort_mode).expect("Invalid chunks_sort_mode value");
+
     let sri = value.sri.as_ref().map(|s| {
       HtmlSriHashFunction::from_str(s).unwrap_or_else(|_| panic!("Invalid sri value: {s}"))
     });
 
     HtmlRspackPluginOptions {
-      filename: value.filename.unwrap_or_else(|| String::from("index.html")),
+      filename: value
+        .filename
+        .unwrap_or_else(|| vec![String::from("index.html")]),
       template: value.template,
       template_fn: value.template_fn.map(|func| TemplateRenderFn {
         inner: Box::new(move |data| {
@@ -103,6 +113,7 @@ impl From<RawHtmlRspackPluginOptions> for HtmlRspackPluginOptions {
       script_loading,
       chunks: value.chunks,
       exclude_chunks: value.exclude_chunks,
+      chunks_sort_mode,
       sri,
       minify: value.minify,
       title: value.title,

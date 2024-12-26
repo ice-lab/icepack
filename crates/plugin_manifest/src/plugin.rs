@@ -65,9 +65,9 @@ async fn process_assets(&self, compilation: &mut Compilation) -> Result<()> {
       .iter()
       .for_each(|chunk| {
         let chunk = compilation.chunk_by_ukey.expect_get(chunk);
-        chunk.files.iter().for_each(|file| {
+        chunk.files().iter().for_each(|file| {
           if let Some(asset) = assets.get(file) {
-            if !asset.info.hot_module_replacement && !asset.info.development {
+            if !asset.info.hot_module_replacement.unwrap_or(false) && !asset.info.development.unwrap_or(false) {
               files.push(file.to_string());
             }
           } else {
@@ -86,14 +86,14 @@ async fn process_assets(&self, compilation: &mut Compilation) -> Result<()> {
 
   let page_chunk_name_regex = regex::Regex::new(r"^p_").unwrap();
   compilation.chunk_by_ukey.values().for_each(|c| {
-    if let Some(name) = &c.id {
+    if let Some(name) = c.id() {
       if !c.has_entry_module(&compilation.chunk_graph)
         && !c.can_be_initial(&compilation.chunk_group_by_ukey)
       {
         assets_mainfest.pages.insert(
           page_chunk_name_regex.replace(name, "").to_string(),
           Vec::from_iter(
-            c.files
+            c.files()
               .iter()
               // Only collect js and css files.
               .filter(|f| f.ends_with(".js") || f.ends_with(".css"))
@@ -119,7 +119,7 @@ impl Plugin for ManifestPlugin {
   fn apply(
     &self,
     ctx: rspack_core::PluginContext<&mut rspack_core::ApplyContext>,
-    _options: &mut rspack_core::CompilerOptions,
+    _options: &rspack_core::CompilerOptions,
   ) -> Result<()> {
     ctx
       .context

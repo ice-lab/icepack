@@ -1,20 +1,27 @@
 use napi::Either;
 use napi_derive::napi;
 use rspack_binding_values::library::JsLibraryOptions;
-use rspack_binding_values::JsFilename;
-use rspack_core::{CrossOriginLoading, Environment, PathInfo};
+use rspack_binding_values::{JsCleanOptions, JsFilename};
+use rspack_core::{
+  CleanOptions, CrossOriginLoading, Environment, OnPolicyCreationFailure, PathInfo,
+};
 use rspack_core::{OutputOptions, TrustedTypes};
 
 #[derive(Debug)]
 #[napi(object)]
 pub struct RawTrustedTypes {
   pub policy_name: Option<String>,
+  pub on_policy_creation_failure: Option<String>,
 }
 
 impl From<RawTrustedTypes> for TrustedTypes {
   fn from(value: RawTrustedTypes) -> Self {
     Self {
       policy_name: value.policy_name,
+      on_policy_creation_failure: match value.on_policy_creation_failure {
+        Some(v) => OnPolicyCreationFailure::from(v),
+        None => OnPolicyCreationFailure::Stop,
+      },
     }
   }
 }
@@ -47,6 +54,7 @@ impl From<RawCrossOriginLoading> for CrossOriginLoading {
 pub struct RawEnvironment {
   pub r#const: Option<bool>,
   pub arrow_function: Option<bool>,
+  pub node_prefix_for_core_modules: Option<bool>,
 }
 
 impl From<RawEnvironment> for Environment {
@@ -54,6 +62,7 @@ impl From<RawEnvironment> for Environment {
     Self {
       r#const: value.r#const,
       arrow_function: value.arrow_function,
+      node_prefix_for_core_modules: value.node_prefix_for_core_modules,
     }
   }
 }
@@ -64,7 +73,7 @@ pub struct RawOutputOptions {
   pub path: String,
   #[napi(ts_type = "boolean | \"verbose\"")]
   pub pathinfo: Either<bool, String>,
-  pub clean: bool,
+  pub clean: Either<bool, JsCleanOptions>,
   #[napi(ts_type = "\"auto\" | JsFilename")]
   pub public_path: JsFilename,
   pub asset_module_filename: JsFilename,
@@ -76,7 +85,6 @@ pub struct RawOutputOptions {
   pub cross_origin_loading: RawCrossOriginLoading,
   pub css_filename: JsFilename,
   pub css_chunk_filename: JsFilename,
-  pub css_head_data_compression: bool,
   pub hot_update_main_filename: String,
   pub hot_update_chunk_filename: String,
   pub hot_update_global: String,
@@ -107,6 +115,7 @@ pub struct RawOutputOptions {
   #[napi(ts_type = r#""module" | "text/javascript" | "false""#)]
   pub script_type: String,
   pub environment: RawEnvironment,
+  pub compare_before_emit: bool,
 }
 
 impl TryFrom<RawOutputOptions> for OutputOptions {
@@ -118,10 +127,15 @@ impl TryFrom<RawOutputOptions> for OutputOptions {
       Either::B(s) => PathInfo::String(s),
     };
 
+    let clean = match value.clean {
+      Either::A(b) => CleanOptions::CleanAll(b),
+      Either::B(cop) => cop.to_clean_options(),
+    };
+
     Ok(OutputOptions {
       path: value.path.into(),
       pathinfo,
-      clean: value.clean,
+      clean,
       public_path: value.public_path.into(),
       asset_module_filename: value.asset_module_filename.into(),
       wasm_loading: value.wasm_loading.as_str().into(),
@@ -134,7 +148,6 @@ impl TryFrom<RawOutputOptions> for OutputOptions {
       cross_origin_loading: value.cross_origin_loading.into(),
       css_filename: value.css_filename.into(),
       css_chunk_filename: value.css_chunk_filename.into(),
-      css_head_data_compression: value.css_head_data_compression,
       hot_update_main_filename: value.hot_update_main_filename.into(),
       hot_update_chunk_filename: value.hot_update_chunk_filename.into(),
       hot_update_global: value.hot_update_global,
@@ -160,6 +173,7 @@ impl TryFrom<RawOutputOptions> for OutputOptions {
       environment: value.environment.into(),
       charset: value.charset,
       chunk_load_timeout: value.chunk_load_timeout,
+      compare_before_emit: value.compare_before_emit,
     })
   }
 }

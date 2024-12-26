@@ -13,19 +13,20 @@ use napi::bindgen_prelude::*;
 use binding_options::BuiltinPlugin;
 use rspack_core::{Compilation, PluginExt};
 use rspack_error::Diagnostic;
-use rspack_fs_node::{AsyncNodeWritableFileSystem, ThreadsafeNodeFS};
+use rspack_fs_node::{NodeFileSystem, ThreadsafeNodeFS};
 
 mod compiler;
+mod diagnostic;
 mod panic;
 mod plugins;
 mod resolver_factory;
 
+pub use diagnostic::*;
 use plugins::*;
 use resolver_factory::*;
 use binding_options::*;
 use rspack_binding_values::*;
 use rspack_tracing::chrome::FlushGuard;
-use plugin_manifest::ManifestPlugin;
 
 #[napi]
 pub struct Rspack {
@@ -43,6 +44,7 @@ impl Rspack {
     builtin_plugins: Vec<BuiltinPlugin>,
     register_js_taps: RegisterJsTaps,
     output_filesystem: ThreadsafeNodeFS,
+    intermediate_filesystem: ThreadsafeNodeFS,
     mut resolver_factory_reference: Reference<JsResolverFactory>,
   ) -> Result<Self> {
     tracing::info!("raw_options: {:#?}", &options);
@@ -65,15 +67,19 @@ impl Rspack {
       (*resolver_factory_reference).get_resolver_factory(compiler_options.resolve.clone());
     let loader_resolver_factory = (*resolver_factory_reference)
       .get_loader_resolver_factory(compiler_options.resolve_loader.clone());
-
-    // Add default plugins to the compiler.
-    plugins.push(ManifestPlugin::new().boxed());
-
     let rspack = rspack_core::Compiler::new(
       compiler_options,
       plugins,
-      AsyncNodeWritableFileSystem::new(output_filesystem)
-        .map_err(|e| Error::from_reason(format!("Failed to create writable filesystem: {e}",)))?,
+      binding_options::buildtime_plugins::buildtime_plugins(),
+      Some(Box::new(NodeFileSystem::new(output_filesystem).map_err(
+        |e| Error::from_reason(format!("Failed to create writable filesystem: {e}",)),
+      )?)),
+      Some(Box::new(
+        NodeFileSystem::new(intermediate_filesystem).map_err(|e| {
+          Error::from_reason(format!("Failed to create intermediate filesystem: {e}",))
+        })?,
+      )),
+      None,
       Some(resolver_factory),
       Some(loader_resolver_factory),
     );
@@ -92,7 +98,7 @@ impl Rspack {
 
   /// Build with the given option passed to the constructor
   #[napi(ts_args_type = "callback: (err: null | Error) => void")]
-  pub fn build(&mut self, env: Env, reference: Reference<Rspack>, f: JsFunction) -> Result<()> {
+  pub fn build(&mut self, env: Env, reference: Reference<Rspack>, f: Function) -> Result<()> {
     unsafe {
       self.run(env, reference, |compiler, _guard| {
         callbackify(env, f, async move {
@@ -120,7 +126,7 @@ impl Rspack {
     reference: Reference<Rspack>,
     changed_files: Vec<String>,
     removed_files: Vec<String>,
-    f: JsFunction,
+    f: Function,
   ) -> Result<()> {
     use std::collections::HashSet;
 
@@ -182,7 +188,7 @@ impl Rspack {
   }
 
   fn cleanup_last_compilation(&self, compilation: &Compilation) {
-    JsCompilationWrapper::cleanup(compilation.id());
+    JsCompilationWrapper::cleanup_last_compilation(compilation.id());
   }
 }
 
@@ -223,7 +229,7 @@ static GLOBAL_TRACE_STATE: Mutex<TraceState> = Mutex::new(TraceState::Off);
 #[napi]
 pub fn register_global_trace(
   filter: String,
-  #[napi(ts_arg_type = "\"chrome\" | \"logger\"")] layer: String,
+  #[napi(ts_arg_type = "\"chrome\" | \"logger\"| \"console\"")] layer: String,
   output: String,
 ) {
   let mut state = GLOBAL_TRACE_STATE
@@ -232,6 +238,10 @@ pub fn register_global_trace(
   if matches!(&*state, TraceState::Off) {
     let guard = match layer.as_str() {
       "chrome" => rspack_tracing::enable_tracing_by_env_with_chrome_layer(&filter, &output),
+      "console" => {
+        rspack_tracing::enable_tracing_by_env_with_tokio_console();
+        None
+      }
       "logger" => {
         rspack_tracing::enable_tracing_by_env(&filter, &output);
         None

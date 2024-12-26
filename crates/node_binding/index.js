@@ -252,7 +252,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { __chunk_inner_is_only_initial, __chunk_inner_can_be_initial, __chunk_inner_has_runtime, __chunk_inner_get_all_async_chunks, __chunk_inner_get_all_initial_chunks, __chunk_inner_get_all_referenced_chunks, __chunk_graph_inner_get_chunk_modules, __chunk_graph_inner_get_chunk_entry_modules, __chunk_graph_inner_get_chunk_entry_dependent_chunks_iterable, __chunk_graph_inner_get_chunk_modules_iterable_by_source_type, __chunk_group_inner_get_chunk_group, __entrypoint_inner_get_runtime_chunk, DependenciesDto, EntryOptionsDto, EntryDataDto, JsEntries, JsCompilation, DependencyDto, DependenciesBlockDto, ModuleDto, JsResolver, JsRspackSeverity, JsStats, BuiltinPluginName, RawRuleSetConditionType, JsLoaderState, RegisterJsTapKind, JsResolverFactory, Rspack, registerGlobalTrace, cleanupGlobalTrace } = nativeBinding
+const { __chunk_inner_is_only_initial, __chunk_inner_can_be_initial, __chunk_inner_has_runtime, __chunk_inner_get_all_async_chunks, __chunk_inner_get_all_initial_chunks, __chunk_inner_get_all_referenced_chunks, __chunk_graph_inner_get_chunk_modules, __chunk_graph_inner_get_chunk_entry_modules, __chunk_graph_inner_get_chunk_entry_dependent_chunks_iterable, __chunk_graph_inner_get_chunk_modules_iterable_by_source_type, __chunk_group_inner_get_chunk_group, __entrypoint_inner_get_runtime_chunk, JsDependencies, EntryOptionsDto, EntryDataDto, JsEntries, JsCompilation, JsContextModuleFactoryBeforeResolveData, JsContextModuleFactoryAfterResolveData, JsDependency, JsDependenciesBlock, JsModule, JsModuleGraph, JsResolver, JsRspackSeverity, JsStats, BuiltinPluginName, RawExternalItemFnCtx, RawRuleSetConditionType, JsLoaderState, formatDiagnostic, RegisterJsTapKind, JsResolverFactory, Rspack, registerGlobalTrace, cleanupGlobalTrace } = nativeBinding
 
 module.exports.__chunk_inner_is_only_initial = __chunk_inner_is_only_initial
 module.exports.__chunk_inner_can_be_initial = __chunk_inner_can_be_initial
@@ -266,20 +266,25 @@ module.exports.__chunk_graph_inner_get_chunk_entry_dependent_chunks_iterable = _
 module.exports.__chunk_graph_inner_get_chunk_modules_iterable_by_source_type = __chunk_graph_inner_get_chunk_modules_iterable_by_source_type
 module.exports.__chunk_group_inner_get_chunk_group = __chunk_group_inner_get_chunk_group
 module.exports.__entrypoint_inner_get_runtime_chunk = __entrypoint_inner_get_runtime_chunk
-module.exports.DependenciesDto = DependenciesDto
+module.exports.JsDependencies = JsDependencies
 module.exports.EntryOptionsDto = EntryOptionsDto
 module.exports.EntryDataDto = EntryDataDto
 module.exports.JsEntries = JsEntries
 module.exports.JsCompilation = JsCompilation
-module.exports.DependencyDto = DependencyDto
-module.exports.DependenciesBlockDto = DependenciesBlockDto
-module.exports.ModuleDto = ModuleDto
+module.exports.JsContextModuleFactoryBeforeResolveData = JsContextModuleFactoryBeforeResolveData
+module.exports.JsContextModuleFactoryAfterResolveData = JsContextModuleFactoryAfterResolveData
+module.exports.JsDependency = JsDependency
+module.exports.JsDependenciesBlock = JsDependenciesBlock
+module.exports.JsModule = JsModule
+module.exports.JsModuleGraph = JsModuleGraph
 module.exports.JsResolver = JsResolver
 module.exports.JsRspackSeverity = JsRspackSeverity
 module.exports.JsStats = JsStats
 module.exports.BuiltinPluginName = BuiltinPluginName
+module.exports.RawExternalItemFnCtx = RawExternalItemFnCtx
 module.exports.RawRuleSetConditionType = RawRuleSetConditionType
 module.exports.JsLoaderState = JsLoaderState
+module.exports.formatDiagnostic = formatDiagnostic
 module.exports.RegisterJsTapKind = RegisterJsTapKind
 module.exports.JsResolverFactory = JsResolverFactory
 module.exports.Rspack = Rspack

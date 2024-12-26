@@ -40,6 +40,7 @@ pub struct JsHooksAdapterPlugin {
   register_compilation_optimize_chunk_modules_taps: RegisterCompilationOptimizeChunkModulesTaps,
   register_compilation_additional_tree_runtime_requirements:
     RegisterCompilationAdditionalTreeRuntimeRequirementsTaps,
+  register_compilation_runtime_requirement_in_tree: RegisterCompilationRuntimeRequirementInTreeTaps,
   register_compilation_runtime_module_taps: RegisterCompilationRuntimeModuleTaps,
   register_compilation_chunk_hash_taps: RegisterCompilationChunkHashTaps,
   register_compilation_chunk_asset_taps: RegisterCompilationChunkAssetTaps,
@@ -83,7 +84,7 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
   fn apply(
     &self,
     ctx: PluginContext<&mut ApplyContext>,
-    _options: &mut CompilerOptions,
+    _options: &CompilerOptions,
   ) -> rspack_error::Result<()> {
     ctx
       .context
@@ -185,6 +186,15 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
       .intercept(
         self
           .register_compilation_additional_tree_runtime_requirements
+          .clone(),
+      );
+    ctx
+      .context
+      .compilation_hooks
+      .runtime_requirement_in_tree
+      .intercept(
+        self
+          .register_compilation_runtime_requirement_in_tree
           .clone(),
       );
     ctx
@@ -301,6 +311,90 @@ impl rspack_core::Plugin for JsHooksAdapterPlugin {
       .tap(html_hooks_adapter_compilation::new(self));
 
     Ok(())
+  }
+
+  fn clear_cache(&self) {
+    self.register_compiler_this_compilation_taps.clear_cache();
+    self.register_compiler_compilation_taps.clear_cache();
+    self.register_compiler_make_taps.clear_cache();
+    self.register_compiler_finish_make_taps.clear_cache();
+    self.register_compiler_should_emit_taps.clear_cache();
+    self.register_compiler_emit_taps.clear_cache();
+    self.register_compiler_after_emit_taps.clear_cache();
+    self.register_compiler_asset_emitted_taps.clear_cache();
+    self.register_compilation_build_module_taps.clear_cache();
+    self
+      .register_compilation_still_valid_module_taps
+      .clear_cache();
+    self.register_compilation_succeed_module_taps.clear_cache();
+    self.register_compilation_execute_module_taps.clear_cache();
+    self.register_compilation_finish_modules_taps.clear_cache();
+    self
+      .register_compilation_optimize_modules_taps
+      .clear_cache();
+    self
+      .register_compilation_after_optimize_modules_taps
+      .clear_cache();
+    self.register_compilation_optimize_tree_taps.clear_cache();
+    self
+      .register_compilation_optimize_chunk_modules_taps
+      .clear_cache();
+    self
+      .register_compilation_additional_tree_runtime_requirements
+      .clear_cache();
+    self
+      .register_compilation_runtime_requirement_in_tree
+      .clear_cache();
+    self.register_compilation_runtime_module_taps.clear_cache();
+    self.register_compilation_chunk_hash_taps.clear_cache();
+    self.register_compilation_chunk_asset_taps.clear_cache();
+    self.register_compilation_process_assets_taps.clear_cache();
+    self
+      .register_compilation_after_process_assets_taps
+      .clear_cache();
+    self.register_compilation_seal_taps.clear_cache();
+    self.register_compilation_after_seal_taps.clear_cache();
+    self
+      .register_normal_module_factory_before_resolve_taps
+      .clear_cache();
+    self
+      .register_normal_module_factory_factorize_taps
+      .clear_cache();
+    self
+      .register_normal_module_factory_resolve_taps
+      .clear_cache();
+    self
+      .register_normal_module_factory_resolve_for_scheme_taps
+      .clear_cache();
+    self
+      .register_normal_module_factory_after_resolve_taps
+      .clear_cache();
+    self
+      .register_normal_module_factory_create_module_taps
+      .clear_cache();
+    self
+      .register_context_module_factory_before_resolve_taps
+      .clear_cache();
+    self
+      .register_context_module_factory_after_resolve_taps
+      .clear_cache();
+    self
+      .register_javascript_modules_chunk_hash_taps
+      .clear_cache();
+    self
+      .register_html_plugin_before_asset_tag_generation_taps
+      .clear_cache();
+    self
+      .register_html_plugin_alter_asset_tags_taps
+      .clear_cache();
+    self
+      .register_html_plugin_alter_asset_tag_groups_taps
+      .clear_cache();
+    self
+      .register_html_plugin_after_template_execution_taps
+      .clear_cache();
+    self.register_html_plugin_before_emit_taps.clear_cache();
+    self.register_html_plugin_after_emit_taps.clear_cache();
   }
 }
 
@@ -431,6 +525,11 @@ impl JsHooksAdapterPlugin {
         register_compilation_additional_tree_runtime_requirements:
           RegisterCompilationAdditionalTreeRuntimeRequirementsTaps::new(
             register_js_taps.register_compilation_additional_tree_runtime_requirements,
+            non_skippable_registers.clone(),
+          ),
+        register_compilation_runtime_requirement_in_tree:
+          RegisterCompilationRuntimeRequirementInTreeTaps::new(
+            register_js_taps.register_compilation_runtime_requirement_in_tree,
             non_skippable_registers.clone(),
           ),
         register_compilation_runtime_module_taps: RegisterCompilationRuntimeModuleTaps::new(

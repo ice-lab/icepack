@@ -15,6 +15,7 @@ use rspack_core::{
   Resolver,
 };
 use rspack_error::{error, AnyhowError, Result};
+use rspack_cacheable::{cacheable, cacheable_dyn, with::{AsRefStrConverter, AsRefStr}};
 use rspack_loader_runner::{Content, Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
@@ -34,24 +35,46 @@ use tokio::sync::Mutex;
 
 pub const BARREL_LOADER_IDENTIFIER: &str = "builtin:barrel-loader";
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[cacheable(with=AsRefStr)]
+#[derive(Debug, Deserialize)]
 pub struct LoaderOptions {
+  options: String,
   pub names: Vec<String>,
   pub cache_dir: Option<String>,
 }
 
+impl AsRefStrConverter for LoaderOptions {
+  fn as_str(&self) -> &str {
+    &self.options
+  }
+  fn from_str(s: &str) -> Self {
+    s.try_into()
+      .expect("failed to generate LoaderOptions")
+  }
+}
+
+impl TryFrom<&str> for LoaderOptions {
+  type Error = serde_json::Error;
+
+  fn try_from(s: &str) -> Result<Self, Self::Error> {
+    serde_json::from_str(s)
+  }
+}
+
+#[cacheable]
+#[derive(Debug)]
 pub struct BarrelLoader {
   identifier: Identifier,
   loader_options: LoaderOptions,
 }
 
 impl BarrelLoader {
-  pub fn new(options: LoaderOptions) -> Self {
-    Self {
+  pub fn new(options: &str) -> Result<Self, serde_json::Error> {
+    let loader_options: LoaderOptions = options.try_into()?;
+    Ok(Self {
       identifier: BARREL_LOADER_IDENTIFIER.into(),
-      loader_options: options.into(),
-    }
+      loader_options,
+    })
   }
 
   pub fn with_identifier(mut self, identifier: Identifier) -> Self {
@@ -75,7 +98,7 @@ impl BarrelLoader {
         dependency_category: DependencyCategory::Esm,
       });
 
-    let Some(content) = std::mem::take(&mut loader_context.content) else {
+    let Some(content) = loader_context.take_content() else {
       return Ok(());
     };
 
@@ -155,13 +178,13 @@ impl BarrelLoader {
           output.push_str(&format!("\nexport * from '{}';", req));
         });
       }
-      loader_context.content = Some(Content::from(output));
+      loader_context.finish_with((output, None));
     } else {
       let reexport_str = format!(
         "export * from '{}';",
         resource_path.to_string()
       );
-      loader_context.content = Some(Content::from(reexport_str));
+      loader_context.finish_with((reexport_str, None));
     }
     Ok(())
   }
@@ -224,6 +247,7 @@ async fn get_barrel_map(
         })
       })
       .map_err(AnyhowError::from)?;
+
     let input_source_map = c
       .input_source_map(&built.input_source_map)
       .map_err(|e| error!(e.to_string()))?;
@@ -349,6 +373,7 @@ fn get_barrel_map_boxed(
   ))
 }
 
+#[cacheable_dyn]
 #[async_trait::async_trait]
 impl Loader<RunnerContext> for BarrelLoader {
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {

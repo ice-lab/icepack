@@ -4,10 +4,10 @@ use std::mem::take;
 
 use fxhash::FxHashSet;
 use rspack_error::Error;
-use swc_core::common::{
+use swc_core::{common::{
   pass::{Repeat, Repeated},
   DUMMY_SP,
-};
+}, ecma::visit::fold_pass};
 use swc_core::ecma::{
   ast::*,
   visit::{noop_fold_type, Fold, FoldWith},
@@ -583,12 +583,12 @@ impl Fold for RemoveExport {
   }
 }
 
-pub fn remove_export(exports: Vec<String>) -> impl Fold {
-  Repeat::new(RemoveExport {
+pub fn remove_export(exports: Vec<String>) -> impl Pass {
+  fold_pass(Repeat::new(RemoveExport {
     state: State {
       remove_exports: exports,
       ..Default::default()
     },
     in_lhs_of_var: false,
-  })
+  }))
 }

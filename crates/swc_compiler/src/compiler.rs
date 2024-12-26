@@ -11,66 +11,30 @@ use std::{path::PathBuf, sync::Arc};
 
 use anyhow::{bail, Context, Error};
 use base64::prelude::*;
-use dashmap::DashMap;
 use rspack_ast::javascript::{Ast as JsAst, Context as JsAstContext, Program as JsProgram};
-use swc_config::config_types::BoolOr;
+use rspack_util::swc::minify_file_comments;
+use swc::config::JsMinifyCommentOption;
+use swc::BoolOr;
 use swc_core::base::config::{
-  BuiltInput, Config, InputSourceMap, IsModule, JsMinifyCommentOption,
+  BuiltInput, Config, InputSourceMap, IsModule
 };
 use swc_core::base::{sourcemap, SwcComments};
-use swc_core::common::comments::{Comment, CommentKind, Comments};
+use swc_core::common::comments::Comments;
 use swc_core::common::errors::{Handler, HANDLER};
+use swc_core::common::SourceFile;
 use swc_core::common::{
   comments::SingleThreadedComments, FileName, FilePathMapping, Mark, SourceMap, GLOBALS,
 };
-use swc_core::common::{BytePos, SourceFile};
-use swc_core::ecma::ast::{EsVersion, Program};
+use swc_core::ecma::ast::{EsVersion, Pass, Program};
 use swc_core::ecma::parser::{
   parse_file_as_module, parse_file_as_program, parse_file_as_script, Syntax,
 };
 use swc_core::ecma::transforms::base::helpers::{self, Helpers};
-use swc_core::ecma::visit::{Fold, FoldWith};
 use swc_core::{
   base::{config::Options, try_with_handler},
   common::Globals,
 };
 use url::Url;
-
-fn minify_file_comments(
-  comments: &SingleThreadedComments,
-  preserve_comments: BoolOr<JsMinifyCommentOption>,
-) {
-  match preserve_comments {
-    BoolOr::Bool(true) | BoolOr::Data(JsMinifyCommentOption::PreserveAllComments) => {}
-
-    BoolOr::Data(JsMinifyCommentOption::PreserveSomeComments) => {
-      let preserve_excl = |_: &BytePos, vc: &mut Vec<Comment>| -> bool {
-        // Preserve license comments.
-        //
-        // See https://github.com/terser/terser/blob/798135e04baddd94fea403cfaab4ba8b22b1b524/lib/output.js#L175-L181
-        vc.retain(|c: &Comment| {
-          c.text.contains("@lic")
-            || c.text.contains("@preserve")
-            || c.text.contains("@copyright")
-            || c.text.contains("@cc_on")
-            || (c.kind == CommentKind::Block && c.text.starts_with('!'))
-        });
-        !vc.is_empty()
-      };
-      let (mut l, mut t) = comments.borrow_all_mut();
-
-      l.retain(preserve_excl);
-      t.retain(preserve_excl);
-    }
-
-    BoolOr::Bool(false) => {
-      let (mut l, mut t) = comments.borrow_all_mut();
-      l.clear();
-      t.clear();
-    }
-  }
-}
-
 pub struct SwcCompiler {
   cm: Arc<SourceMap>,
   fm: Arc<SourceFile>,
@@ -165,9 +129,9 @@ impl SwcCompiler {
     &'a self,
     program: Option<Program>,
     before_pass: impl FnOnce(&Program) -> P + 'a,
-  ) -> Result<BuiltInput<impl Fold + 'a>, Error>
+  ) -> Result<BuiltInput<impl Pass + 'a>, Error>
   where
-    P: Fold + 'a,
+    P: Pass + 'a,
   {
     let built = self.run(|| {
       try_with_handler(self.cm.clone(), Default::default(), |handler| {
@@ -206,22 +170,27 @@ impl SwcCompiler {
     }
   }
 
-  pub fn transform(&self, config: BuiltInput<impl Fold>) -> Result<Program, Error> {
+  pub fn transform(&self, config: BuiltInput<impl Pass>) -> Result<Program, Error> {
     let program = config.program;
     let mut pass = config.pass;
 
     let program = self.run(|| {
       helpers::HELPERS.set(&self.helpers, || {
         try_with_handler(self.cm.clone(), Default::default(), |handler| {
-          HANDLER.set(handler, || {
-            // Fold module
-            Ok(program.fold_with(&mut pass))
-          })
+          HANDLER.set(handler, || Ok(program.apply(&mut pass)))
         })
       })
     });
+
     if let Some(comments) = &config.comments {
-      minify_file_comments(comments, config.preserve_comments);
+      // TODO: Wait for https://github.com/swc-project/swc/blob/e6fc5327b1a309eae840fe1ec3a2367adab37430/crates/swc/src/config/mod.rs#L808 to land.
+      let preserve_annotations = match &config.preserve_comments {
+        BoolOr::Bool(true) | BoolOr::Data(JsMinifyCommentOption::PreserveAllComments) => true,
+        BoolOr::Data(JsMinifyCommentOption::PreserveSomeComments) => false,
+        BoolOr::Bool(false) => false,
+      };
+
+      minify_file_comments(comments, config.preserve_comments, preserve_annotations);
     };
 
     program
@@ -415,8 +384,8 @@ impl IntoSwcComments for SingleThreadedComments {
       (l.take(), t.take())
     };
     SwcComments {
-      leading: Arc::new(DashMap::from_iter(l)),
-      trailing: Arc::new(DashMap::from_iter(t)),
+      leading: Arc::new(FromIterator::<_>::from_iter(l)),
+      trailing: Arc::new(FromIterator::<_>::from_iter(t)),
     }
   }
 }

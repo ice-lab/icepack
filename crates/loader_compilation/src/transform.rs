@@ -2,13 +2,12 @@ use std::path::Path;
 use anyhow::{Context, Error};
 use either::Either;
 use serde::Deserialize;
-use swc_core::common::chain;
 use swc_core::atoms::Atom;
 use swc_core::common::collections::AHashMap;
 use swc_core::common::BytePos;
-use swc_core::ecma::ast::Ident;
-use swc_core::ecma::visit::{noop_visit_type, Visit};
-use swc_core::ecma::{transforms::base::pass::noop, visit::Fold};
+use swc_core::ecma::ast::{Ident, Pass, noop_pass};
+use swc_core::ecma::visit::{noop_visit_type, Visit, fold_pass};
+use swc_core::ecma::visit::Fold;
 use swc_env_replacement::env_replacement;
 use swc_keep_export::keep_export;
 use swc_named_import_transform::{named_import_transform, TransformConfig};
@@ -21,14 +20,14 @@ macro_rules! either {
       #[allow(clippy::redundant_closure_call)]
       Either::Left($f(config))
     } else {
-      Either::Right(noop())
+      Either::Right(noop_pass())
     }
   };
   ($config:expr, $f:expr, $enabled:expr) => {
     if $enabled() {
       either!($config, $f)
     } else {
-      Either::Right(noop())
+      Either::Right(noop_pass())
     }
   };
 }
@@ -96,8 +95,8 @@ pub(crate) fn transform<'a>(
   resource_path: &'a str,
   routes_config: Option<&Vec<String>>,
   feature_options: &TransformFeatureOptions,
-) -> impl Fold + 'a {
-  chain!(
+) -> impl Pass + 'a {
+  (
     either!(feature_options.optimize_import, |options: &Vec<String>| {
       named_import_transform(TransformConfig {
         packages: options.clone(),

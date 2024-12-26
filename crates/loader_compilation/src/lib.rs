@@ -5,6 +5,7 @@ use std::path::Path;
 use serde::Deserialize;
 use swc_compiler::{IntoJsAst, SwcCompiler};
 use rspack_core::{rspack_sources::SourceMap, Mode, RunnerContext};
+use rspack_cacheable::{cacheable, cacheable_dyn, with::{AsRefStrConverter, AsRefStr}};
 use rspack_error::{error, AnyhowError, Diagnostic, Result};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
 use rspack_regex::RspackRegex;
@@ -28,46 +29,68 @@ pub struct CompileRules {
   exclude: Option<Vec<String>>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Deserialize)]
 pub struct LoaderOptions {
-  pub swc_options: Config,
-  pub transform_features: TransformFeatureOptions,
-  pub compile_rules: CompileRules,
-}
-
-pub struct CompilationOptions {
-  swc_options: Options,
+  #[serde(rename = "swcOptions")]
+  swc_options: Config,
+  #[serde(rename = "transformFeatures")]
   transform_features: TransformFeatureOptions,
+  #[serde(rename = "compileRules")]
   compile_rules: CompileRules,
 }
 
-pub struct CompilationLoader {
-  identifier: Identifier,
-  loader_options: CompilationOptions,
+impl AsRefStrConverter for CompilationOptions {
+  fn as_str(&self) -> &str {
+    &self.raw_options
+  }
+  fn from_str(s: &str) -> Self {
+    s.try_into()
+      .expect("failed to generate CompilationOptions")
+  }
 }
 
-impl From<LoaderOptions> for CompilationOptions {
-  fn from(value: LoaderOptions) -> Self {
+impl TryFrom<&str> for CompilationOptions {
+  type Error = serde_json::Error;
+
+  fn try_from(s: &str) -> Result<Self, Self::Error> {
+    let value: LoaderOptions = serde_json::from_str(s)?;
     let transform_features = value.transform_features;
     let compile_rules = value.compile_rules;
-    CompilationOptions {
+    Ok(CompilationOptions {
+      raw_options: s.into(),
       swc_options: Options {
         config: value.swc_options,
         ..Default::default()
       },
       transform_features,
       compile_rules,
-    }
+    })
   }
 }
 
+#[cacheable(with=AsRefStr)]
+#[derive(Debug)]
+pub struct CompilationOptions {
+  raw_options: String,
+  pub(crate) swc_options: Options,
+  pub(crate) transform_features: TransformFeatureOptions,
+  pub(crate) compile_rules: CompileRules,
+}
+
+#[cacheable]
+#[derive(Debug)]
+pub struct CompilationLoader {
+  identifier: Identifier,
+  loader_options: CompilationOptions,
+}
+
 impl CompilationLoader {
-  pub fn new(options: LoaderOptions) -> Self {
-    Self {
+  pub fn new(raw_options: &str) -> Result<Self, serde_json::Error> {
+    let loader_options: CompilationOptions = raw_options.try_into()?;
+    Ok(Self {
       identifier: COMPILATION_LOADER_IDENTIFIER.into(),
-      loader_options: options.into(),
-    }
+      loader_options,
+    })
   }
 
   pub fn with_identifier(mut self, identifier: Identifier) -> Self {
@@ -81,7 +104,8 @@ impl CompilationLoader {
       .resource_path()
       .map(|p| p.to_path_buf())
       .unwrap_or_default();
-    let Some(content) = std::mem::take(&mut loader_context.content) else {
+    let Some(content) = loader_context.take_content() else {
+
       return Ok(());
     };
 
@@ -90,13 +114,11 @@ impl CompilationLoader {
       for pattern in exclude {
         let pattern = RspackRegex::new(pattern).unwrap();
         if pattern.test(&resource_path.as_str()) {
-          loader_context.content = Some(content);
+          loader_context.finish_with((content, None));
           return Ok(());
         }
       }
     }
-
-    let resource_str = resource_path.as_str().to_string();
 
     let swc_options = {
       let mut swc_options = self.loader_options.swc_options.clone();
@@ -110,7 +132,7 @@ impl CompilationLoader {
           .transform
           .merge(MergingOption::from(Some(transform)));
       }
-      if let Some(pre_source_map) = loader_context.source_map.clone() {
+      if let Some(pre_source_map) = loader_context.source_map().cloned() {
         if let Ok(source_map) = pre_source_map.to_json() {
           swc_options.config.input_source_map = Some(InputSourceMap::Str(source_map))
         }
@@ -187,7 +209,7 @@ impl CompilationLoader {
       keep_comments: Some(true),
     };
 
-    let program = tokio::task::block_in_place(|| c.transform(built).map_err(AnyhowError::from))?;
+    let program = c.transform(built).map_err(AnyhowError::from)?;
     if source_map_kind.enabled() {
       let mut v = IdentCollector {
         names: Default::default(),
@@ -197,20 +219,14 @@ impl CompilationLoader {
     }
     let ast = c.into_js_ast(program);
     let TransformOutput { code, map } = ast::stringify(&ast, codegen_options)?;
-    loader_context.content = Some(code.into());
-    
-    let map = map
-      .map(|m| SourceMap::from_json(&m))
-      .transpose()
-      .map_err(|e| error!(e.to_string()))?;
-    loader_context.source_map = map;
-
+    loader_context.finish_with((code, map));
     Ok(())
   }
 }
 
 pub const COMPILATION_LOADER_IDENTIFIER: &str = "builtin:compilation-loader";
 
+#[cacheable_dyn]
 #[async_trait::async_trait]
 impl Loader<RunnerContext> for CompilationLoader {
   async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {

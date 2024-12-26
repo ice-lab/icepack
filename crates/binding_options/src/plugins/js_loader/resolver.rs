@@ -1,5 +1,9 @@
-use std::sync::Arc;
+use std::{
+  borrow::Cow,
+  sync::{Arc, LazyLock},
+};
 
+use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::{Identifiable, Identifier};
 use rspack_core::{
   BoxLoader, Context, Loader, ModuleRuleUseLoader, NormalModuleFactoryResolveLoader, ResolveResult,
@@ -14,16 +18,19 @@ use rspack_hook::plugin_hook;
 use rspack_loader_lightningcss::{config::Config, LIGHTNINGCSS_LOADER_IDENTIFIER};
 use rspack_loader_preact_refresh::PREACT_REFRESH_LOADER_IDENTIFIER;
 use rspack_loader_react_refresh::REACT_REFRESH_LOADER_IDENTIFIER;
-use rspack_loader_swc::SWC_LOADER_IDENTIFIER;
-use loader_compilation::COMPILATION_LOADER_IDENTIFIER;
-use loader_barrel::BARREL_LOADER_IDENTIFIER;
+use rspack_loader_swc::{SwcLoader, SWC_LOADER_IDENTIFIER};
+use loader_compilation::{CompilationLoader, COMPILATION_LOADER_IDENTIFIER};
 use rspack_paths::Utf8Path;
+use rustc_hash::FxHashMap;
+use tokio::sync::RwLock;
 
 use super::{JsLoaderRspackPlugin, JsLoaderRspackPluginInner};
 
+#[cacheable]
 #[derive(Debug)]
 pub struct JsLoader(pub Identifier);
 
+#[cacheable_dyn]
 impl Loader<RunnerContext> for JsLoader {}
 
 impl Identifiable for JsLoader {
@@ -41,33 +48,64 @@ pub fn serde_error_to_miette(
   let span = LabeledSpan::at_offset(offset.offset(), e.to_string());
   miette!(labels = vec![span], "{msg}").with_source_code(content.clone())
 }
-pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoader> {
+
+type SwcLoaderCache<'a> = LazyLock<RwLock<FxHashMap<(Cow<'a, str>, Arc<str>), Arc<SwcLoader>>>>;
+static SWC_LOADER_CACHE: SwcLoaderCache = LazyLock::new(|| RwLock::new(FxHashMap::default()));
+
+type CompilationLoaderCache<'a> = LazyLock<RwLock<FxHashMap<(Cow<'a, str>, Arc<str>), Arc<CompilationLoader>>>>;
+static COMPILATION_LOADER_CACHE: CompilationLoaderCache = LazyLock::new(|| RwLock::new(FxHashMap::default()));
+
+pub async fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoader> {
   let options: Arc<str> = options.unwrap_or("{}").into();
   if builtin.starts_with(SWC_LOADER_IDENTIFIER) {
-    return Ok(Arc::new(
-      rspack_loader_swc::SwcLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
-        serde_error_to_miette(e, options, "failed to parse builtin:swc-loader options")
-      })?)
-      .with_identifier(builtin.into()),
-    ));
+    if let Some(loader) = SWC_LOADER_CACHE
+      .read()
+      .await
+      .get(&(Cow::Borrowed(builtin), options.clone()))
+    {
+      return Ok(loader.clone());
+    }
+
+    let loader = Arc::new(
+      rspack_loader_swc::SwcLoader::new(options.as_ref())
+        .map_err(|e| {
+          serde_error_to_miette(
+            e,
+            options.clone(),
+            "failed to parse builtin:swc-loader options",
+          )
+        })?
+        .with_identifier(builtin.into()),
+    );
+
+    SWC_LOADER_CACHE.write().await.insert(
+      (Cow::Owned(builtin.to_owned()), options.clone()),
+      loader.clone(),
+    );
+    return Ok(loader);
   }
 
+  // Customize compilation loader.
   if builtin.starts_with(COMPILATION_LOADER_IDENTIFIER) {
-    return Ok(Arc::new(
-      loader_compilation::CompilationLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
-        serde_error_to_miette(e, options, "failed to parse builtin:compilation-loader options")
-      })?)
+    if let Some(loader) = COMPILATION_LOADER_CACHE
+      .read()
+      .await
+      .get(&(Cow::Borrowed(builtin), options.clone()))
+    {
+      return Ok(loader.clone());
+    }
+    let loader = Arc::new(loader_compilation::CompilationLoader::new(options.as_ref())
+      .map_err(|e| {
+        serde_error_to_miette(e, options.clone(), "falied to parse builtin:compilation-loader options")
+      })?
       .with_identifier(builtin.into()),
-    ));
-  }
-
-  if builtin.starts_with(BARREL_LOADER_IDENTIFIER) {
-    return Ok(Arc::new(
-      loader_barrel::BarrelLoader::new(serde_json::from_str(options.as_ref()).map_err(|e| {
-        serde_error_to_miette(e, options, "failed to parse builtin:barrel-loader options")
-      })?)
-      .with_identifier(builtin.into()),
-    ));
+    );
+    
+    COMPILATION_LOADER_CACHE.write().await.insert(
+      (Cow::Owned(builtin.to_owned()), options.clone()),
+      loader.clone(),
+    );
+    return Ok(loader);
   }
 
   if builtin.starts_with(LIGHTNINGCSS_LOADER_IDENTIFIER) {
@@ -95,6 +133,8 @@ pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoa
       rspack_loader_preact_refresh::PreactRefreshLoader::default().with_identifier(builtin.into()),
     ));
   }
+
+  // TODO: should be compiled with a different cfg
   if builtin.starts_with(rspack_loader_testing::SIMPLE_ASYNC_LOADER_IDENTIFIER) {
     return Ok(Arc::new(rspack_loader_testing::SimpleAsyncLoader));
   }
@@ -103,6 +143,12 @@ pub fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoa
   }
   if builtin.starts_with(rspack_loader_testing::PITCHING_LOADER_IDENTIFIER) {
     return Ok(Arc::new(rspack_loader_testing::PitchingLoader));
+  }
+  if builtin.starts_with(rspack_loader_testing::PASS_THROUGH_LOADER_IDENTIFIER) {
+    return Ok(Arc::new(rspack_loader_testing::PassthroughLoader));
+  }
+  if builtin.starts_with(rspack_loader_testing::NO_PASS_THROUGH_LOADER_IDENTIFIER) {
+    return Ok(Arc::new(rspack_loader_testing::NoPassthroughLoader));
   }
   unreachable!("Unexpected builtin loader: {builtin}")
 }
@@ -127,7 +173,9 @@ pub(crate) async fn resolve_loader(
 
   // FIXME: not belong to napi
   if loader_request.starts_with(BUILTIN_LOADER_PREFIX) {
-    return get_builtin_loader(loader_request, loader_options).map(Some);
+    return get_builtin_loader(loader_request, loader_options)
+      .await
+      .map(Some);
   }
 
   let resolve_result = resolver

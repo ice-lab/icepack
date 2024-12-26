@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use swc_core::{
   common::DUMMY_SP,
-  ecma::{ast::*, visit::Fold},
+  ecma::{ast::*, visit::{fold_pass, Fold}},
 };
 
 pub struct TransformConfig {
@@ -13,10 +13,10 @@ pub struct NamedImportTransform {
   pub packages: Vec<String>,
 }
 
-pub fn named_import_transform(config: TransformConfig) -> impl Fold {
-  NamedImportTransform {
+pub fn named_import_transform(config: TransformConfig) -> impl Pass {
+  fold_pass(NamedImportTransform {
     packages: config.packages,
-  }
+  })
 }
 
 impl Fold for NamedImportTransform {

@@ -11,6 +11,6 @@ tracing = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-rspack_core = { path = "../.rspack_crates/rspack_core" }
-rspack_hook = { path = "../.rspack_crates/rspack_hook" }
-rspack_error = { path = "../.rspack_crates/rspack_error" }
+rspack_core = { workspace = true }
+rspack_hook = { workspace = true }
+rspack_error = { workspace = true }

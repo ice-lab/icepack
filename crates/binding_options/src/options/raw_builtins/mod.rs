@@ -2,6 +2,7 @@ mod raw_banner;
 mod raw_bundle_info;
 mod raw_copy;
 mod raw_css_extract;
+mod raw_dll;
 mod raw_html;
 mod raw_ignore;
 mod raw_lazy_compilation;
@@ -15,6 +16,7 @@ mod raw_swc_js_minimizer;
 
 use napi::{bindgen_prelude::FromNapiValue, Env, JsUnknown};
 use napi_derive::napi;
+use raw_dll::{RawDllReferenceAgencyPluginOptions, RawFlagAllModulesAsUsedPluginOptions};
 use raw_lightning_css_minimizer::RawLightningCssMinimizerRspackPluginOptions;
 use rspack_binding_values::entry::JsEntryPluginOptions;
 use rspack_core::{BoxPlugin, Plugin, PluginExt};
@@ -26,12 +28,16 @@ use rspack_ids::{
 use rspack_napi::NapiResultExt;
 use rspack_plugin_asset::AssetPlugin;
 use rspack_plugin_banner::BannerPlugin;
+use rspack_plugin_context_replacement::ContextReplacementPlugin;
 use rspack_plugin_copy::{CopyRspackPlugin, CopyRspackPluginOptions};
 use rspack_plugin_css::CssPlugin;
 use rspack_plugin_devtool::{
   EvalDevToolModulePlugin, EvalSourceMapDevToolPlugin, SourceMapDevToolModuleOptionsPlugin,
   SourceMapDevToolModuleOptionsPluginOptions, SourceMapDevToolPlugin,
   SourceMapDevToolPluginOptions,
+};
+use rspack_plugin_dll::{
+  DllEntryPlugin, DllReferenceAgencyPlugin, FlagAllModulesAsUsedPlugin, LibManifestPlugin,
 };
 use rspack_plugin_dynamic_entry::DynamicEntryPlugin;
 use rspack_plugin_ensure_chunk_conditions::EnsureChunkConditionsPlugin;
@@ -59,6 +65,7 @@ use rspack_plugin_mf::{
 use rspack_plugin_no_emit_on_errors::NoEmitOnErrorsPlugin;
 use rspack_plugin_progress::ProgressPlugin;
 use rspack_plugin_real_content_hash::RealContentHashPlugin;
+use rspack_plugin_remove_duplicate_modules::RemoveDuplicateModulesPlugin;
 use rspack_plugin_remove_empty_chunks::RemoveEmptyChunksPlugin;
 use rspack_plugin_runtime::{
   enable_chunk_loading_plugin, ArrayPushCallbackChunkFormatPlugin, BundlerInfoPlugin,
@@ -74,11 +81,16 @@ use rspack_plugin_wasm::{
 };
 use rspack_plugin_web_worker_template::web_worker_template_plugin;
 use rspack_plugin_worker::WorkerPlugin;
+use plugin_manifest::ManifestPlugin;
 
 pub use self::{
-  raw_banner::RawBannerPluginOptions, raw_copy::RawCopyRspackPluginOptions,
-  raw_html::RawHtmlRspackPluginOptions, raw_ignore::RawIgnorePluginOptions,
-  raw_limit_chunk_count::RawLimitChunkCountPluginOptions, raw_mf::RawContainerPluginOptions,
+  raw_banner::RawBannerPluginOptions,
+  raw_copy::RawCopyRspackPluginOptions,
+  raw_dll::{RawDllEntryPluginOptions, RawLibManifestPluginOptions},
+  raw_html::RawHtmlRspackPluginOptions,
+  raw_ignore::RawIgnorePluginOptions,
+  raw_limit_chunk_count::RawLimitChunkCountPluginOptions,
+  raw_mf::RawContainerPluginOptions,
   raw_progress::RawProgressPluginOptions,
   raw_swc_js_minimizer::RawSwcJsMinimizerRspackPluginOptions,
 };
@@ -91,10 +103,10 @@ use self::{
   raw_size_limits::RawSizeLimitsPluginOptions,
 };
 use crate::{
-  plugins::{CssExtractRspackAdditionalDataPlugin, JsLoaderRspackPlugin},
-  JsLoaderRunner, RawDynamicEntryPluginOptions, RawEvalDevToolModulePluginOptions,
-  RawExternalItemWrapper, RawExternalsPluginOptions, RawHttpExternalsRspackPluginOptions,
-  RawSourceMapDevToolPluginOptions, RawSplitChunksOptions,
+  plugins::JsLoaderRspackPlugin, JsLoaderRunner, RawContextReplacementPluginOptions,
+  RawDynamicEntryPluginOptions, RawEvalDevToolModulePluginOptions, RawExternalItemWrapper,
+  RawExternalsPluginOptions, RawHttpExternalsRspackPluginOptions, RawSourceMapDevToolPluginOptions,
+  RawSplitChunksOptions,
 };
 
 #[napi(string_enum)]
@@ -125,6 +137,7 @@ pub enum BuiltinPluginName {
   WebWorkerTemplatePlugin,
   MergeDuplicateChunksPlugin,
   SplitChunksPlugin,
+  RemoveDuplicateModulesPlugin,
   ShareRuntimePlugin,
   ContainerPlugin,
   ContainerReferencePlugin,
@@ -162,6 +175,11 @@ pub enum BuiltinPluginName {
   RuntimeChunkPlugin,
   SizeLimitsPlugin,
   NoEmitOnErrorsPlugin,
+  ContextReplacementPlugin,
+  DllEntryPlugin,
+  DllReferenceAgencyPlugin,
+  LibManifestPlugin,
+  FlagAllModulesAsUsedPlugin,
 
   // rspack specific plugins
   // naming format follow XxxRspackPlugin
@@ -177,6 +195,7 @@ pub enum BuiltinPluginName {
   // naming format follow XxxRspackPlugin
   JsLoaderRspackPlugin,
   LazyCompilationPlugin,
+  ManifestPlugin,
 }
 
 #[napi(object)]
@@ -187,7 +206,7 @@ pub struct BuiltinPlugin {
 }
 
 impl BuiltinPlugin {
-  pub fn append_to(self, env: Env, plugins: &mut Vec<BoxPlugin>) -> rspack_error::Result<()> {
+  pub fn append_to(self, _env: Env, plugins: &mut Vec<BoxPlugin>) -> rspack_error::Result<()> {
     match self.name {
       // webpack also have these plugins
       BuiltinPluginName::DefinePlugin => {
@@ -297,6 +316,9 @@ impl BuiltinPlugin {
         use rspack_plugin_split_chunks::SplitChunksPlugin;
         let options = downcast_into::<RawSplitChunksOptions>(self.options)?.into();
         plugins.push(SplitChunksPlugin::new(options).boxed());
+      }
+      BuiltinPluginName::RemoveDuplicateModulesPlugin => {
+        plugins.push(RemoveDuplicateModulesPlugin::default().boxed());
       }
       BuiltinPluginName::ShareRuntimePlugin => {
         plugins.push(ShareRuntimePlugin::new(downcast_into::<bool>(self.options)?).boxed())
@@ -479,8 +501,6 @@ impl BuiltinPlugin {
         )
       }
       BuiltinPluginName::CssExtractRspackPlugin => {
-        let additional_data_plugin = CssExtractRspackAdditionalDataPlugin::new(env)?.boxed();
-        plugins.push(additional_data_plugin);
         let plugin = rspack_plugin_extract_css::plugin::PluginCssExtract::new(
           downcast_into::<RawCssExtractPluginOption>(self.options)?.into(),
         )
@@ -506,6 +526,33 @@ impl BuiltinPlugin {
       }
       BuiltinPluginName::NoEmitOnErrorsPlugin => {
         plugins.push(NoEmitOnErrorsPlugin::default().boxed());
+      }
+      BuiltinPluginName::ContextReplacementPlugin => {
+        let raw_options = downcast_into::<RawContextReplacementPluginOptions>(self.options)?;
+        let options = raw_options.try_into()?;
+        plugins.push(ContextReplacementPlugin::new(options).boxed());
+      }
+      BuiltinPluginName::DllEntryPlugin => {
+        let raw_options = downcast_into::<RawDllEntryPluginOptions>(self.options)?;
+        let options = raw_options.into();
+        plugins.push(DllEntryPlugin::new(options).boxed());
+      }
+      BuiltinPluginName::LibManifestPlugin => {
+        let raw_options = downcast_into::<RawLibManifestPluginOptions>(self.options)?;
+        let options = raw_options.into();
+        plugins.push(LibManifestPlugin::new(options).boxed());
+      }
+      BuiltinPluginName::FlagAllModulesAsUsedPlugin => {
+        let raw_options = downcast_into::<RawFlagAllModulesAsUsedPluginOptions>(self.options)?;
+        plugins.push(FlagAllModulesAsUsedPlugin::new(raw_options.explanation).boxed())
+      }
+      BuiltinPluginName::DllReferenceAgencyPlugin => {
+        let raw_options = downcast_into::<RawDllReferenceAgencyPluginOptions>(self.options)?;
+        let options = raw_options.into();
+        plugins.push(DllReferenceAgencyPlugin::new(options).boxed());
+      }
+      BuiltinPluginName::ManifestPlugin => {
+        plugins.push(ManifestPlugin::new().boxed());
       }
     }
     Ok(())
