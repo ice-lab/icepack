@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 use std::future::Future;
 use std::pin::Pin;
 use std::{
@@ -9,10 +11,11 @@ use std::{
 use lazy_static::lazy_static;
 use regex::Regex;
 use rspack_core::{
-  DependencyCategory, LoaderRunnerContext, ResolveOptionsWithDependencyType, ResolveResult,
+  DependencyCategory, RunnerContext, ResolveOptionsWithDependencyType, ResolveResult,
   Resolver,
 };
 use rspack_error::{error, AnyhowError, Result};
+use rspack_cacheable::{cacheable, cacheable_dyn, with::{AsRefStrConverter, AsRefStr}};
 use rspack_loader_runner::{Content, Identifiable, Identifier, Loader, LoaderContext};
 use rspack_plugin_javascript::{
   ast::{self, SourceMapConfig},
@@ -24,7 +27,7 @@ use swc_core::{
   base::config::{Options, OutputCharset},
   ecma::{
     ast::EsVersion,
-    parser::{Syntax, TsConfig},
+    parser::{Syntax, TsSyntax},
   },
 };
 use swc_optimize_barrel::optimize_barrel;
@@ -32,30 +35,158 @@ use tokio::sync::Mutex;
 
 pub const BARREL_LOADER_IDENTIFIER: &str = "builtin:barrel-loader";
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[cacheable(with=AsRefStr)]
+#[derive(Debug, Deserialize)]
 pub struct LoaderOptions {
+  options: String,
   pub names: Vec<String>,
   pub cache_dir: Option<String>,
 }
 
+impl AsRefStrConverter for LoaderOptions {
+  fn as_str(&self) -> &str {
+    &self.options
+  }
+  fn from_str(s: &str) -> Self {
+    s.try_into()
+      .expect("failed to generate LoaderOptions")
+  }
+}
+
+impl TryFrom<&str> for LoaderOptions {
+  type Error = serde_json::Error;
+
+  fn try_from(s: &str) -> Result<Self, Self::Error> {
+    serde_json::from_str(s)
+  }
+}
+
+#[cacheable]
+#[derive(Debug)]
 pub struct BarrelLoader {
   identifier: Identifier,
   loader_options: LoaderOptions,
 }
 
 impl BarrelLoader {
-  pub fn new(options: LoaderOptions) -> Self {
-    Self {
+  pub fn new(options: &str) -> Result<Self, serde_json::Error> {
+    let loader_options: LoaderOptions = options.try_into()?;
+    Ok(Self {
       identifier: BARREL_LOADER_IDENTIFIER.into(),
-      loader_options: options.into(),
-    }
+      loader_options,
+    })
   }
 
   pub fn with_identifier(mut self, identifier: Identifier) -> Self {
     assert!(identifier.starts_with(BARREL_LOADER_IDENTIFIER));
     self.identifier = identifier;
     self
+  }
+
+  async fn loader_impl(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    let resource_path = loader_context
+      .resource_path()
+      .map(|p| p.to_path_buf())
+      .unwrap_or_default();
+
+    let resolver = loader_context
+      .context
+      .resolver_factory
+      .get(ResolveOptionsWithDependencyType {
+        resolve_options: None,
+        resolve_to_context: false,
+        dependency_category: DependencyCategory::Esm,
+      });
+
+    let Some(content) = loader_context.take_content() else {
+      return Ok(());
+    };
+
+    let source = content.try_into_string()?;
+
+    let result = {
+      // Get barrel mapping
+      let mut mapping_result = GLOBAL_TRANSFORM_MAPPING.lock().await;
+      let resource_key = resource_path.as_str();
+      if mapping_result.contains_key(resource_key) {
+        mapping_result.get(resource_key).cloned()
+      } else {
+        let visited = HashSet::new();
+        let ret = get_barrel_map(
+          visited,
+          resolver,
+          resource_path.clone().into_std_path_buf(),
+          self.loader_options.cache_dir.clone(),
+          false,
+          Some(source),
+        )
+        .await?;
+        if let Some(mapping) = ret.clone() {
+          mapping_result.insert(resource_key.to_string(), mapping);
+        }
+        ret
+      }
+    };
+    let mut export_map = HashMap::new();
+    if let Some(TransformMapping {
+      export_list,
+      wildcard_exports,
+      is_client_entry,
+    }) = result
+    {
+      export_list.iter().for_each(|list| {
+        let key = list[0].clone();
+        let value = (list[1].clone(), list[2].clone());
+        export_map.insert(key, value);
+      });
+
+      let names = &self.loader_options.names;
+      let mut missed_names = vec![];
+      let mut output = if is_client_entry {
+        String::from("\"use client;\"\n")
+      } else {
+        String::from("")
+      };
+      names.iter().for_each(|n| {
+        if export_map.contains_key(n) {
+          let (file_path, orig) = export_map.get(n).unwrap();
+          if orig == "*" {
+            output.push_str(&format!("\nexport * as {} from '{}';", n, file_path));
+          } else if orig == "default" {
+            output.push_str(&format!(
+              "\nexport {{ default as {} }} from '{}';",
+              n, file_path
+            ));
+          } else if orig == n {
+            output.push_str(&format!("\nexport {{ {} }} from '{}';", n, file_path));
+          } else {
+            output.push_str(&format!(
+              "\nexport {{ {} as {} }} from '{}';",
+              orig, n, file_path
+            ));
+          }
+        } else {
+          missed_names.push(n.as_str());
+        }
+      });
+
+      if missed_names.len() > 0 {
+        wildcard_exports.iter().for_each(|n| {
+          let mut missed_str = String::from(&missed_names.join(" ,"));
+          missed_str.push_str("&wildcard");
+          let req = n.replace("__PLACEHOLDER__", &missed_str);
+          output.push_str(&format!("\nexport * from '{}';", req));
+        });
+      }
+      loader_context.finish_with((output, None));
+    } else {
+      let reexport_str = format!(
+        "export * from '{}';",
+        resource_path.to_string()
+      );
+      loader_context.finish_with((reexport_str, None));
+    }
+    Ok(())
   }
 }
 
@@ -98,7 +229,7 @@ async fn get_barrel_map(
   let file_extension = file.extension().unwrap();
   let ts_extensions = vec!["tsx", "ts", "mts"];
   if ts_extensions.iter().any(|ext| ext == &file_extension) {
-    swc_options.config.jsc.syntax = Some(Syntax::Typescript(TsConfig {
+    swc_options.config.jsc.syntax = Some(Syntax::Typescript(TsSyntax {
       tsx: true,
       decorators: true,
       ..Default::default()
@@ -116,9 +247,14 @@ async fn get_barrel_map(
         })
       })
       .map_err(AnyhowError::from)?;
+
+    let input_source_map = c
+      .input_source_map(&built.input_source_map)
+      .map_err(|e| error!(e.to_string()))?;
     let codegen_options = ast::CodegenOptions {
       target: Some(built.target),
       minify: Some(built.minify),
+      input_source_map: input_source_map.as_ref(),
       ascii_only: built
         .output
         .charset
@@ -191,7 +327,7 @@ async fn get_barrel_map(
           let res = get_barrel_map_boxed(
             visited.clone(),
             resolver.clone(),
-            resource.path,
+            resource.path.as_std_path().to_path_buf(),
             cache_dir.clone(),
             true,
             None,
@@ -237,106 +373,22 @@ fn get_barrel_map_boxed(
   ))
 }
 
+#[cacheable_dyn]
 #[async_trait::async_trait]
-impl Loader<LoaderRunnerContext> for BarrelLoader {
-  async fn run(&self, loader_context: &mut LoaderContext<'_, LoaderRunnerContext>) -> Result<()> {
-    let resource_path: std::path::PathBuf = loader_context.resource_path.to_path_buf();
-
-    let resolver = loader_context
-      .context
-      .resolver_factory
-      .get(ResolveOptionsWithDependencyType {
-        resolve_options: None,
-        resolve_to_context: false,
-        dependency_category: DependencyCategory::Esm,
-      });
-
-    let content = std::mem::take(&mut loader_context.content).expect("content should be available");
-    let source = content.try_into_string()?;
-
-    let result = {
-      // Get barrel mapping
-      let mut mapping_result = GLOBAL_TRANSFORM_MAPPING.lock().await;
-      let resource_key = &resource_path.to_string_lossy().to_string();
-      if mapping_result.contains_key(resource_key) {
-        mapping_result.get(resource_key).cloned()
-      } else {
-        let visited = HashSet::new();
-        let ret = get_barrel_map(
-          visited,
-          resolver,
-          resource_path.clone(),
-          self.loader_options.cache_dir.clone(),
-          false,
-          Some(source),
-        )
-        .await?;
-        if let Some(mapping) = ret.clone() {
-          mapping_result.insert(resource_key.to_string(), mapping);
-        }
-        ret
-      }
-    };
-    let mut export_map = HashMap::new();
-    if let Some(TransformMapping {
-      export_list,
-      wildcard_exports,
-      is_client_entry,
-    }) = result
+impl Loader<RunnerContext> for BarrelLoader {
+  async fn run(&self, loader_context: &mut LoaderContext<RunnerContext>) -> Result<()> {
+    #[allow(unused_mut)]
+    let inner = async { self.loader_impl(loader_context).await };
+    #[cfg(debug_assertions)]
     {
-      export_list.iter().for_each(|list| {
-        let key = list[0].clone();
-        let value = (list[1].clone(), list[2].clone());
-        export_map.insert(key, value);
-      });
-
-      let names = &self.loader_options.names;
-      let mut missed_names = vec![];
-      let mut output = if is_client_entry {
-        String::from("\"use client;\"\n")
-      } else {
-        String::from("")
-      };
-      names.iter().for_each(|n| {
-        if export_map.contains_key(n) {
-          let (file_path, orig) = export_map.get(n).unwrap();
-          if orig == "*" {
-            output.push_str(&format!("\nexport * as {} from '{}';", n, file_path));
-          } else if orig == "default" {
-            output.push_str(&format!(
-              "\nexport {{ default as {} }} from '{}';",
-              n, file_path
-            ));
-          } else if orig == n {
-            output.push_str(&format!("\nexport {{ {} }} from '{}';", n, file_path));
-          } else {
-            output.push_str(&format!(
-              "\nexport {{ {} as {} }} from '{}';",
-              orig, n, file_path
-            ));
-          }
-        } else {
-          missed_names.push(n.as_str());
-        }
-      });
-
-      if missed_names.len() > 0 {
-        wildcard_exports.iter().for_each(|n| {
-          let mut missed_str = String::from(&missed_names.join(" ,"));
-          missed_str.push_str("&wildcard");
-          let req = n.replace("__PLACEHOLDER__", &missed_str);
-          output.push_str(&format!("\nexport * from '{}';", req));
-        });
-      }
-      loader_context.content = Some(Content::from(output));
-    } else {
-      let reexport_str = format!(
-        "export * from '{}';",
-        resource_path.to_string_lossy().to_string()
-      );
-      loader_context.content = Some(Content::from(reexport_str));
+      stacker::maybe_grow(
+        2 * 1024 * 1024, /* 2mb */
+        4 * 1024 * 1024, /* 4mb */
+        || async { inner.await }
+      ).await
     }
-    Ok(())
+    #[cfg(not(debug_assertions))]
+    inner.await
   }
 }
 

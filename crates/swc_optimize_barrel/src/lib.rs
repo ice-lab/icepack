@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use swc_core::{
   common::DUMMY_SP,
-  ecma::{ast::*, utils::private_ident, visit::Fold},
+  ecma::{ast::*, utils::private_ident, visit::{fold_pass, Fold}},
 };
 
 #[derive(Clone, Debug, Deserialize)]
@@ -17,10 +17,10 @@ pub struct Config {
   pub wildcard: bool,
 }
 
-pub fn optimize_barrel(config: Config) -> impl Fold {
-  OptimizeBarrel {
+pub fn optimize_barrel(config: Config)-> impl Pass {
+  fold_pass(OptimizeBarrel {
     wildcard: config.wildcard,
-  }
+  })
 }
 
 #[derive(Debug, Default)]
@@ -217,6 +217,7 @@ impl Fold for OptimizeBarrel {
           span: DUMMY_SP,
           kind: VarDeclKind::Const,
           declare: false,
+          ctxt: Default::default(),
           decls: vec![VarDeclarator {
             span: DUMMY_SP,
             name: Pat::Ident(BindingIdent {
@@ -255,6 +256,7 @@ impl Fold for OptimizeBarrel {
             span: DUMMY_SP,
             kind: VarDeclKind::Const,
             declare: false,
+            ctxt: Default::default(),
             decls: vec![VarDeclarator {
               span: DUMMY_SP,
               name: Pat::Ident(BindingIdent {

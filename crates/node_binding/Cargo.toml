@@ -6,35 +6,39 @@ version = "0.0.0"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+plugin  = ["binding_options/plugin"]
+
 [dependencies]
-rspack_binding_macros  = { path = "../.rspack_crates/rspack_binding_macros" }
-rspack_binding_options = { path = "../.rspack_crates/rspack_binding_options" }
-binding_options        = { path = "../binding_options" }
-rspack_binding_values  = { path = "../.rspack_crates/rspack_binding_values" }
-rspack_core            = { path = "../.rspack_crates/rspack_core" }
-rspack_error           = { path = "../.rspack_crates/rspack_error" }
-rspack_fs_node         = { path = "../.rspack_crates/rspack_fs_node" }
-rspack_hook            = { path = "../.rspack_crates/rspack_hook" }
-rspack_napi_shared     = { path = "../.rspack_crates/rspack_napi_shared" }
-rspack_tracing         = { path = "../.rspack_crates/rspack_tracing" }
+ropey                    = { workspace = true }
+rspack_allocator         = { workspace = true }
+binding_options          = { path = "../binding_options" }
+rspack_binding_values    = { workspace = true }
+rspack_collections       = { workspace = true }
+rspack_core              = { workspace = true }
+rspack_error             = { workspace = true }
+rspack_fs                = { workspace = true }
+rspack_fs_node           = { workspace = true }
+rspack_hash              = { workspace = true }
+rspack_hook              = { workspace = true }
+rspack_napi              = { workspace = true }
+rspack_paths             = { workspace = true }
+rspack_plugin_html       = { workspace = true }
+rspack_plugin_javascript = { workspace = true }
+rspack_util              = { workspace = true }
+
+rspack_tracing = { workspace = true }
 
 async-trait = { workspace = true }
-once_cell   = { workspace = true }
+cow-utils   = { workspace = true }
 tracing     = { workspace = true }
 
 napi        = { workspace = true }
 napi-derive = { workspace = true }
 
-color-backtrace = "0.6"
+color-backtrace = "0.6.1"
 
-[target.'cfg(not(target_os = "linux"))'.dependencies]
-mimalloc-rust = { workspace = true }
-
-[target.'cfg(all(target_os = "linux", target_env = "gnu", any(target_arch = "x86_64", target_arch = "aarch64")))'.dependencies]
-tikv-jemallocator = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
-
-[dev-dependencies]
-testing_macros = { workspace = true }

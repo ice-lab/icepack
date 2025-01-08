@@ -2,8 +2,11 @@ use std::path::Path;
 use anyhow::{Context, Error};
 use either::Either;
 use serde::Deserialize;
-use swc_core::common::chain;
-use swc_core::ecma::{transforms::base::pass::noop, visit::Fold};
+use swc_core::atoms::Atom;
+use swc_core::common::collections::AHashMap;
+use swc_core::common::BytePos;
+use swc_core::ecma::ast::{Ident, Pass, noop_pass};
+use swc_core::ecma::visit::{noop_visit_type, Visit};
 use swc_env_replacement::env_replacement;
 use swc_keep_export::keep_export;
 use swc_named_import_transform::{named_import_transform, TransformConfig};
@@ -13,16 +16,17 @@ use swc_change_package_import::{change_package_import, Config as ImportConfig, S
 macro_rules! either {
   ($config:expr, $f:expr) => {
     if let Some(config) = &$config {
+      #[allow(clippy::redundant_closure_call)]
       Either::Left($f(config))
     } else {
-      Either::Right(noop())
+      Either::Right(noop_pass())
     }
   };
   ($config:expr, $f:expr, $enabled:expr) => {
     if $enabled() {
       either!($config, $f)
     } else {
-      Either::Right(noop())
+      Either::Right(noop_pass())
     }
   };
 }
@@ -60,11 +64,10 @@ pub(crate) fn load_routes_config(path: &Path) -> Result<Vec<String>, Error> {
   parse_routes_config(content)
 }
 
-fn match_route_entry(resource_path: &Path, routes: Option<&Vec<String>>) -> bool {
-  let resource_path_str = resource_path.to_str().unwrap();
+fn match_route_entry(resource_path: &str, routes: Option<&Vec<String>>) -> bool {
   if let Some(routes) = routes {
     for route in routes {
-      if resource_path_str.ends_with(&route.to_string()) {
+      if resource_path.ends_with(&route.to_string()) {
         return true;
       }
     }
@@ -72,11 +75,10 @@ fn match_route_entry(resource_path: &Path, routes: Option<&Vec<String>>) -> bool
   false
 }
 
-fn match_app_entry(resource_path: &Path) -> bool {
-  let resource_path_str = resource_path.to_str().unwrap();
+fn match_app_entry(resource_path: &str) -> bool {
   // File path ends with src/app.(ts|tsx|js|jsx)
   let regex_for_app = regex::Regex::new(r"src/app\.(ts|tsx|js|jsx)$").unwrap();
-  regex_for_app.is_match(resource_path_str)
+  regex_for_app.is_match(resource_path)
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -89,11 +91,11 @@ pub struct TransformFeatureOptions {
 }
 
 pub(crate) fn transform<'a>(
-  resource_path: &'a Path,
+  resource_path: &'a str,
   routes_config: Option<&Vec<String>>,
   feature_options: &TransformFeatureOptions,
-) -> impl Fold + 'a {
-  chain!(
+) -> impl Pass + 'a {
+  (
     either!(feature_options.optimize_import, |options: &Vec<String>| {
       named_import_transform(TransformConfig {
         packages: options.clone(),
@@ -132,4 +134,16 @@ pub(crate) fn transform<'a>(
       }
     ),
   )
+}
+
+pub struct IdentCollector {
+  pub names: AHashMap<BytePos, Atom>,
+}
+
+impl Visit for IdentCollector {
+  noop_visit_type!();
+
+  fn visit_ident(&mut self, ident: &Ident) {
+    self.names.insert(ident.span.lo, ident.sym.clone());
+  }
 }

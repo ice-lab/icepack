@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use swc_change_package_import::{
-  Config, ImportType, MapProperty, ModuleImportVisitor, SpecificConfigs,
+  Config, ImportType, MapProperty, SpecificConfigs, change_package_import
 };
 use swc_core::ecma::transforms::testing::{test_fixture, FixtureTestConfig};
 
@@ -11,7 +11,7 @@ fn test_single_literal_transform(input: PathBuf) {
   let output = input.with_file_name("output.js");
   test_fixture(
     Default::default(),
-    &|_t| ModuleImportVisitor::new(vec![Config::LiteralConfig(String::from("y"))]),
+    &|_t| change_package_import(vec![Config::LiteralConfig(String::from("y"))]),
     &input,
     &output,
     FixtureTestConfig {
@@ -26,7 +26,7 @@ fn test_multi_literal_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![
+      change_package_import(vec![
         Config::LiteralConfig(String::from("z")),
         Config::LiteralConfig(String::from("o")),
       ])
@@ -46,7 +46,7 @@ fn test_single_specific_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("y"),
         map: HashMap::from([(
           "x".to_string(),
@@ -72,7 +72,7 @@ fn test_single_specific_transform_2(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("y"),
         map: HashMap::from([(
           "x".to_string(),
@@ -98,7 +98,7 @@ fn test_mix_specific_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![
+      change_package_import(vec![
         Config::LiteralConfig(String::from("antd")),
         Config::SpecificConfig(SpecificConfigs {
           name: String::from("ice"),
@@ -127,7 +127,7 @@ fn test_multi_specific_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![
+      change_package_import(vec![
         Config::SpecificConfig(SpecificConfigs {
           name: String::from("e"),
           map: HashMap::from([
@@ -176,7 +176,7 @@ fn test_ice_basic_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([(
           "runApp".to_string(),
@@ -202,7 +202,7 @@ fn test_ice_as_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([(
           "runApp".to_string(),
@@ -228,7 +228,7 @@ fn test_ice_alias_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([(
           "Head".to_string(),
@@ -254,7 +254,7 @@ fn test_ice_alias_with_as_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([(
           "Head".to_string(),
@@ -280,7 +280,7 @@ fn test_ice_multiple_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([
           (
@@ -324,7 +324,7 @@ fn test_ice_matched_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([
           (
@@ -360,7 +360,7 @@ fn test_ice_miss_match_transform(input: PathBuf) {
   test_fixture(
     Default::default(),
     &|_t| {
-      ModuleImportVisitor::new(vec![Config::SpecificConfig(SpecificConfigs {
+      change_package_import(vec![Config::SpecificConfig(SpecificConfigs {
         name: String::from("ice"),
         map: HashMap::from([(
           "runApp".to_string(),

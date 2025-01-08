@@ -10,7 +10,7 @@ use swc_core::{
   },
   ecma::{
     ast::*,
-    visit::{noop_fold_type, Fold, FoldWith},
+    visit::{noop_fold_type, Fold, FoldWith, fold_pass},
   },
 };
 /// State of the transforms. Shared by the analyzer and the transform.
@@ -579,12 +579,14 @@ impl Fold for Analyzer<'_> {
   }
 }
 
-pub fn keep_export(exports: Vec<String>) -> impl Fold {
-  Repeat::new(KeepExport {
-    state: State {
-      keep_exports: exports,
-      ..Default::default()
-    },
-    in_lhs_of_var: false,
-  })
+pub fn keep_export(exports: Vec<String>) -> impl Pass {
+  fold_pass(
+    Repeat::new(KeepExport {
+      state: State {
+        keep_exports: exports,
+        ..Default::default()
+      },
+      in_lhs_of_var: false,
+    })
+  )
 }

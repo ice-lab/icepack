@@ -1,14 +1,9 @@
-use better_scoped_tls::scoped_tls;
 use napi_derive::napi;
 use rspack_core::{MangleExportsOption, Optimization, SideEffectOption, UsedExportsOption};
-use serde::Deserialize;
 
-scoped_tls!(pub(crate) static IS_ENABLE_NEW_SPLIT_CHUNKS: bool);
-
-#[derive(Deserialize, Debug, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 #[napi(object)]
-pub struct RspackRawOptimizationOptions {
+pub struct RawOptimizationOptions {
   pub remove_available_modules: bool,
   pub side_effects: String,
   pub used_exports: String,
@@ -18,10 +13,10 @@ pub struct RspackRawOptimizationOptions {
   pub concatenate_modules: bool,
 }
 
-impl TryFrom<RspackRawOptimizationOptions> for Optimization {
+impl TryFrom<RawOptimizationOptions> for Optimization {
   type Error = rspack_error::Error;
 
-  fn try_from(value: RspackRawOptimizationOptions) -> rspack_error::Result<Self> {
+  fn try_from(value: RawOptimizationOptions) -> rspack_error::Result<Self> {
     Ok(Optimization {
       remove_available_modules: value.remove_available_modules,
       side_effects: SideEffectOption::from(value.side_effects.as_str()),

@@ -5,11 +5,12 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
+base64                   = { version = "0.22.1" }
 dashmap = { workspace = true }
-rspack_ast = { path = "../.rspack_crates/rspack_ast" }
-swc_config = { workspace = true }
-swc_core = { workspace = true, features = [
-  "base",
-  "ecma_ast",
-  "common"
-] }
+jsonc-parser             = { version = "0.26.2", features = ["serde"] }
+rspack_ast               = { workspace = true }
+rspack_util              = { workspace = true }
+swc                      = { workspace = true, features = ["manual-tokio-runtmie"] }
+swc_config               = { workspace = true }
+swc_core                 = { workspace = true, features = ["base", "ecma_ast", "common"] }
+url                      = "2.5.4"

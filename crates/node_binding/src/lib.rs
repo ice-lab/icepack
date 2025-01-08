@@ -3,60 +3,36 @@
 #![feature(try_blocks)]
 #[macro_use]
 extern crate napi_derive;
+extern crate rspack_allocator;
 
-use std::collections::HashSet;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 
-use binding_options::RSPackRawOptions;
+use compiler::{Compiler, CompilerState, CompilerStateGuard};
 use napi::bindgen_prelude::*;
-use once_cell::sync::Lazy;
-use rspack_binding_options::BuiltinPlugin;
-use rspack_binding_values::SingleThreadedHashMap;
-use rspack_core::PluginExt;
+use binding_options::BuiltinPlugin;
+use rspack_core::{Compilation, PluginExt};
 use rspack_error::Diagnostic;
-use rspack_fs_node::{AsyncNodeWritableFileSystem, ThreadsafeNodeFS};
+use rspack_fs_node::{NodeFileSystem, ThreadsafeNodeFS};
 
-mod hook;
-mod loader;
+mod compiler;
+mod diagnostic;
 mod panic;
 mod plugins;
+mod resolver_factory;
 
-use hook::*;
-// Napi macro registered this successfully
-#[allow(unused)]
-use loader::run_builtin_loader;
+pub use diagnostic::*;
 use plugins::*;
-use rspack_binding_options::*;
+use resolver_factory::*;
+use binding_options::*;
 use rspack_binding_values::*;
-use rspack_napi_shared::set_napi_env;
 use rspack_tracing::chrome::FlushGuard;
 
-#[cfg(not(target_os = "linux"))]
-#[global_allocator]
-static GLOBAL: mimalloc_rust::GlobalMiMalloc = mimalloc_rust::GlobalMiMalloc;
-
-#[cfg(all(
-  target_os = "linux",
-  target_env = "gnu",
-  any(target_arch = "x86_64", target_arch = "aarch64")
-))]
-#[global_allocator]
-static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
-
-static COMPILERS: Lazy<
-  SingleThreadedHashMap<CompilerId, Pin<Box<rspack_core::Compiler<AsyncNodeWritableFileSystem>>>>,
-> = Lazy::new(Default::default);
-
-static NEXT_COMPILER_ID: AtomicU32 = AtomicU32::new(0);
-
-type CompilerId = u32;
-
-#[napi(custom_finalize)]
+#[napi]
 pub struct Rspack {
-  id: CompilerId,
   js_plugin: JsHooksAdapterPlugin,
+  compiler: Pin<Box<Compiler>>,
+  state: CompilerState,
 }
 
 #[napi]
@@ -64,175 +40,163 @@ impl Rspack {
   #[napi(constructor)]
   pub fn new(
     env: Env,
-    options: RSPackRawOptions,
+    options: RawOptions,
     builtin_plugins: Vec<BuiltinPlugin>,
-    js_hooks: JsHooks,
     register_js_taps: RegisterJsTaps,
     output_filesystem: ThreadsafeNodeFS,
-    js_loader_runner: JsFunction,
+    intermediate_filesystem: ThreadsafeNodeFS,
+    mut resolver_factory_reference: Reference<JsResolverFactory>,
   ) -> Result<Self> {
-    Self::prepare_environment(&env);
     tracing::info!("raw_options: {:#?}", &options);
 
-    let disabled_hooks: DisabledHooks = Default::default();
     let mut plugins = Vec::new();
-    let js_plugin =
-      JsHooksAdapterPlugin::from_js_hooks(env, js_hooks, disabled_hooks, register_js_taps)?;
+    let js_plugin = JsHooksAdapterPlugin::from_js_hooks(env, register_js_taps)?;
     plugins.push(js_plugin.clone().boxed());
     for bp in builtin_plugins {
-      bp.append_to(&mut plugins)
+      bp.append_to(env, &mut plugins)
         .map_err(|e| Error::from_reason(format!("{e}")))?;
     }
 
-    let js_loader_runner: JsLoaderRunner = JsLoaderRunner::try_from(js_loader_runner)?;
-    plugins.push(JsLoaderResolver { js_loader_runner }.boxed());
-
-    let compiler_options = options
-      .apply(&mut plugins)
+    let compiler_options: rspack_core::CompilerOptions = options
+      .try_into()
       .map_err(|e| Error::from_reason(format!("{e}")))?;
 
     tracing::info!("normalized_options: {:#?}", &compiler_options);
 
+    let resolver_factory =
+      (*resolver_factory_reference).get_resolver_factory(compiler_options.resolve.clone());
+    let loader_resolver_factory = (*resolver_factory_reference)
+      .get_loader_resolver_factory(compiler_options.resolve_loader.clone());
     let rspack = rspack_core::Compiler::new(
       compiler_options,
       plugins,
-      AsyncNodeWritableFileSystem::new(env, output_filesystem)
-        .map_err(|e| Error::from_reason(format!("Failed to create writable filesystem: {e}",)))?,
+      binding_options::buildtime_plugins::buildtime_plugins(),
+      Some(Box::new(NodeFileSystem::new(output_filesystem).map_err(
+        |e| Error::from_reason(format!("Failed to create writable filesystem: {e}",)),
+      )?)),
+      Some(Box::new(
+        NodeFileSystem::new(intermediate_filesystem).map_err(|e| {
+          Error::from_reason(format!("Failed to create intermediate filesystem: {e}",))
+        })?,
+      )),
+      None,
+      Some(resolver_factory),
+      Some(loader_resolver_factory),
     );
 
-    let id = NEXT_COMPILER_ID.fetch_add(1, Ordering::SeqCst);
-    unsafe { COMPILERS.insert_if_vacant(id, Box::pin(rspack)) }?;
-
-    Ok(Self { id, js_plugin })
+    Ok(Self {
+      compiler: Box::pin(Compiler::from(rspack)),
+      state: CompilerState::init(),
+      js_plugin,
+    })
   }
 
-  #[allow(clippy::unwrap_in_result, clippy::unwrap_used)]
-  #[napi(
-    js_name = "unsafe_set_disabled_hooks",
-    ts_args_type = "hooks: Array<string>"
-  )]
-  pub fn set_disabled_hooks(&self, _env: Env, hooks: Vec<String>) -> Result<()> {
-    self.js_plugin.set_disabled_hooks(hooks)
+  #[napi]
+  pub fn set_non_skippable_registers(&self, kinds: Vec<RegisterJsTapKind>) {
+    self.js_plugin.set_non_skippable_registers(kinds)
   }
 
   /// Build with the given option passed to the constructor
-  ///
-  /// Warning:
-  /// Calling this method recursively might cause a deadlock.
-  #[napi(
-    js_name = "unsafe_build",
-    ts_args_type = "callback: (err: null | Error) => void"
-  )]
-  pub fn build(&self, env: Env, f: JsFunction) -> Result<()> {
-    let handle_build = |compiler: &mut Pin<Box<rspack_core::Compiler<_>>>| {
-      // Safety: compiler is stored in a global hashmap, so it's guaranteed to be alive.
-      let compiler: &'static mut Pin<Box<rspack_core::Compiler<AsyncNodeWritableFileSystem>>> =
-        unsafe { std::mem::transmute::<&'_ mut _, &'static mut _>(compiler) };
-
-      callbackify(env, f, async move {
-        compiler.build().await.map_err(|e| {
-          Error::new(
-            napi::Status::GenericFailure,
-            print_error_diagnostic(e, compiler.options.stats.colors),
-          )
-        })?;
-        tracing::info!("build ok");
-        Ok(())
-      })
-    };
-    unsafe { COMPILERS.borrow_mut(&self.id, handle_build) }
-  }
-
-  /// Rebuild with the given option passed to the constructor
-  ///
-  /// Warning:
-  /// Calling this method recursively will cause a deadlock.
-  #[napi(
-    js_name = "unsafe_rebuild",
-    ts_args_type = "changed_files: string[], removed_files: string[], callback: (err: null | Error) => void"
-  )]
-  pub fn rebuild(
-    &self,
-    env: Env,
-    changed_files: Vec<String>,
-    removed_files: Vec<String>,
-    f: JsFunction,
-  ) -> Result<()> {
-    let handle_rebuild = |compiler: &mut Pin<Box<rspack_core::Compiler<_>>>| {
-      // Safety: compiler is stored in a global hashmap, so it's guaranteed to be alive.
-      // The reason why use Box<Compiler> here instead of Compiler itself is that:
-      // Compilers may expand and change its layout underneath, make Compiler layout change.
-      // Use Box to make sure the Compiler layout won't change
-      let compiler: &'static mut Pin<Box<rspack_core::Compiler<AsyncNodeWritableFileSystem>>> =
-        unsafe { std::mem::transmute::<&'_ mut _, &'static mut _>(compiler) };
-
-      callbackify(env, f, async move {
-        compiler
-          .rebuild(
-            HashSet::from_iter(changed_files.into_iter()),
-            HashSet::from_iter(removed_files.into_iter()),
-          )
-          .await
-          .map_err(|e| {
+  #[napi(ts_args_type = "callback: (err: null | Error) => void")]
+  pub fn build(&mut self, env: Env, reference: Reference<Rspack>, f: Function) -> Result<()> {
+    unsafe {
+      self.run(env, reference, |compiler, _guard| {
+        callbackify(env, f, async move {
+          compiler.build().await.map_err(|e| {
             Error::new(
               napi::Status::GenericFailure,
               print_error_diagnostic(e, compiler.options.stats.colors),
             )
           })?;
-        tracing::info!("rebuild ok");
-        Ok(())
+          tracing::info!("build ok");
+          drop(_guard);
+          Ok(())
+        })
       })
-    };
-
-    unsafe { COMPILERS.borrow_mut(&self.id, handle_rebuild) }
+    }
   }
 
-  /// Get the last compilation
-  ///
-  /// Warning:
-  ///
-  /// Calling this method under the build or rebuild method might cause a deadlock.
-  ///
-  /// **Note** that this method is not safe if you cache the _JsCompilation_ on the Node side, as it will be invalidated by the next build and accessing a dangling ptr is a UB.
-  #[napi(js_name = "unsafe_last_compilation")]
-  pub fn unsafe_last_compilation<F: Fn(JsCompilation) -> Result<()>>(&self, f: F) -> Result<()> {
-    let handle_last_compilation = |compiler: &mut Pin<Box<rspack_core::Compiler<_>>>| {
-      // Safety: compiler is stored in a global hashmap, and compilation is only available in the callback of this function, so it is safe to cast to a static lifetime. See more in the warning part of this method.
-      // The reason why use Box<Compiler> here instead of Compiler itself is that:
-      // Compilers may expand and change its layout underneath, make Compiler layout change.
-      // Use Box to make sure the Compiler layout won't change
-      let compiler: &'static mut Pin<Box<rspack_core::Compiler<AsyncNodeWritableFileSystem>>> =
-        unsafe { std::mem::transmute::<&'_ mut _, &'static mut _>(compiler) };
-      f(JsCompilation::from_compilation(&mut compiler.compilation))
-    };
+  /// Rebuild with the given option passed to the constructor
+  #[napi(
+    ts_args_type = "changed_files: string[], removed_files: string[], callback: (err: null | Error) => void"
+  )]
+  pub fn rebuild(
+    &mut self,
+    env: Env,
+    reference: Reference<Rspack>,
+    changed_files: Vec<String>,
+    removed_files: Vec<String>,
+    f: Function,
+  ) -> Result<()> {
+    use std::collections::HashSet;
 
-    unsafe { COMPILERS.borrow_mut(&self.id, handle_last_compilation) }
-  }
-
-  /// Destroy the compiler
-  ///
-  /// Warning:
-  ///
-  /// Anything related to this compiler will be invalidated after this method is called.
-  #[napi(js_name = "unsafe_drop")]
-  pub fn drop(&self) -> Result<()> {
-    unsafe { COMPILERS.remove(&self.id) };
-
-    Ok(())
-  }
-}
-
-impl ObjectFinalize for Rspack {
-  fn finalize(self, _env: Env) -> Result<()> {
-    // WARNING: Don't try to destroy the compiler from the finalize method. The background thread may still be working and it's a COMPLETELY unsafe way.
-    Ok(())
+    unsafe {
+      self.run(env, reference, |compiler, _guard| {
+        callbackify(env, f, async move {
+          compiler
+            .rebuild(
+              HashSet::from_iter(changed_files.into_iter()),
+              HashSet::from_iter(removed_files.into_iter()),
+            )
+            .await
+            .map_err(|e| {
+              Error::new(
+                napi::Status::GenericFailure,
+                print_error_diagnostic(e, compiler.options.stats.colors),
+              )
+            })?;
+          tracing::info!("rebuild ok");
+          drop(_guard);
+          Ok(())
+        })
+      })
+    }
   }
 }
 
 impl Rspack {
-  fn prepare_environment(env: &Env) {
-    set_napi_env(env.raw());
+  /// Run the given function with the compiler.
+  ///
+  /// ## Safety
+  /// 1. The caller must ensure that the `Compiler` is not moved or dropped during the lifetime of the callback.
+  /// 2. `CompilerStateGuard` should and only be dropped so soon as each `Compiler` is free of use.
+  ///    Accessing `Compiler` beyond the lifetime of `CompilerStateGuard` would lead to potential race condition.
+  unsafe fn run<R>(
+    &mut self,
+    env: Env,
+    reference: Reference<Rspack>,
+    f: impl FnOnce(&'static mut Compiler, CompilerStateGuard) -> Result<R>,
+  ) -> Result<R> {
+    if self.state.running() {
+      return Err(concurrent_compiler_error());
+    }
+    let _guard = self.state.enter();
+    let mut compiler = reference.share_with(env, |s| {
+      // SAFETY: The mutable reference to `Compiler` is exclusive. It's guaranteed by the running state guard.
+      Ok(unsafe { s.compiler.as_mut().get_unchecked_mut() })
+    })?;
+
+    self.cleanup_last_compilation(&compiler.compilation);
+
+    // SAFETY:
+    // 1. `Compiler` is pinned and stored on the heap.
+    // 2. `JsReference` (NAPI internal mechanism) keeps `Compiler` alive until its instance getting garbage collected.
+    f(
+      unsafe { std::mem::transmute::<&mut Compiler, &'static mut Compiler>(*compiler) },
+      _guard,
+    )
   }
+
+  fn cleanup_last_compilation(&self, compilation: &Compilation) {
+    JsCompilationWrapper::cleanup_last_compilation(compilation.id());
+  }
+}
+
+fn concurrent_compiler_error() -> Error {
+  Error::new(
+    napi::Status::GenericFailure,
+    "ConcurrentCompilationError: You ran rspack twice. Each instance only supports a single concurrent compilation at a time.",
+  )
 }
 
 #[derive(Default)]
@@ -265,7 +229,7 @@ static GLOBAL_TRACE_STATE: Mutex<TraceState> = Mutex::new(TraceState::Off);
 #[napi]
 pub fn register_global_trace(
   filter: String,
-  #[napi(ts_arg_type = "\"chrome\" | \"logger\"")] layer: String,
+  #[napi(ts_arg_type = "\"chrome\" | \"logger\"| \"console\"")] layer: String,
   output: String,
 ) {
   let mut state = GLOBAL_TRACE_STATE
@@ -274,6 +238,10 @@ pub fn register_global_trace(
   if matches!(&*state, TraceState::Off) {
     let guard = match layer.as_str() {
       "chrome" => rspack_tracing::enable_tracing_by_env_with_chrome_layer(&filter, &output),
+      "console" => {
+        rspack_tracing::enable_tracing_by_env_with_tokio_console();
+        None
+      }
       "logger" => {
         rspack_tracing::enable_tracing_by_env(&filter, &output);
         None
