@@ -9,7 +9,7 @@ permissions:
 on:
   push:
     branches:
-      - master
+      - fix/ci
     tags-ignore:
       - '**'
     paths-ignore:
@@ -108,7 +108,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}
         with:
-          toolchain: nightly-2023-12-28
+          toolchain: nightly-2024-09-05
           targets: ${{ matrix.settings.target }}
 
       - name: Cache cargo
