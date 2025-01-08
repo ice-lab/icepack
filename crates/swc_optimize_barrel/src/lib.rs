@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use swc_core::{
   common::DUMMY_SP,
-  ecma::{ast::*, utils::private_ident, visit::{fold_pass, Fold, VisitMutPass}},
+  ecma::{ast::*, utils::private_ident, visit::{fold_pass, Fold}},
 };
 
 #[derive(Clone, Debug, Deserialize)]

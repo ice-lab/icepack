@@ -4,7 +4,7 @@ use std::default::Default;
 use std::path::Path;
 use serde::Deserialize;
 use swc_compiler::{IntoJsAst, SwcCompiler};
-use rspack_core::{rspack_sources::SourceMap, Mode, RunnerContext};
+use rspack_core::{Mode, RunnerContext};
 use rspack_cacheable::{cacheable, cacheable_dyn, with::{AsRefStrConverter, AsRefStr}};
 use rspack_error::{error, AnyhowError, Diagnostic, Result};
 use rspack_loader_runner::{Identifiable, Identifier, Loader, LoaderContext};
