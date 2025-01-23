@@ -12,7 +12,7 @@ inputs:
     required: false
     type: string
   ref:
-    default: 'v1.1.8'
+    default: 'v1.2.1'
     required: false
     type: string
   temp:

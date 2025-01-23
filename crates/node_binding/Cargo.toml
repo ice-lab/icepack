@@ -1,20 +1,22 @@
 [package]
-edition = "2021"
-name = "node_binding"
-version = "0.0.0"
-
+description = "node binding"
+edition     = "2021"
+license     = "MIT"
+name        = "icepack_node"
+publish     = false
+repository  = "https://github.com/web-infra-dev/rspack"
+version     = "0.2.0"
 [lib]
 crate-type = ["cdylib"]
 
 [features]
-default = []
-plugin  = ["binding_options/plugin"]
+plugin = ["binding_values/plugin"]
 
 [dependencies]
+anyhow                   = { workspace = true }
 ropey                    = { workspace = true }
 rspack_allocator         = { workspace = true }
-binding_options          = { path = "../binding_options" }
-rspack_binding_values    = { workspace = true }
+binding_values    = { path = "../binding_values" }
 rspack_collections       = { workspace = true }
 rspack_core              = { workspace = true }
 rspack_error             = { workspace = true }
@@ -30,9 +32,10 @@ rspack_util              = { workspace = true }
 
 rspack_tracing = { workspace = true }
 
-async-trait = { workspace = true }
-cow-utils   = { workspace = true }
-tracing     = { workspace = true }
+async-trait        = { workspace = true }
+cow-utils          = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 napi        = { workspace = true }
 napi-derive = { workspace = true }
