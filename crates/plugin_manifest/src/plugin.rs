@@ -86,7 +86,7 @@ async fn process_assets(&self, compilation: &mut Compilation) -> Result<()> {
 
   let page_chunk_name_regex = regex::Regex::new(r"^p_").unwrap();
   compilation.chunk_by_ukey.values().for_each(|c| {
-    if let Some(name) = c.id() {
+    if let Some(name) = c.name() {
       if !c.has_entry_module(&compilation.chunk_graph)
         && !c.can_be_initial(&compilation.chunk_group_by_ukey)
       {

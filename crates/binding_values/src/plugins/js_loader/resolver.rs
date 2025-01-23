@@ -51,6 +51,8 @@ pub fn serde_error_to_miette(
 
 type SwcLoaderCache<'a> = LazyLock<RwLock<FxHashMap<(Cow<'a, str>, Arc<str>), Arc<SwcLoader>>>>;
 static SWC_LOADER_CACHE: SwcLoaderCache = LazyLock::new(|| RwLock::new(FxHashMap::default()));
+type CompilationLoaderCache<'a> = LazyLock<RwLock<FxHashMap<(Cow<'a, str>, Arc<str>), Arc<CompilationLoader>>>>;
+static COMPILATION_LOADER_CACHE: CompilationLoaderCache = LazyLock::new(|| RwLock::new(FxHashMap::default()));
 
 pub async fn get_builtin_loader(builtin: &str, options: Option<&str>) -> Result<BoxLoader> {
   let options: Arc<str> = options.unwrap_or("{}").into();
