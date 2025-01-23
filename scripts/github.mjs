@@ -25,7 +25,11 @@ export async function overwriteContent(content, dest) {
 }
 
 export async function copyAndCleanUp(temp, dest, spinner) {
-  const updateSpinner = text => spinner.text = text;
+  const updateSpinner = text => {
+    if (spinner) {
+      spinner.text = text;
+    }
+  }
 
   updateSpinner('Copying crates to the dest...');
   
