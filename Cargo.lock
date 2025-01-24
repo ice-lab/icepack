@@ -2363,38 +2363,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icepack_node"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "binding_values",
- "color-backtrace",
- "cow-utils",
- "napi",
- "napi-build",
- "napi-derive",
- "ropey",
- "rspack_allocator",
- "rspack_collections",
- "rspack_core",
- "rspack_error",
- "rspack_fs",
- "rspack_fs_node",
- "rspack_hash",
- "rspack_hook",
- "rspack_napi",
- "rspack_paths",
- "rspack_plugin_html",
- "rspack_plugin_javascript",
- "rspack_plugin_runtime",
- "rspack_tracing",
- "rspack_util",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "icu_collections"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3353,6 +3321,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77a5d83df9f36fe23f0c3648c6bbb8b0298bb5f1939c8f2704431371f4b84d43"
 dependencies = [
  "smallvec",
+]
+
+[[package]]
+name = "node_binding"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "binding_values",
+ "color-backtrace",
+ "cow-utils",
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "ropey",
+ "rspack_allocator",
+ "rspack_collections",
+ "rspack_core",
+ "rspack_error",
+ "rspack_fs",
+ "rspack_fs_node",
+ "rspack_hash",
+ "rspack_hook",
+ "rspack_napi",
+ "rspack_paths",
+ "rspack_plugin_html",
+ "rspack_plugin_javascript",
+ "rspack_plugin_runtime",
+ "rspack_tracing",
+ "rspack_util",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
