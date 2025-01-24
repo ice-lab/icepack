@@ -114,10 +114,11 @@ swc_error_reporters = { version = "=6.0.0" }
 swc_html            = { version = "=7.0.0" }
 swc_html_minifier   = { version = "=7.0.0", default-features = false }
 swc_node_comments   = { version = "=5.0.0" }
+
+pnp = { version = "0.9.0" }
+
+rspack_dojang = { version = "0.1.10" }
 testing             = { version = "^0.35.16" }
-
-
-rspack_dojang = { version = "0.1.9" }
 
 # all rspack workspace dependencies
 rspack                                 = { version = "0.2.0", path = "crates/.rspack_crates/rspack" }
@@ -199,6 +200,8 @@ rspack_swc_plugin_import               = { version = "0.2.0", path = "crates/.rs
 rspack_testing                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_testing" }
 rspack_tracing                         = { version = "0.2.0", path = "crates/.rspack_crates/rspack_tracing" }
 rspack_util                            = { version = "0.2.0", path = "crates/.rspack_crates/rspack_util" }
+
+
 [workspace.metadata.release]
 rate-limit = { existing-packages = 70, new-packages = 70 }
 [profile.dev]

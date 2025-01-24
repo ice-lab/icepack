@@ -1,9 +1,8 @@
 [package]
-description = "rspack binding values"
+description = "fork form rspack binding values"
 edition     = "2021"
 license     = "MIT"
 name        = "binding_values"
-repository  = "https://github.com/web-infra-dev/rspack"
 version     = "0.2.0"
 
 [features]
