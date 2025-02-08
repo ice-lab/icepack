@@ -79,6 +79,11 @@ jobs:
             name: linux-arm64-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |-
+              echo "Before: corepack version => $(corepack --version || echo 'not installed')" &&
+              npm install -g corepack@latest &&
+              echo "After : corepack version => $(corepack --version)" &&
+              corepack enable &&
+              pnpm --version &&
               set -e &&
               cd crates/node_binding &&
               export JEMALLOC_SYS_WITH_LG_PAGE=16 && export CC_aarch64_unknown_linux_gnu=clang &&
@@ -106,14 +111,6 @@ jobs:
 
       - name: Clone Crates
         uses: ./.github/actions/clone-crates
-
-      - name: Use Latest Corepack
-        run: |
-          echo "Before: corepack version => $(corepack --version || echo 'not installed')"
-          npm install -g corepack@latest
-          echo "After : corepack version => $(corepack --version)"
-          corepack enable
-          pnpm --version
 
       - name: Install
         uses: dtolnay/rust-toolchain@stable
