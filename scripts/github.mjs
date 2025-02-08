@@ -1,3 +1,4 @@
+import path from 'path';
 import gitclone from 'git-clone/promise.js';
 import { rimraf } from 'rimraf';
 import ora from 'ora';
@@ -5,49 +6,64 @@ import yaml from 'js-yaml';
 import fse from 'fs-extra';
 
 export function getGithubInfo() {
-  const info = {};
   try {
     const content = yaml.load(
-      fse.readFileSync('.github/actions/clone-crates/action.yml',
-      'utf-8',
-    ));
-    ['repo', 'dest', 'temp', 'ref'].forEach((key) => {
+      fse.readFileSync('.github/actions/clone-crates/action.yml', 'utf-8')
+    );
+    return ['repo', 'dest', 'temp', 'ref'].reduce((info, key) => {
       info[key] = content.inputs[key].default;
-    });
+      return info;
+    }, {});
   } catch (e) {
     console.log(e);
+    return {};
   }
-  return info;
+}
+
+export async function overwriteContent(content, dest) {
+  fse.writeFileSync(dest, content);
 }
 
 export async function copyAndCleanUp(temp, dest, spinner) {
-  // Step3: only copy crates dir to the dest.
-  if (spinner) {
-    spinner.text = 'Copying crates to the dest...';
+  const updateSpinner = text => {
+    if (spinner) {
+      spinner.text = text;
+    }
   }
-  fse.copySync(temp + '/crates', dest);
-  const pkg = JSON.parse(fse.readFileSync(temp + '/package.json', 'utf-8'));
-  console.log('version: ', pkg.version);
-  // Step4: remove useless files.
-  if (spinner) {
-    spinner.text = 'Clean up...';
-  }
+
+  updateSpinner('Copying crates to the dest...');
+  
+  fse.copySync(path.join(temp, 'crates'), dest);
+  
+  const pkg = JSON.parse(fse.readFileSync(path.join(temp, 'package.json'), 'utf-8'));
+
+  // Update build.rs content
+  const buildRsPath = path.join(dest, 'rspack_loader_swc/build.rs');
+  const buildRsContent = fse.readFileSync(buildRsPath, 'utf-8')
+    .replace('"../../Cargo.toml"', '"../../../Cargo.toml"');
+  fse.writeFileSync(buildRsPath, buildRsContent);
+
+  // Write package.json
+  fse.writeFileSync(
+    path.join(dest, '../package.json'), 
+    JSON.stringify({ version: pkg.version }, null, 2)
+  );
+
+  updateSpinner('Clean up...');
   await rimraf(temp);
+
   if (process.env.IS_GITHUB) {
-    await Promise.all(['node_binding', 'bench'].map(async (dir) => {
-      // Remove useless crates in github action to reduce the check time.
-      await rimraf(dest + '/' + dir);
-    }));
+    await Promise.all(
+      ['node_binding', 'bench'].map(dir => 
+        rimraf(path.join(dest, dir))
+      )
+    );
   }
-  if (spinner) {
-    spinner.succeed('Cloning rspack repo succeed.');
-  }
+
+  spinner?.succeed('Cloning rspack repo succeed.');
 }
 
-export function createSpinner(
-  text,
-  options = {},
-) {
+export function createSpinner(text, options = {}) {
   const spinner = ora({
     text,
     stream: process.stdout,
@@ -60,25 +76,17 @@ export function createSpinner(
 }
 
 export async function getRspackCrates() {
-  const {
-    repo,
-    dest,
-    temp,
-    ref,
-  } = getGithubInfo();
-  let cloneError = null;
+  const { repo, dest, temp, ref } = getGithubInfo();
   const spinner = createSpinner('Cloning rspack repo...');
-  // Step 1: remove dir.
-  await rimraf(dest);
-  // Step2: clone git repo.
-  await gitclone(`git@github.com:${repo}.git`, temp, { checkout: ref }).catch((err) => {cloneError = err;});
-  if (!cloneError) {
-    copyAndCleanUp(temp, dest, spinner);
-  } else {
+
+  try {
+    await rimraf(dest);
+    await gitclone(`git@github.com:${repo}.git`, temp, { checkout: ref });
+    await copyAndCleanUp(temp, dest, spinner);
+  } catch (err) {
     spinner.fail('Cloning rspack repo failed.');
-    // Clean temp dir if clone failed.
     await rimraf(temp);
-    console.log(cloneError);
+    console.log(err);
   }
 }
 

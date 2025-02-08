@@ -9,17 +9,18 @@ use napi::{
   bindgen_prelude::{Buffer, FromNapiValue, Function, JsValuesTupleIntoVec, Promise, ToNapiValue},
   Env, NapiRaw,
 };
-use rspack_binding_values::{
+use binding_values::{
   JsAdditionalTreeRuntimeRequirementsArg, JsAdditionalTreeRuntimeRequirementsResult,
   JsAfterEmitData, JsAfterResolveData, JsAfterResolveOutput, JsAfterTemplateExecutionData,
   JsAlterAssetTagGroupsData, JsAlterAssetTagsData, JsAssetEmittedArgs,
   JsBeforeAssetTagGenerationData, JsBeforeEmitData, JsBeforeResolveArgs, JsBeforeResolveOutput,
-  JsChunk, JsChunkAssetArgs, JsCompilationWrapper, JsContextModuleFactoryAfterResolveDataWrapper,
-  JsContextModuleFactoryAfterResolveResult, JsContextModuleFactoryBeforeResolveDataWrapper,
-  JsContextModuleFactoryBeforeResolveResult, JsCreateData, JsExecuteModuleArg, JsFactorizeArgs,
-  JsFactorizeOutput, JsModuleWrapper, JsNormalModuleFactoryCreateModuleArgs, JsResolveArgs,
-  JsResolveForSchemeArgs, JsResolveForSchemeOutput, JsResolveOutput, JsRuntimeGlobals,
-  JsRuntimeModule, JsRuntimeModuleArg, JsRuntimeRequirementInTreeArg,
+  JsChunkAssetArgs, JsChunkWrapper, JsCompilationWrapper,
+  JsContextModuleFactoryAfterResolveDataWrapper, JsContextModuleFactoryAfterResolveResult,
+  JsContextModuleFactoryBeforeResolveDataWrapper, JsContextModuleFactoryBeforeResolveResult,
+  JsCreateData, JsCreateScriptData, JsExecuteModuleArg, JsFactorizeArgs, JsFactorizeOutput,
+  JsLinkPrefetchData, JsLinkPreloadData, JsModuleWrapper, JsNormalModuleFactoryCreateModuleArgs,
+  JsResolveArgs, JsResolveForSchemeArgs, JsResolveForSchemeOutput, JsResolveOutput,
+  JsRuntimeGlobals, JsRuntimeModule, JsRuntimeModuleArg, JsRuntimeRequirementInTreeArg,
   JsRuntimeRequirementInTreeResult, ToJsCompatSourceOwned,
 };
 use rspack_collections::IdentifierSet;
@@ -67,6 +68,11 @@ use rspack_plugin_html::{
   HtmlPluginBeforeAssetTagGenerationHook, HtmlPluginBeforeEmit, HtmlPluginBeforeEmitHook,
 };
 use rspack_plugin_javascript::{JavascriptModulesChunkHash, JavascriptModulesChunkHashHook};
+use rspack_plugin_runtime::{
+  CreateScriptData, LinkPrefetchData, LinkPreloadData, RuntimePluginCreateScript,
+  RuntimePluginCreateScriptHook, RuntimePluginLinkPrefetch, RuntimePluginLinkPrefetchHook,
+  RuntimePluginLinkPreload, RuntimePluginLinkPreloadHook,
+};
 
 #[napi(object)]
 pub struct JsTap<'f> {
@@ -386,6 +392,9 @@ pub enum RegisterJsTapKind {
   HtmlPluginAfterTemplateExecution,
   HtmlPluginBeforeEmit,
   HtmlPluginAfterEmit,
+  RuntimePluginCreateScript,
+  RuntimePluginLinkPreload,
+  RuntimePluginLinkPrefetch,
 }
 
 #[derive(Default, Clone)]
@@ -456,14 +465,14 @@ pub struct RegisterJsTaps {
   #[napi(
     ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsAdditionalTreeRuntimeRequirementsArg) => JsAdditionalTreeRuntimeRequirementsResult | undefined); stage: number; }>"
   )]
-  pub register_compilation_additional_tree_runtime_requirements: RegisterFunction<
+  pub register_compilation_additional_tree_runtime_requirements_taps: RegisterFunction<
     JsAdditionalTreeRuntimeRequirementsArg,
     Option<JsAdditionalTreeRuntimeRequirementsResult>,
   >,
   #[napi(
     ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsRuntimeRequirementInTreeArg) => JsRuntimeRequirementInTreeResult | undefined); stage: number; }>"
   )]
-  pub register_compilation_runtime_requirement_in_tree:
+  pub register_compilation_runtime_requirement_in_tree_taps:
     RegisterFunction<JsRuntimeRequirementInTreeArg, Option<JsRuntimeRequirementInTreeResult>>,
 
   #[napi(
@@ -492,7 +501,7 @@ pub struct RegisterJsTaps {
   #[napi(
     ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsChunk) => Buffer); stage: number; }>"
   )]
-  pub register_compilation_chunk_hash_taps: RegisterFunction<JsChunk, Buffer>,
+  pub register_compilation_chunk_hash_taps: RegisterFunction<JsChunkWrapper, Buffer>,
   #[napi(
     ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsChunkAssetArgs) => void); stage: number; }>"
   )]
@@ -558,7 +567,7 @@ pub struct RegisterJsTaps {
   #[napi(
     ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsChunk) => Buffer); stage: number; }>"
   )]
-  pub register_javascript_modules_chunk_hash_taps: RegisterFunction<JsChunk, Buffer>,
+  pub register_javascript_modules_chunk_hash_taps: RegisterFunction<JsChunkWrapper, Buffer>,
   #[napi(
     ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsBeforeAssetTagGenerationData) => JsBeforeAssetTagGenerationData); stage: number; }>"
   )]
@@ -589,6 +598,21 @@ pub struct RegisterJsTaps {
   )]
   pub register_html_plugin_after_emit_taps:
     RegisterFunction<JsAfterEmitData, Promise<JsAfterEmitData>>,
+  #[napi(
+    ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsCreateScriptData) => String); stage: number; }>"
+  )]
+  pub register_runtime_plugin_create_script_taps:
+    RegisterFunction<JsCreateScriptData, Option<String>>,
+  #[napi(
+    ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsLinkPreloadData) => String); stage: number; }>"
+  )]
+  pub register_runtime_plugin_link_preload_taps:
+    RegisterFunction<JsLinkPreloadData, Option<String>>,
+  #[napi(
+    ts_type = "(stages: Array<number>) => Array<{ function: ((arg: JsLinkPrefetchData) => String); stage: number; }>"
+  )]
+  pub register_runtime_plugin_link_prefetch_taps:
+    RegisterFunction<JsLinkPrefetchData, Option<String>>,
 }
 
 /* Compiler Hooks */
@@ -756,7 +780,7 @@ define_register!(
 );
 define_register!(
   RegisterCompilationChunkHashTaps,
-  tap = CompilationChunkHashTap<JsChunk, Buffer> @ CompilationChunkHashHook,
+  tap = CompilationChunkHashTap<JsChunkWrapper, Buffer> @ CompilationChunkHashHook,
   cache = true,
   sync = false,
   kind = RegisterJsTapKind::CompilationChunkHash,
@@ -874,7 +898,7 @@ define_register!(
 /* JavascriptModules Hooks */
 define_register!(
   RegisterJavascriptModulesChunkHashTaps,
-  tap = JavascriptModulesChunkHashTap<JsChunk, Buffer> @ JavascriptModulesChunkHashHook,
+  tap = JavascriptModulesChunkHashTap<JsChunkWrapper, Buffer> @ JavascriptModulesChunkHashHook,
   cache = true,
   sync = false,
   kind = RegisterJsTapKind::JavascriptModulesChunkHash,
@@ -933,6 +957,30 @@ define_register!(
   cache = true,
   sync = false,
   kind = RegisterJsTapKind::HtmlPluginAfterEmit,
+  skip = true,
+);
+define_register!(
+  RegisterRuntimePluginCreateScriptTaps,
+  tap = RuntimePluginCreateScriptTap<JsCreateScriptData, Option<String>> @ RuntimePluginCreateScriptHook,
+  cache = true,
+  sync = false,
+  kind = RegisterJsTapKind::RuntimePluginCreateScript,
+  skip = true,
+);
+define_register!(
+  RegisterRuntimePluginLinkPreloadTaps,
+  tap = RuntimePluginLinkPreloadTap<JsLinkPreloadData, Option<String>> @ RuntimePluginLinkPreloadHook,
+  cache = true,
+  sync = false,
+  kind = RegisterJsTapKind::RuntimePluginLinkPreload,
+  skip = true,
+);
+define_register!(
+  RegisterRuntimePluginLinkPrefetchTaps,
+  tap = RuntimePluginLinkPrefetchTap<JsLinkPrefetchData, Option<String>> @ RuntimePluginLinkPrefetchHook,
+  cache = true,
+  sync = false,
+  kind = RegisterJsTapKind::RuntimePluginLinkPrefetch,
   skip = true,
 );
 
@@ -1191,9 +1239,8 @@ impl CompilationAdditionalTreeRuntimeRequirements
     chunk_ukey: &ChunkUkey,
     runtime_requirements: &mut RuntimeGlobals,
   ) -> rspack_error::Result<()> {
-    let chunk = compilation.chunk_by_ukey.expect_get(chunk_ukey);
     let arg = JsAdditionalTreeRuntimeRequirementsArg {
-      chunk: JsChunk::from(chunk, compilation),
+      chunk: JsChunkWrapper::new(*chunk_ukey, compilation),
       runtime_requirements: JsRuntimeGlobals::from(*runtime_requirements),
     };
     let result = self.function.call_with_sync(arg).await?;
@@ -1218,9 +1265,8 @@ impl CompilationRuntimeRequirementInTree for CompilationRuntimeRequirementInTree
     _runtime_requirements: &RuntimeGlobals,
     runtime_requirements_mut: &mut RuntimeGlobals,
   ) -> rspack_error::Result<Option<()>> {
-    let chunk = compilation.chunk_by_ukey.expect_get(chunk_ukey);
     let arg = JsRuntimeRequirementInTreeArg {
-      chunk: JsChunk::from(chunk, compilation),
+      chunk: JsChunkWrapper::new(*chunk_ukey, compilation),
       runtime_requirements: JsRuntimeGlobals::from(*all_runtime_requirements),
     };
     let result = self.function.blocking_call_with_sync(arg)?;
@@ -1245,12 +1291,11 @@ impl CompilationRuntimeModule for CompilationRuntimeModuleTap {
     &self,
     compilation: &mut Compilation,
     m: &ModuleIdentifier,
-    c: &ChunkUkey,
+    chunk_ukey: &ChunkUkey,
   ) -> rspack_error::Result<()> {
     let Some(module) = compilation.runtime_modules.get(m) else {
       return Ok(());
     };
-    let chunk = compilation.chunk_by_ukey.expect_get(c);
     let arg = JsRuntimeModuleArg {
       module: JsRuntimeModule {
         source: Some(
@@ -1267,7 +1312,7 @@ impl CompilationRuntimeModule for CompilationRuntimeModuleTap {
           .cow_replace("webpack/runtime/", "")
           .into_owned(),
       },
-      chunk: JsChunk::from(chunk, compilation),
+      chunk: JsChunkWrapper::new(*chunk_ukey, compilation),
     };
     if let Some(module) = self.function.call_with_sync(arg).await?
       && let Some(source) = module.source
@@ -1294,10 +1339,9 @@ impl CompilationChunkHash for CompilationChunkHashTap {
     chunk_ukey: &ChunkUkey,
     hasher: &mut RspackHash,
   ) -> rspack_error::Result<()> {
-    let chunk = compilation.chunk_by_ukey.expect_get(chunk_ukey);
     let result = self
       .function
-      .call_with_sync(JsChunk::from(chunk, compilation))
+      .call_with_sync(JsChunkWrapper::new(*chunk_ukey, compilation))
       .await?;
     result.hash(hasher);
     Ok(())
@@ -1316,11 +1360,10 @@ impl CompilationChunkAsset for CompilationChunkAssetTap {
     chunk_ukey: &ChunkUkey,
     file: &str,
   ) -> rspack_error::Result<()> {
-    let chunk = compilation.chunk_by_ukey.expect_get(chunk_ukey);
     self
       .function
       .call_with_sync(JsChunkAssetArgs {
-        chunk: JsChunk::from(chunk, compilation),
+        chunk: JsChunkWrapper::new(*chunk_ukey, compilation),
         filename: file.to_string(),
       })
       .await
@@ -1662,10 +1705,9 @@ impl JavascriptModulesChunkHash for JavascriptModulesChunkHashTap {
     chunk_ukey: &ChunkUkey,
     hasher: &mut RspackHash,
   ) -> rspack_error::Result<()> {
-    let chunk = compilation.chunk_by_ukey.expect_get(chunk_ukey);
     let result = self
       .function
-      .call_with_sync(JsChunk::from(chunk, compilation))
+      .call_with_sync(JsChunkWrapper::new(*chunk_ukey, compilation))
       .await?;
     result.hash(hasher);
     Ok(())
@@ -1768,6 +1810,60 @@ impl HtmlPluginAfterEmit for HtmlPluginAfterEmitTap {
       .call_with_promise(JsAfterEmitData::from(data))
       .await?;
     Ok(result.into())
+  }
+
+  fn stage(&self) -> i32 {
+    self.stage
+  }
+}
+
+#[async_trait]
+impl RuntimePluginCreateScript for RuntimePluginCreateScriptTap {
+  async fn run(&self, mut data: CreateScriptData) -> rspack_error::Result<CreateScriptData> {
+    if let Some(code) = self
+      .function
+      .call_with_sync(JsCreateScriptData::from(data.clone()))
+      .await?
+    {
+      data.code = code;
+    }
+    Ok(data)
+  }
+
+  fn stage(&self) -> i32 {
+    self.stage
+  }
+}
+
+#[async_trait]
+impl RuntimePluginLinkPreload for RuntimePluginLinkPreloadTap {
+  async fn run(&self, mut data: LinkPreloadData) -> rspack_error::Result<LinkPreloadData> {
+    if let Some(code) = self
+      .function
+      .call_with_sync(JsLinkPreloadData::from(data.clone()))
+      .await?
+    {
+      data.code = code;
+    }
+    Ok(data)
+  }
+
+  fn stage(&self) -> i32 {
+    self.stage
+  }
+}
+
+#[async_trait]
+impl RuntimePluginLinkPrefetch for RuntimePluginLinkPrefetchTap {
+  async fn run(&self, mut data: LinkPrefetchData) -> rspack_error::Result<LinkPrefetchData> {
+    if let Some(code) = self
+      .function
+      .call_with_sync(JsLinkPrefetchData::from(data.clone()))
+      .await?
+    {
+      data.code = code;
+    }
+    Ok(data)
   }
 
   fn stage(&self) -> i32 {
