@@ -64,6 +64,9 @@ jobs:
             name: linux-x64-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: |-
+              npm install -g corepack@latest &&
+              corepack enable &&
+              pnpm --version &&
               set -e &&
               cd crates/node_binding &&
               unset CC_x86_64_unknown_linux_gnu && unset CC &&
@@ -79,6 +82,9 @@ jobs:
             name: linux-arm64-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |-
+              npm install -g corepack@latest &&
+              corepack enable &&
+              pnpm --version &&
               set -e &&
               cd crates/node_binding &&
               export JEMALLOC_SYS_WITH_LG_PAGE=16 && export CC_aarch64_unknown_linux_gnu=clang &&
@@ -141,7 +147,7 @@ jobs:
         if: ${{ !matrix.settings.docker }}
         shell: bash
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}.${{ matrix.settings.name }}.node
           path: crates/node_binding/${{ env.APP_NAME }}.*.node
@@ -156,19 +162,19 @@ jobs:
       - name: Pnpm Cache # Required by some tests
         uses: ./.github/actions/pnpm-cache
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.APP_NAME }}.darwin-x64.node
           path: crates/node_binding/artifacts
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.APP_NAME }}.darwin-arm64.node
           path: crates/node_binding/artifacts
       - name: Combine binaries
         run: cd crates/node_binding && pnpm universal
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}.darwin-universal.node
           path: crates/node_binding/${{ env.APP_NAME }}.*.node
@@ -183,7 +189,7 @@ jobs:
       - name: Pnpm Cache # Required by some tests
         uses: ./.github/actions/pnpm-cache
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: crates/node_binding/artifacts
       - name: Move artifacts
