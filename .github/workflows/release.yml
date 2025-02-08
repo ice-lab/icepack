@@ -9,7 +9,7 @@ permissions:
 on:
   push:
     branches:
-      - master
+      - fix/ci
     tags-ignore:
       - '**'
     paths-ignore:
@@ -141,7 +141,7 @@ jobs:
         if: ${{ !matrix.settings.docker }}
         shell: bash
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}.${{ matrix.settings.name }}.node
           path: crates/node_binding/${{ env.APP_NAME }}.*.node
@@ -168,7 +168,7 @@ jobs:
       - name: Combine binaries
         run: cd crates/node_binding && pnpm universal
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}.darwin-universal.node
           path: crates/node_binding/${{ env.APP_NAME }}.*.node
