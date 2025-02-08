@@ -63,6 +63,12 @@ jobs:
             target: x86_64-unknown-linux-gnu
             name: linux-x64-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+            prebuild: |-
+              echo "Before: corepack version => $(corepack --version || echo 'not installed')" &&
+              npm install -g corepack@latest &&
+              echo "After : corepack version => $(corepack --version)" &&
+              corepack enable &&
+              pnpm --version
             build: |-
               set -e &&
               cd crates/node_binding &&
@@ -78,12 +84,13 @@ jobs:
             target: aarch64-unknown-linux-gnu
             name: linux-arm64-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-            build: |-
+            prebuild: |-
               echo "Before: corepack version => $(corepack --version || echo 'not installed')" &&
               npm install -g corepack@latest &&
               echo "After : corepack version => $(corepack --version)" &&
               corepack enable &&
-              pnpm --version &&
+              pnpm --version
+            build: |-
               set -e &&
               cd crates/node_binding &&
               export JEMALLOC_SYS_WITH_LG_PAGE=16 && export CC_aarch64_unknown_linux_gnu=clang &&
@@ -140,7 +147,11 @@ jobs:
         with:
           image: ${{ matrix.settings.docker }}
           options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
-          run: ${{ matrix.settings.build }}
+          run: |
+            if [ -n "${{ matrix.settings.prebuild }}" ]; then
+              ${{ matrix.settings.prebuild }}
+            fi
+            ${{ matrix.settings.build }}
       - name: Build
         run: ${{ matrix.settings.build }}
         if: ${{ !matrix.settings.docker }}
