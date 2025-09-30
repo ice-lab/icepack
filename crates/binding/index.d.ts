@@ -353,7 +353,7 @@ export declare class ModuleGraphConnection {
 
 export declare class NativeWatcher {
   constructor(options: NativeWatcherOptions)
-  watch(files: [Array<string>, Array<string>], directories: [Array<string>, Array<string>], missing: [Array<string>, Array<string>], callback: (err: Error | null, result: NativeWatchResult) => void, callbackUndelayed: (path: string) => void): void
+  watch(files: [Array<string>, Array<string>], directories: [Array<string>, Array<string>], missing: [Array<string>, Array<string>], startTime: bigint, callback: (err: Error | null, result: NativeWatchResult) => void, callbackUndelayed: (path: string) => void): void
   triggerEvent(kind: 'change' | 'remove' | 'create', path: string): void
   /**
    * # Safety
@@ -446,6 +446,7 @@ export declare const enum BuiltinPluginName {
   CommonJsChunkFormatPlugin = 'CommonJsChunkFormatPlugin',
   ArrayPushCallbackChunkFormatPlugin = 'ArrayPushCallbackChunkFormatPlugin',
   ModuleChunkFormatPlugin = 'ModuleChunkFormatPlugin',
+  EsmLibraryPlugin = 'EsmLibraryPlugin',
   HotModuleReplacementPlugin = 'HotModuleReplacementPlugin',
   LimitChunkCountPlugin = 'LimitChunkCountPlugin',
   WorkerPlugin = 'WorkerPlugin',
@@ -509,6 +510,7 @@ export declare const enum BuiltinPluginName {
   RstestPlugin = 'RstestPlugin',
   RslibPlugin = 'RslibPlugin',
   CircularDependencyRspackPlugin = 'CircularDependencyRspackPlugin',
+  URLPlugin = 'URLPlugin',
   JsLoaderRspackPlugin = 'JsLoaderRspackPlugin',
   LazyCompilationPlugin = 'LazyCompilationPlugin',
   ModuleInfoHeaderPlugin = 'ModuleInfoHeaderPlugin',
@@ -1273,11 +1275,6 @@ export interface JsStatsLogging {
   trace?: Array<string>
 }
 
-export interface JsStatsMillisecond {
-  secs: number
-  subsecMillis: number
-}
-
 export interface JsStatsModule {
   commonAttributes: JsStatsModuleCommonAttributes
   dependent?: boolean
@@ -1322,8 +1319,8 @@ export interface JsStatsModuleIssuer {
 }
 
 export interface JsStatsModuleProfile {
-  factory: JsStatsMillisecond
-  building: JsStatsMillisecond
+  factory: number
+  building: number
 }
 
 export interface JsStatsModuleReason {
@@ -1458,7 +1455,7 @@ export interface NapiResolveOptions {
    * Create aliases to import or require certain modules more easily.
    * A trailing $ can also be added to the given object's keys to signify an exact match.
    */
-  alias?: Record<string, Array<string | undefined | null>>
+  alias?: Record<string, string | false | string[]>
   /**
    * A list of alias fields in description files.
    * Specify a field, such as `browser`, to be parsed according to [this specification](https://github.com/defunctzombie/package-browser-field-spec).
@@ -2031,6 +2028,7 @@ parallelCodeSplitting: boolean
 rspackFuture?: RawRspackFuture
 cache: boolean | { type: "persistent" } & RawExperimentCacheOptionsPersistent | { type: "memory" }
 useInputFileSystem?: false | Array<RegExp>
+css?: boolean
 inlineConst: boolean
 inlineEnum: boolean
 typeReexportsPresence: boolean
@@ -2209,6 +2207,14 @@ export interface RawIntegrityItem {
   integrity: string
 }
 
+export declare const enum RawJavascriptParserCommonjsExports {
+  SkipInEsm = 'skipInEsm'
+}
+
+export interface RawJavascriptParserCommonjsOptions {
+  exports?: boolean | 'skipInEsm'
+}
+
 export interface RawJavascriptParserOptions {
   dynamicImportMode?: string
   dynamicImportPreload?: string
@@ -2241,21 +2247,28 @@ export interface RawJavascriptParserOptions {
    * @experimental
    */
   requireResolve?: boolean
-  /**
-   * This option is experimental in Rspack only and subject to change or be removed anytime.
-   * @experimental
-   */
-  importDynamic?: boolean
-  /**
-   * This option is experimental in Rspack only and subject to change or be removed anytime.
-   * @experimental
-   */
-  inlineConst?: boolean
-  /**
-   * This option is experimental in Rspack only and subject to change or be removed anytime.
-   * @experimental
-   */
-  typeReexportsPresence?: string
+commonjs?: boolean | { exports?: boolean | 'skipInEsm' }
+/**
+ * This option is experimental in Rspack only and subject to change or be removed anytime.
+ * @experimental
+ */
+importDynamic?: boolean
+commonjsMagicComments?: boolean
+/**
+ * This option is experimental in Rspack only and subject to change or be removed anytime.
+ * @experimental
+ */
+inlineConst?: boolean
+/**
+ * This option is experimental in Rspack only and subject to change or be removed anytime.
+ * @experimental
+ */
+typeReexportsPresence?: string
+/**
+ * This option is experimental in Rspack only and subject to change or be removed anytime.
+ * @experimental
+ */
+jsx?: boolean
 }
 
 export interface RawJsonGeneratorOptions {

@@ -17,23 +17,19 @@ const compiler = rspack({
           {
             // Use the compilation loader for JavaScript transformation
             loader: 'builtin:compilation-loader',
-            options: JSON.stringify({
-              swc_options: {
-                config: {
-                  jsc: {
-                    parser: {
-                      syntax: "ecmascript",
-                      jsx: false
-                    },
-                    transform: {},
-                    target: "es2015"
-                  },
-                  module: {
-                    type: "commonjs"
-                  }
-                }
+            options: {
+              jsc: {
+                parser: {
+                  syntax: "ecmascript",
+                  jsx: false
+                },
+                transform: {},
+                target: "es2015"
+              },
+              module: {
+                type: "commonjs"
               }
-            }),
+            },
           },
         ],
       },

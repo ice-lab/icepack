@@ -447,6 +447,7 @@ module.exports.JsRspackSeverity = nativeBinding.JsRspackSeverity
 module.exports.loadBrowserslist = nativeBinding.loadBrowserslist
 module.exports.minify = nativeBinding.minify
 module.exports.minifySync = nativeBinding.minifySync
+module.exports.RawJavascriptParserCommonjsExports = nativeBinding.RawJavascriptParserCommonjsExports
 module.exports.RawRuleSetConditionType = nativeBinding.RawRuleSetConditionType
 module.exports.registerGlobalTrace = nativeBinding.registerGlobalTrace
 module.exports.RegisterJsTapKind = nativeBinding.RegisterJsTapKind
