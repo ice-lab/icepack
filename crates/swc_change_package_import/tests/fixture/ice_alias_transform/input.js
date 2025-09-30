@@ -1,1 +1,0 @@
-import { Head } from 'ice';

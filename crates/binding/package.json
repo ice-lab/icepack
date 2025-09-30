@@ -1,0 +1,51 @@
+{
+  "name": "@ice/pack-binding",
+  "version": "2.0.0",
+  "homepage": "https://github.com/ice-lab/icepack",
+  "bugs": {
+    "url": "https://github.com/ice-lab/icepack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ice-lab/icepack.git",
+    "directory": "crates/binding"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "build": "napi build --platform"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "3.0.1",
+    "@types/node": "^24.0.12",
+    "typescript": "^5.8.3"
+  },
+  "napi": {
+    "binaryName": "binding",
+    "targets": [
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "i686-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-apple-darwin",
+      "aarch64-unknown-linux-musl",
+      "aarch64-pc-windows-msvc",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "aarch64-linux-android"
+    ]
+  }
+}

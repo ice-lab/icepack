@@ -1,0 +1,7 @@
+{
+  "name": "plugin",
+  "private": true,
+  "dependencies": {
+    "@ice/pack-core": "workspace:*"
+  }
+}
