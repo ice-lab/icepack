@@ -29,7 +29,8 @@
   },
   "dependencies": {
     "@rspack/core": "1.5.8",
-    "@ice/pack-binding": "workspace:*"
+    "@ice/pack-binding": "workspace:*",
+    "@swc/types": "0.1.25"
   },
   "devDependencies": {
     "@taplo/cli": "^0.7.0",
