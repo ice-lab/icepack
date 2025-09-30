@@ -1,2 +1,5 @@
 packages:
-  - "crates/node_binding"
+  - 'crates/binding'
+  - 'examples/use-plugin'
+  - 'examples/use-loader'
+  - '.'

@@ -1,1 +1,0 @@
-import { runApp } from "@ice/runtime";

@@ -1,24 +1,43 @@
 {
-  "name": "ice-monorepo",
-  "version": "0.0.1",
-  "type": "module",
-  "homepage": "https://ice.work",
-  "bugs": "https://github.com/alibaba/ice/issues",
-  "scripts": {
-    "setup": "rm -rf node_modules packages/*/node_modules && pnpm install && pnpm setup-crates",
-    "setup-crates": "node scripts/clone-rspack.mjs",
-    "test": "node scripts/test.mjs"
-  },
-  "devDependencies": {
-    "git-clone": "0.2.0",
-    "rimraf": "^5.0.5",
-    "fs-extra": "^11.1.1",
-    "ora": "^7.0.1",
-    "js-yaml": "4.1.0"
+  "name": "@ice/pack-core",
+  "version": "1.0.0",
+  "homepage": "https://github.com/ice-lab/icepack",
+  "bugs": {
+    "url": "https://github.com/ice-lab/icepack/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/alibaba/ice"
+    "url": "git+https://github.com/ice-lab/icepack.git"
   },
-  "packageManager": "pnpm@8.9.2"
+  "packageManager": "pnpm@10.15.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "build": "pnpm run --filter @ice/pack-core build",
+    "lint-staged": "lint-staged"
+  },
+  "dependencies": {
+    "@rspack/core": "1.5.8",
+    "@ice/pack-binding": "workspace:*",
+    "@swc/types": "0.1.25"
+  },
+  "devDependencies": {
+    "@taplo/cli": "^0.7.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^16.0.0"
+  },
+  "lint-staged": {
+    "*.toml": "npx taplo format"
+  }
 }
